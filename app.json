@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Dev Clicker: Junior to CEO",
+    "slug": "dev-clicker-junior-to-ceo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0d1117",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.devclickerjuniortoceo"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

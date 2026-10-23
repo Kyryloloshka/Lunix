@@ -1,0 +1,121 @@
+{
+  "app": {
+    "title": "DEV CLI: PATH TO CEO",
+    "kicker": "KERNEL v5.19 // USERSPACE",
+    "branch": "main*",
+    "commit": "8f3b2e1",
+    "session": "SESSION / CAREER_001"
+  },
+  "locale": {
+    "switchTo": "Перемкнути мову на українську"
+  },
+  "nav": {
+    "work": "Console",
+    "skills": "Stack",
+    "career": "Career",
+    "leaders": "Leaders",
+    "settings": "Settings"
+  },
+  "settings": {
+    "heading": "SETTINGS",
+    "subheading": "Control game feedback and behavior",
+    "sound": "Sound",
+    "haptics": "Haptics",
+    "reducedMotion": "Reduce motion",
+    "language": "Language",
+    "notation": "Number format",
+    "compact": "COMPACT",
+    "scientific": "SCIENTIFIC"
+  },
+  "resources": {
+    "capital": "Capital",
+    "cognitive": "Cognition",
+    "influence": "Influence",
+    "stress": "Workload"
+  },
+  "status": {
+    "prod": "PROD: STABLE",
+    "flow": "FLOW OVERCLOCK",
+    "combo": "Combo {current}/{target} · {seconds}s",
+    "ratePerSec": "+{amount}/s",
+    "throttling": "THROTTLING RISK",
+    "output": "OUTPUT",
+    "optimal": "OPTIMAL"
+  },
+  "workspace": {
+    "prompt": "$ git commit -m 'ship'",
+    "hint": "Tap the buffer to generate capital",
+    "crit": "CRIT!",
+    "fileHeader": "workspace.ts — edited",
+    "line1": "const future = await build();",
+    "line2": "if (bugs) fix(bugs);",
+    "line3": "return profit;"
+  },
+  "skills": {
+    "heading": "TECH STACK",
+    "rateLabel": "+{amount}/s",
+    "hardTab": "HARD SKILLS",
+    "softTab": "SOFT SKILLS",
+    "upgradesTab": "UPGRADES",
+    "lvl": "LVL {level}",
+    "buy": "BUY",
+    "purchased": "OWNED",
+    "multiplier": "x{mult} BOOST",
+    "reqLevel": "Requires {skill} Lvl {level}",
+    "items": {
+      "html-css": { "name": "CSS Flexbox & Grid", "desc": "Pixel-perfect centering without pain" },
+      "javascript": { "name": "Async / Event Loop", "desc": "Mastering microtask queues & promises" },
+      "react": { "name": "React Fiber & Hooks", "desc": "Reconciliation & state trees" },
+      "node": { "name": "Node.js Streams", "desc": "Piping gigabytes without memory leaks" },
+      "docker": { "name": "Docker & Kubernetes", "desc": "Clusters, ingresses, and YAML infrastructure" },
+      "system-design": { "name": "Distributed Systems", "desc": "100K RPS, sharding & consistency" },
+      "coffee": { "name": "Aeropress & Cardamom", "desc": "Boosts focus and tap power" },
+      "daily": { "name": "Stand-up Sync", "desc": "Alignment meetings with no blockers" },
+      "linkedin": { "name": "Tech Blogging", "desc": "Publishing architecture post-mortems" },
+      "delegate": { "name": "Intern Delegation", "desc": "Automated background development" }
+    }
+  },
+  "career": {
+    "heading": "CAREER ROADMAP",
+    "subheading": "From self-taught developer to big tech leader",
+    "progressBadge": "{current} / {total}",
+    "active": "CURRENT",
+    "unlocked": "ACHIEVED",
+    "locked": "LOCKED",
+    "reqTitle": "PROMOTION REQUIREMENTS:",
+    "reqCapital": "Capital:",
+    "reqInfluence": "Influence:",
+    "promote": "CLAIM PROMOTION",
+    "ranks": {
+      "0": { "title": "Self-Taught", "desc": "First terminal session and hello world" },
+      "1": { "title": "Trainee Engineer", "desc": "Fixing documentation and minor bugs" },
+      "2": { "title": "Junior Developer", "desc": "First pull requests and code reviews" },
+      "3": { "title": "Middle Engineer", "desc": "Building modules independently" },
+      "4": { "title": "Senior Engineer", "desc": "Mentoring, performance, and core subsystems" },
+      "5": { "title": "Tech Lead", "desc": "Growing the team and shipping projects" },
+      "6": { "title": "Principal Architect", "desc": "Company-wide systems strategy" },
+      "7": { "title": "Unicorn CTO", "desc": "Technical vision for a product serving millions" },
+      "8": { "title": "Google CEO", "desc": "Leading a global technology company" }
+    }
+  },
+  "leaderboard": {
+    "heading": "DEVELOPER LEADERBOARD",
+    "subheading": "Simulated global engineering net worth",
+    "rankBadge": "Rank #{rank}",
+    "disclaimer": "* This is a simulated peer list. Earn capital to claim the top spot.",
+    "you": "YOU",
+    "playerName": "YOU ({label})",
+    "playerRole": "Junior → CEO",
+    "entries": {
+      "sundar": { "name": "Sundar Pichai", "role": "Google CEO" },
+      "satya": { "name": "Satya Nadella", "role": "Microsoft CEO" },
+      "musk": { "name": "Elon Musk", "role": "Chief Meme Officer" },
+      "alex-arch": { "name": "Alex the Architect", "role": "Former FAANG Principal" },
+      "dima-lead": { "name": "Dima the Lead", "role": "Unicorn Tech Lead" },
+      "katya-senior": { "name": "Katya the Senior", "role": "Senior Rust Developer" },
+      "vasya-middle": { "name": "Vasya the Mid-level", "role": "Holding two jobs at once" },
+      "petya-jun": { "name": "Petya the Junior", "role": "Looking for a mentor" },
+      "olex-trainee": { "name": "Olex the Trainee", "role": "First résumé" }
+    }
+  }
+}

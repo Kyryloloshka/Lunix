@@ -1,0 +1,121 @@
+{
+  "app": {
+    "title": "DEV CLI: ШЛЯХ ДО CEO",
+    "kicker": "KERNEL v5.19 // USERSPACE",
+    "branch": "main*",
+    "commit": "8f3b2e1",
+    "session": "СЕСІЯ / КАР'ЄРА_001"
+  },
+  "locale": {
+    "switchTo": "Switch language to English"
+  },
+  "nav": {
+    "work": "Консоль",
+    "skills": "Стек",
+    "career": "Грейди",
+    "leaders": "Топ",
+    "settings": "Опції"
+  },
+  "settings": {
+    "heading": "НАЛАШТУВАННЯ",
+    "subheading": "Керуйте відгуком і поведінкою гри",
+    "sound": "Звуки",
+    "haptics": "Вібровідгук",
+    "reducedMotion": "Зменшити анімації",
+    "language": "Мова",
+    "notation": "Формат чисел",
+    "compact": "КОРОТКИЙ",
+    "scientific": "НАУКОВИЙ"
+  },
+  "resources": {
+    "capital": "Капітал",
+    "cognitive": "Когнітивка",
+    "influence": "Вплив",
+    "stress": "Навантаження"
+  },
+  "status": {
+    "prod": "PROD: STABLE",
+    "flow": "FLOW OVERCLOCK",
+    "combo": "Комбо {current}/{target} · {seconds}с",
+    "ratePerSec": "+{amount}/с",
+    "throttling": "РИЗИК ПЕРЕВАНТАЖЕННЯ",
+    "output": "ВИХІД",
+    "optimal": "ОПТИМАЛЬНО"
+  },
+  "workspace": {
+    "prompt": "$ git commit -m 'ship'",
+    "hint": "Торкніться буфера, щоб згенерувати капітал",
+    "crit": "КРИТ!",
+    "fileHeader": "workspace.ts — змінено",
+    "line1": "const future = await build();",
+    "line2": "if (bugs) fix(bugs);",
+    "line3": "return profit;"
+  },
+  "skills": {
+    "heading": "ТЕХНОЛОГІЧНИЙ СТЕК",
+    "rateLabel": "+{amount}/с",
+    "hardTab": "HARD SKILLS",
+    "softTab": "SOFT SKILLS",
+    "upgradesTab": "АПГРЕЙДИ",
+    "lvl": "РІВ. {level}",
+    "buy": "КУПИТИ",
+    "purchased": "КУПЛЕНО",
+    "multiplier": "x{mult} БУСТ",
+    "reqLevel": "Потрібен {skill} Рів. {level}",
+    "items": {
+      "html-css": { "name": "CSS Flexbox і Grid", "desc": "Центрування без болю" },
+      "javascript": { "name": "Async / Event Loop", "desc": "Черги мікрозадач і проміси" },
+      "react": { "name": "React Fiber і Hooks", "desc": "Узгодження та дерева стану" },
+      "node": { "name": "Node.js Streams", "desc": "Гігабайти даних без витоків пам'яті" },
+      "docker": { "name": "Docker і Kubernetes", "desc": "Кластери, інгреси та YAML-інфраструктура" },
+      "system-design": { "name": "Розподілені системи", "desc": "100K RPS, шардинг і узгодженість" },
+      "coffee": { "name": "Аеропрес і кардамон", "desc": "Більше фокусу й сили тапу" },
+      "daily": { "name": "Синхронізація на дейлі", "desc": "Зустрічі без блокерів" },
+      "linkedin": { "name": "Технічний блог", "desc": "Публікація архітектурних розборів" },
+      "delegate": { "name": "Делегування інтерну", "desc": "Автоматизована фонова розробка" }
+    }
+  },
+  "career": {
+    "heading": "КАР'ЄРНИЙ МАРШРУТ",
+    "subheading": "Від самоучки до лідера великої технологічної компанії",
+    "progressBadge": "{current} / {total}",
+    "active": "ПОТОЧНИЙ",
+    "unlocked": "ЗДОБУТО",
+    "locked": "ЗАБЛОКОВАНО",
+    "reqTitle": "УМОВИ ПІДВИЩЕННЯ:",
+    "reqCapital": "Капітал:",
+    "reqInfluence": "Вплив:",
+    "promote": "ПРОЙТИ ПІДВИЩЕННЯ",
+    "ranks": {
+      "0": { "title": "Самоучка", "desc": "Перший запуск термінала та hello world" },
+      "1": { "title": "Trainee Engineer", "desc": "Виправлення документації й дрібних дефектів" },
+      "2": { "title": "Junior Developer", "desc": "Перші pull request і код-рев'ю" },
+      "3": { "title": "Middle Engineer", "desc": "Самостійна розробка модулів" },
+      "4": { "title": "Senior Engineer", "desc": "Менторство, продуктивність і ключові підсистеми" },
+      "5": { "title": "Tech Lead", "desc": "Розвиток команди та постачання продукту" },
+      "6": { "title": "Principal Architect", "desc": "Стратегія систем усієї компанії" },
+      "7": { "title": "Unicorn CTO", "desc": "Технічне бачення продукту для мільйонів" },
+      "8": { "title": "CEO Google", "desc": "Керування глобальною технологічною компанією" }
+    }
+  },
+  "leaderboard": {
+    "heading": "РЕЙТИНГ РОЗРОБНИКІВ",
+    "subheading": "Симуляція глобального інженерного капіталу",
+    "rankBadge": "Позиція #{rank}",
+    "disclaimer": "* Це симуляція списку колег. Заробляйте капітал, щоб посісти перше місце.",
+    "you": "ВИ",
+    "playerName": "ВИ ({label})",
+    "playerRole": "Junior → CEO",
+    "entries": {
+      "sundar": { "name": "Сундар Пічаї", "role": "CEO Google" },
+      "satya": { "name": "Сатья Наделла", "role": "CEO Microsoft" },
+      "musk": { "name": "Ілон Маск", "role": "Головний мем-директор" },
+      "alex-arch": { "name": "Саня Архітектор", "role": "Колишній FAANG Principal" },
+      "dima-lead": { "name": "Дмитро Тімлід", "role": "Tech Lead єдинорога" },
+      "katya-senior": { "name": "Катя Сеньйор", "role": "Senior Rust-розробниця" },
+      "vasya-middle": { "name": "Вася Мідл", "role": "Дві роботи одночасно" },
+      "petya-jun": { "name": "Петя Джун", "role": "Шукає ментора" },
+      "olex-trainee": { "name": "Олексій Трейні", "role": "Перше резюме" }
+    }
+  }
+}
