@@ -44,18 +44,18 @@
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",
-    "hint": "Toca el búfer para generar capital",
     "crit": "¡CRÍTICO!",
     "fileHeader": "workspace.ts — editado",
     "line1": "const future = await build();",
     "line2": "if (bugs) fix(bugs);",
-    "line3": "return profit;"
+    "line3": "return profit;",
+    "hintCognitive": "Toca para estudiar",
+    "hintCapital": "Toca para trabajar",
+    "hintInfluence": "Toca para hacer networking"
   },
   "skills": {
     "heading": "STACK TECNOLÓGICO",
     "rateLabel": "+{amount}/s",
-    "hardTab": "HARD SKILLS",
-    "softTab": "SOFT SKILLS",
     "upgradesTab": "MEJORAS",
     "lvl": "NIVEL {level}",
     "buy": "COMPRAR",
@@ -63,17 +63,156 @@
     "multiplier": "x{mult} IMPULSO",
     "reqLevel": "Requiere {skill} Nivel {level}",
     "items": {
-      "html-css": { "name": "CSS Flexbox y Grid", "desc": "Centrado perfecto sin dolor" },
-      "javascript": { "name": "Async / Event Loop", "desc": "Dominio de colas de microtareas y promesas" },
-      "react": { "name": "React Fiber y Hooks", "desc": "Reconciliación y árboles de estado" },
-      "node": { "name": "Node.js Streams", "desc": "Procesando gigabytes sin fugas de memoria" },
-      "docker": { "name": "Docker y Kubernetes", "desc": "Clústeres, ingresos e infraestructura YAML" },
-      "system-design": { "name": "Sistemas Distribuidos", "desc": "100K RPS, particionamiento y consistencia" },
-      "coffee": { "name": "Aeropress y Cardamomo", "desc": "Mejora el enfoque y el poder del toque" },
-      "daily": { "name": "Sincronización Diaria", "desc": "Reuniones ágiles sin bloqueos" },
-      "linkedin": { "name": "Blog Técnico", "desc": "Publicación de análisis de arquitectura" },
-      "delegate": { "name": "Delegar al Becario", "desc": "Desarrollo en segundo plano automatizado" }
-    }
+      "html-tags": {
+        "name": "Etiquetas HTML de YouTube",
+        "desc": "Tu primer <div> y muchos <br>"
+      },
+      "css-centering": {
+        "name": "Centrar un div",
+        "desc": "El problema más difícil de la informática"
+      },
+      "js-basics": {
+        "name": "JavaScript sin lágrimas",
+        "desc": "'1' + 1 === '11' y ya no te asusta"
+      },
+      "git": {
+        "name": "Git: primer conflicto de merge",
+        "desc": "<<<<<<< HEAD, una historia de supervivencia"
+      },
+      "algorithms": {
+        "name": "Algoritmos a las 3 a. m.",
+        "desc": "Invierte un árbol binario y luego tu horario de sueño"
+      },
+      "reakt": {
+        "name": "Framework Reakt",
+        "desc": "useEffect se ejecuta dos veces y es una feature"
+      },
+      "nodle": {
+        "name": "Backend en Nodle",
+        "desc": "node_modules más pesado que un agujero negro"
+      },
+      "dokker": {
+        "name": "Contenedores Dokker",
+        "desc": "En mi máquina funciona: enviemos la máquina"
+      },
+      "distributed-systems": {
+        "name": "Sistemas distribuidos",
+        "desc": "100K RPS, sharding y consistencia eventual"
+      },
+      "ml": {
+        "name": "ML con cinta adhesiva",
+        "desc": "Entrena un modelo y reza a la GPU"
+      },
+      "button-color": {
+        "name": "Cambiar el color del botón",
+        "desc": "Primera tarea pagada. Tercera ronda de «un poco más azul»"
+      },
+      "cafe-landing": {
+        "name": "Landing para una cafetería",
+        "desc": "Pagado en dinero y capuchino gratis"
+      },
+      "freelance": {
+        "name": "Freelance en plataformas",
+        "desc": "Precio fijo, revisiones ilimitadas"
+      },
+      "pet-project": {
+        "name": "Proyecto personal con suscripción",
+        "desc": "Tres usuarios de pago, uno es tu madre"
+      },
+      "internal-crm": {
+        "name": "CRM interno que nadie quiere",
+        "desc": "Diecisiete campos obligatorios por formulario"
+      },
+      "bank-microservices": {
+        "name": "Microservicios para un banco",
+        "desc": "Cuarenta servicios, una base de datos compartida"
+      },
+      "rps-platform": {
+        "name": "Plataforma de 100K RPS",
+        "desc": "Las guardias son un estilo de vida"
+      },
+      "saas": {
+        "name": "Tu propio SaaS",
+        "desc": "Ingresos recurrentes, pánico recurrente"
+      },
+      "ai-startup": {
+        "name": "Startup de IA",
+        "desc": "Un wrapper con ronda serie A"
+      },
+      "own-cloud": {
+        "name": "Tu propia nube",
+        "desc": "Ahora otras startups te pagan a ti"
+      },
+      "code-review": {
+        "name": "Code review a juniors",
+        "desc": "«nit:» como estilo de liderazgo"
+      },
+      "tech-blog": {
+        "name": "Blog técnico",
+        "desc": "Post-mortems que alguien lee"
+      },
+      "meetup-talk": {
+        "name": "Charla en un meetup",
+        "desc": "Demo en vivo, qué puede salir mal"
+      },
+      "open-source": {
+        "name": "Open source con estrellas",
+        "desc": "Issues de desconocidos a las 2 a. m."
+      },
+      "conference-tour": {
+        "name": "Gira de conferencias",
+        "desc": "La misma charla, doce ciudades"
+      },
+      "podcast": {
+        "name": "Podcast de arquitectura",
+        "desc": "Dos horas sobre si vuelven los monolitos"
+      },
+      "aeropress": {
+        "name": "Aeropress y cardamomo",
+        "desc": "Cada toque pega más fuerte"
+      },
+      "sleep": {
+        "name": "Dormir 8 horas",
+        "desc": "Dicen que existe"
+      },
+      "mech-keyboard": {
+        "name": "Teclado mecánico",
+        "desc": "Tus compañeros oyen cada commit"
+      }
+    },
+    "leadership": {
+      "delegation": {
+        "name": "Delegación"
+      },
+      "mentoring": {
+        "name": "Mentoría"
+      },
+      "senior-hiring": {
+        "name": "Contratar seniors"
+      },
+      "learning-budget": {
+        "name": "Presupuesto de formación"
+      },
+      "okr": {
+        "name": "OKR que alguien lee"
+      },
+      "board-seat": {
+        "name": "Puesto en el consejo"
+      }
+    },
+    "branches": {
+      "knowledge": "SABER",
+      "work": "TRABAJO",
+      "influence": "INFLUENCIA"
+    },
+    "upgradeTier": "{skill} · optimización {tier}",
+    "branchBoost": "{branch} ×{mult}",
+    "perkTapAll": "+{pct}% de fuerza de toque",
+    "perkTapWork": "+{pct}% al toque de Trabajo",
+    "perkStress": "−{pct}% de estrés por toque",
+    "targetLevel": "{skill} · NIVEL {level}",
+    "leadershipHint": "Potencia toda una rama",
+    "active": "ACTIVO"
   },
   "career": {
     "heading": "HOJA DE RUTA PROFESIONAL",
@@ -83,20 +222,56 @@
     "unlocked": "COMPLETADO",
     "locked": "BLOQUEADO",
     "reqTitle": "REQUISITOS DE ASCENSO:",
-    "reqCapital": "Capital:",
-    "reqInfluence": "Influencia:",
     "promote": "OBTENER ASCENSO",
     "ranks": {
-      "0": { "title": "Autodidacta", "desc": "Primera sesión en terminal y hello world" },
-      "1": { "title": "Ingeniero Trainee", "desc": "Corrigiendo documentación y fallos menores" },
-      "2": { "title": "Desarrollador Junior", "desc": "Primeros pull requests y revisiones de código" },
-      "3": { "title": "Ingeniero Middle", "desc": "Construcción autónoma de módulos" },
-      "4": { "title": "Ingeniero Senior", "desc": "Mentoría, rendimiento y subsistemas críticos" },
-      "5": { "title": "Líder Técnico", "desc": "Desarrollo del equipo y entregas de producto" },
-      "6": { "title": "Arquitecto Principal", "desc": "Estrategia global de sistemas de la empresa" },
-      "7": { "title": "CTO Unicornio", "desc": "Visión técnica para productos a escala masiva" },
-      "8": { "title": "CEO de Google", "desc": "Dirección de una multinacional tecnológica líder" }
-    }
+      "0": {
+        "title": "Estudiante de primer año",
+        "desc": "Un portátil, Stack Overflow y un gran sueño"
+      },
+      "1": {
+        "title": "Estudiante autodidacta",
+        "desc": "Tutoriales a velocidad 2x"
+      },
+      "2": {
+        "title": "Candidato a prácticas",
+        "desc": "Un currículum con un proyecto personal"
+      },
+      "3": {
+        "title": "Trainee",
+        "desc": "¡Primer sueldo! Primera tarea: cambiar el color de un botón"
+      },
+      "4": {
+        "title": "Desarrollador Junior",
+        "desc": "Primeros pull requests y revisiones de código"
+      },
+      "5": {
+        "title": "Ingeniero Middle",
+        "desc": "Construcción autónoma de módulos"
+      },
+      "6": {
+        "title": "Ingeniero Senior",
+        "desc": "Mentoría, rendimiento y subsistemas críticos"
+      },
+      "7": {
+        "title": "Líder Técnico",
+        "desc": "Desarrollo del equipo y entregas de producto"
+      },
+      "8": {
+        "title": "Arquitecto Principal",
+        "desc": "Estrategia global de sistemas de la empresa"
+      },
+      "9": {
+        "title": "CTO Unicornio",
+        "desc": "Visión técnica para productos a escala masiva"
+      },
+      "10": {
+        "title": "CEO de Google",
+        "desc": "Dirección de una multinacional tecnológica líder"
+      }
+    },
+    "reqEarned": "Ganado ({resource}):",
+    "reqSpend": "Gastar ({resource}):",
+    "reqSkill": "{skill}, nivel:"
   },
   "leaderboard": {
     "heading": "RANKING DE DESARROLLADORES",
@@ -107,15 +282,42 @@
     "playerName": "TÚ ({label})",
     "playerRole": "Junior → CEO",
     "entries": {
-      "sundar": { "name": "Sundar Pichai", "role": "CEO de Google" },
-      "satya": { "name": "Satya Nadella", "role": "CEO de Microsoft" },
-      "musk": { "name": "Elon Musk", "role": "Director General de Memes" },
-      "alex-arch": { "name": "Alex el Arquitecto", "role": "Ex-Principal en FAANG" },
-      "dima-lead": { "name": "Dima el Lead", "role": "Líder Técnico en Unicornio" },
-      "katya-senior": { "name": "Katya la Senior", "role": "Desarrolladora Senior Rust" },
-      "vasya-middle": { "name": "Vasya el Middle", "role": "Con dos empleos en remoto" },
-      "petya-jun": { "name": "Petya el Junior", "role": "Buscando un mentor" },
-      "olex-trainee": { "name": "Olex el Trainee", "role": "Primer currículum enviado" }
+      "sundar": {
+        "name": "Sundar Pichai",
+        "role": "CEO de Google"
+      },
+      "satya": {
+        "name": "Satya Nadella",
+        "role": "CEO de Microsoft"
+      },
+      "musk": {
+        "name": "Elon Musk",
+        "role": "Director General de Memes"
+      },
+      "alex-arch": {
+        "name": "Alex el Arquitecto",
+        "role": "Ex-Principal en FAANG"
+      },
+      "dima-lead": {
+        "name": "Dima el Lead",
+        "role": "Líder Técnico en Unicornio"
+      },
+      "katya-senior": {
+        "name": "Katya la Senior",
+        "role": "Desarrolladora Senior Rust"
+      },
+      "vasya-middle": {
+        "name": "Vasya el Middle",
+        "role": "Con dos empleos en remoto"
+      },
+      "petya-jun": {
+        "name": "Petya el Junior",
+        "role": "Buscando un mentor"
+      },
+      "olex-trainee": {
+        "name": "Olex el Trainee",
+        "role": "Primer currículum enviado"
+      }
     }
   }
 }

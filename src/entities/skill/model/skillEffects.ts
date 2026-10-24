@@ -1,18 +1,23 @@
 import { Decimal } from '@shared/lib/decimal';
 import { SKILLS } from './skillRegistry';
-import { TECH_UPGRADES } from './upgradesRegistry';
+import { UPGRADES } from './upgradesRegistry';
+import type { SkillResource } from './types';
 
 export interface SkillEffects {
   capitalPerSec: Decimal;
   cognitivePerSec: Decimal;
   influencePerSec: Decimal;
-  capitalPerClick: Decimal;
+  /** Multiplier on the base tap value of each resource (1 = no perks). */
+  tapMultiplier: Record<SkillResource, number>;
   stressReduction: number;
 }
 
 export const INITIAL_SKILL_LEVELS: Record<string, number> = Object.fromEntries(
   SKILLS.map((skill) => [skill.id, 0]),
 );
+
+/** Each of these levels doubles a producer's output (PRD §5). */
+export const MILESTONE_LEVELS = [25, 50, 100, 200] as const;
 
 export type PurchaseMode = 1 | 10 | 100 | 'max';
 
@@ -49,13 +54,6 @@ export function getBulkSkillCost(
     return firstCost.multiplyScalar(Math.round(sum * 1e12) / 1e12);
   }
   return firstCost.multiply(growthPow.subtract(1)).divide(safeGrowth - 1);
-}
-
-export function isSkillTreeReachable(levels: Record<string, number>, currentRank: number): boolean {
-  return SKILLS.every((skill) => {
-    if (skill.unlockRank > currentRank) return true;
-    return skill.prerequisites?.every((requirement) => SKILLS.some((candidate) => candidate.id === requirement.skillId)) ?? true;
-  });
 }
 
 export function getMaxAffordableLevel(
@@ -99,36 +97,59 @@ export function getTapStressMultiplier(stressReduction: number): number {
   return 1 / (1 + safeReduction / 100);
 }
 
+export function getMilestoneMultiplier(level: number): number {
+  return 2 ** MILESTONE_LEVELS.filter((milestone) => level >= milestone).length;
+}
+
+/** Derived state: recomputed from levels and purchases after every change, never saved. */
 export function calculateSkillEffects(
   levels: Record<string, number>,
   purchasedUpgrades: string[] = [],
 ): SkillEffects {
-  const multipliers = purchasedUpgrades.reduce<Record<string, number>>((acc, id) => {
-    const upgrade = TECH_UPGRADES.find((item) => item.id === id);
-    if (upgrade) {
-      acc[upgrade.targetSkillId] = (acc[upgrade.targetSkillId] ?? 1) * upgrade.multiplier;
+  const skillMultipliers: Record<string, number> = {};
+  const branchMultipliers: Record<string, number> = {};
+  for (const id of purchasedUpgrades) {
+    const upgrade = UPGRADES.find((item) => item.id === id);
+    if (!upgrade) continue;
+    const { effect } = upgrade;
+    if (effect.type === 'skillMultiplier') {
+      skillMultipliers[effect.skillId] = (skillMultipliers[effect.skillId] ?? 1) * effect.multiplier;
+    } else {
+      branchMultipliers[effect.branch] = (branchMultipliers[effect.branch] ?? 1) * effect.multiplier;
     }
-    return acc;
-  }, {});
+  }
 
-  return SKILLS.reduce<SkillEffects>((effects, skill) => {
+  const perSec: Record<SkillResource, Decimal> = {
+    capital: Decimal.ZERO,
+    cognitive: Decimal.ZERO,
+    influence: Decimal.ZERO,
+  };
+  const tapMultiplier: Record<SkillResource, number> = { capital: 1, cognitive: 1, influence: 1 };
+  let stressReduction = 0;
+
+  for (const skill of SKILLS) {
     const level = levels[skill.id] ?? 0;
-    if (level <= 0) return effects;
+    if (level <= 0) continue;
 
-    const mult = multipliers[skill.id] ?? 1;
+    if (skill.kind === 'producer') {
+      const multiplier = getMilestoneMultiplier(level)
+        * (skillMultipliers[skill.id] ?? 1)
+        * (branchMultipliers[skill.branch] ?? 1);
+      perSec[skill.produces] = perSec[skill.produces].add(skill.perLevel.multiplyScalar(level * multiplier));
+    } else if (skill.effect.type === 'tapPower') {
+      for (const resource of skill.effect.resources) {
+        tapMultiplier[resource] += skill.effect.perLevel * level;
+      }
+    } else {
+      stressReduction += skill.effect.perLevel * level;
+    }
+  }
 
-    return {
-      capitalPerSec: effects.capitalPerSec.add(skill.capitalPerLevel.multiplyScalar(level * mult)),
-      cognitivePerSec: effects.cognitivePerSec.add(skill.cognitivePerLevel.multiplyScalar(level * mult)),
-      influencePerSec: effects.influencePerSec.add(skill.influencePerLevel.multiplyScalar(level * mult)),
-      capitalPerClick: effects.capitalPerClick.add(skill.clickCapitalPerLevel.multiplyScalar(level * mult)),
-      stressReduction: effects.stressReduction + skill.stressReductionPerLevel * level,
-    };
-  }, {
-    capitalPerSec: Decimal.ZERO,
-    cognitivePerSec: Decimal.ZERO,
-    influencePerSec: Decimal.ZERO,
-    capitalPerClick: Decimal.from(1),
-    stressReduction: 0,
-  });
+  return {
+    capitalPerSec: perSec.capital,
+    cognitivePerSec: perSec.cognitive,
+    influencePerSec: perSec.influence,
+    tapMultiplier,
+    stressReduction,
+  };
 }

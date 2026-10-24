@@ -44,18 +44,18 @@
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",
-    "hint": "Tap the buffer to generate capital",
     "crit": "CRIT!",
     "fileHeader": "workspace.ts — edited",
     "line1": "const future = await build();",
     "line2": "if (bugs) fix(bugs);",
-    "line3": "return profit;"
+    "line3": "return profit;",
+    "hintCognitive": "Tap to study",
+    "hintCapital": "Tap to work",
+    "hintInfluence": "Tap to network"
   },
   "skills": {
     "heading": "TECH STACK",
     "rateLabel": "+{amount}/s",
-    "hardTab": "HARD SKILLS",
-    "softTab": "SOFT SKILLS",
     "upgradesTab": "UPGRADES",
     "lvl": "LVL {level}",
     "buy": "BUY",
@@ -63,17 +63,156 @@
     "multiplier": "x{mult} BOOST",
     "reqLevel": "Requires {skill} Lvl {level}",
     "items": {
-      "html-css": { "name": "CSS Flexbox & Grid", "desc": "Pixel-perfect centering without pain" },
-      "javascript": { "name": "Async / Event Loop", "desc": "Mastering microtask queues & promises" },
-      "react": { "name": "React Fiber & Hooks", "desc": "Reconciliation & state trees" },
-      "node": { "name": "Node.js Streams", "desc": "Piping gigabytes without memory leaks" },
-      "docker": { "name": "Docker & Kubernetes", "desc": "Clusters, ingresses, and YAML infrastructure" },
-      "system-design": { "name": "Distributed Systems", "desc": "100K RPS, sharding & consistency" },
-      "coffee": { "name": "Aeropress & Cardamom", "desc": "Boosts focus and tap power" },
-      "daily": { "name": "Stand-up Sync", "desc": "Alignment meetings with no blockers" },
-      "linkedin": { "name": "Tech Blogging", "desc": "Publishing architecture post-mortems" },
-      "delegate": { "name": "Intern Delegation", "desc": "Automated background development" }
-    }
+      "html-tags": {
+        "name": "HTML Tags from YouTube",
+        "desc": "Your first <div> and a lot of <br>"
+      },
+      "css-centering": {
+        "name": "Centering a Div",
+        "desc": "The hardest problem in computer science"
+      },
+      "js-basics": {
+        "name": "JavaScript Without Tears",
+        "desc": "'1' + 1 === '11' and you're fine with it"
+      },
+      "git": {
+        "name": "Git: First Merge Conflict",
+        "desc": "<<<<<<< HEAD, a survival story"
+      },
+      "algorithms": {
+        "name": "3 a.m. Algorithm Puzzles",
+        "desc": "Invert a binary tree, then your sleep schedule"
+      },
+      "reakt": {
+        "name": "Reakt Framework",
+        "desc": "useEffect runs twice and that's a feature"
+      },
+      "nodle": {
+        "name": "Backend on Nodle",
+        "desc": "node_modules heavier than a black hole"
+      },
+      "dokker": {
+        "name": "Dokker Containers",
+        "desc": "Works on my machine, so we ship the machine"
+      },
+      "distributed-systems": {
+        "name": "Distributed Systems",
+        "desc": "100K RPS, sharding and eventual consistency"
+      },
+      "ml": {
+        "name": "Duct-Tape ML",
+        "desc": "Train a model, pray to the GPU"
+      },
+      "button-color": {
+        "name": "Change the Button Color",
+        "desc": "First paid task. Third round of 'a bit bluer'"
+      },
+      "cafe-landing": {
+        "name": "Landing Page for a Café",
+        "desc": "Paid in money and free cappuccino"
+      },
+      "freelance": {
+        "name": "Freelance Marketplace",
+        "desc": "Fixed price, unlimited revisions"
+      },
+      "pet-project": {
+        "name": "Pet Project with Subscriptions",
+        "desc": "Three paying users, one of them is your mom"
+      },
+      "internal-crm": {
+        "name": "Internal CRM Nobody Likes",
+        "desc": "Seventeen required fields per form"
+      },
+      "bank-microservices": {
+        "name": "Microservices for a Bank",
+        "desc": "Forty services, one shared database"
+      },
+      "rps-platform": {
+        "name": "100K RPS Platform",
+        "desc": "On-call is a lifestyle"
+      },
+      "saas": {
+        "name": "Your Own SaaS",
+        "desc": "Monthly recurring revenue, monthly recurring panic"
+      },
+      "ai-startup": {
+        "name": "AI Startup",
+        "desc": "A wrapper with a Series A"
+      },
+      "own-cloud": {
+        "name": "Your Own Cloud",
+        "desc": "Other startups now pay you"
+      },
+      "code-review": {
+        "name": "Code Review for Juniors",
+        "desc": "'nit:' as a leadership style"
+      },
+      "tech-blog": {
+        "name": "Tech Blog",
+        "desc": "Post-mortems people actually read"
+      },
+      "meetup-talk": {
+        "name": "Meetup Talk",
+        "desc": "Live demo, what could go wrong"
+      },
+      "open-source": {
+        "name": "Open Source with Stars",
+        "desc": "Issues from strangers at 2 a.m."
+      },
+      "conference-tour": {
+        "name": "Conference Tour",
+        "desc": "Same talk, twelve cities"
+      },
+      "podcast": {
+        "name": "Architecture Podcast",
+        "desc": "Two hours on whether monoliths are back"
+      },
+      "aeropress": {
+        "name": "Aeropress & Cardamom",
+        "desc": "Every tap hits harder"
+      },
+      "sleep": {
+        "name": "8 Hours of Sleep",
+        "desc": "Rumored to exist"
+      },
+      "mech-keyboard": {
+        "name": "Mechanical Keyboard",
+        "desc": "Your coworkers hear every commit"
+      }
+    },
+    "leadership": {
+      "delegation": {
+        "name": "Delegation"
+      },
+      "mentoring": {
+        "name": "Mentoring"
+      },
+      "senior-hiring": {
+        "name": "Hiring Seniors"
+      },
+      "learning-budget": {
+        "name": "Learning Budget"
+      },
+      "okr": {
+        "name": "OKRs Someone Reads"
+      },
+      "board-seat": {
+        "name": "Board Seat"
+      }
+    },
+    "branches": {
+      "knowledge": "KNOWLEDGE",
+      "work": "WORK",
+      "influence": "INFLUENCE"
+    },
+    "upgradeTier": "{skill} · tuning {tier}",
+    "branchBoost": "{branch} ×{mult}",
+    "perkTapAll": "+{pct}% tap power",
+    "perkTapWork": "+{pct}% Work tap",
+    "perkStress": "−{pct}% stress per tap",
+    "targetLevel": "{skill} · LVL {level}",
+    "leadershipHint": "Boosts a whole branch",
+    "active": "ACTIVE"
   },
   "career": {
     "heading": "CAREER ROADMAP",
@@ -83,20 +222,56 @@
     "unlocked": "ACHIEVED",
     "locked": "LOCKED",
     "reqTitle": "PROMOTION REQUIREMENTS:",
-    "reqCapital": "Capital:",
-    "reqInfluence": "Influence:",
     "promote": "CLAIM PROMOTION",
     "ranks": {
-      "0": { "title": "Self-Taught", "desc": "First terminal session and hello world" },
-      "1": { "title": "Trainee Engineer", "desc": "Fixing documentation and minor bugs" },
-      "2": { "title": "Junior Developer", "desc": "First pull requests and code reviews" },
-      "3": { "title": "Middle Engineer", "desc": "Building modules independently" },
-      "4": { "title": "Senior Engineer", "desc": "Mentoring, performance, and core subsystems" },
-      "5": { "title": "Tech Lead", "desc": "Growing the team and shipping projects" },
-      "6": { "title": "Principal Architect", "desc": "Company-wide systems strategy" },
-      "7": { "title": "Unicorn CTO", "desc": "Technical vision for a product serving millions" },
-      "8": { "title": "Google CEO", "desc": "Leading a global technology company" }
-    }
+      "0": {
+        "title": "First-Year Student",
+        "desc": "A laptop, Stack Overflow and a big dream"
+      },
+      "1": {
+        "title": "Self-Taught Student",
+        "desc": "Tutorials at 2x speed"
+      },
+      "2": {
+        "title": "Internship Candidate",
+        "desc": "A résumé with one pet project"
+      },
+      "3": {
+        "title": "Trainee",
+        "desc": "First salary! First task: change a button color"
+      },
+      "4": {
+        "title": "Junior Developer",
+        "desc": "First pull requests and code reviews"
+      },
+      "5": {
+        "title": "Middle Engineer",
+        "desc": "Building modules independently"
+      },
+      "6": {
+        "title": "Senior Engineer",
+        "desc": "Mentoring, performance, and core subsystems"
+      },
+      "7": {
+        "title": "Tech Lead",
+        "desc": "Growing the team and shipping projects"
+      },
+      "8": {
+        "title": "Principal Architect",
+        "desc": "Company-wide systems strategy"
+      },
+      "9": {
+        "title": "Unicorn CTO",
+        "desc": "Technical vision for a product serving millions"
+      },
+      "10": {
+        "title": "Google CEO",
+        "desc": "Leading a global technology company"
+      }
+    },
+    "reqEarned": "Earned ({resource}):",
+    "reqSpend": "Spend ({resource}):",
+    "reqSkill": "{skill}, level:"
   },
   "leaderboard": {
     "heading": "DEVELOPER LEADERBOARD",
@@ -107,15 +282,42 @@
     "playerName": "YOU ({label})",
     "playerRole": "Junior → CEO",
     "entries": {
-      "sundar": { "name": "Sundar Pichai", "role": "Google CEO" },
-      "satya": { "name": "Satya Nadella", "role": "Microsoft CEO" },
-      "musk": { "name": "Elon Musk", "role": "Chief Meme Officer" },
-      "alex-arch": { "name": "Alex the Architect", "role": "Former FAANG Principal" },
-      "dima-lead": { "name": "Dima the Lead", "role": "Unicorn Tech Lead" },
-      "katya-senior": { "name": "Katya the Senior", "role": "Senior Rust Developer" },
-      "vasya-middle": { "name": "Vasya the Mid-level", "role": "Holding two jobs at once" },
-      "petya-jun": { "name": "Petya the Junior", "role": "Looking for a mentor" },
-      "olex-trainee": { "name": "Olex the Trainee", "role": "First résumé" }
+      "sundar": {
+        "name": "Sundar Pichai",
+        "role": "Google CEO"
+      },
+      "satya": {
+        "name": "Satya Nadella",
+        "role": "Microsoft CEO"
+      },
+      "musk": {
+        "name": "Elon Musk",
+        "role": "Chief Meme Officer"
+      },
+      "alex-arch": {
+        "name": "Alex the Architect",
+        "role": "Former FAANG Principal"
+      },
+      "dima-lead": {
+        "name": "Dima the Lead",
+        "role": "Unicorn Tech Lead"
+      },
+      "katya-senior": {
+        "name": "Katya the Senior",
+        "role": "Senior Rust Developer"
+      },
+      "vasya-middle": {
+        "name": "Vasya the Mid-level",
+        "role": "Holding two jobs at once"
+      },
+      "petya-jun": {
+        "name": "Petya the Junior",
+        "role": "Looking for a mentor"
+      },
+      "olex-trainee": {
+        "name": "Olex the Trainee",
+        "role": "First résumé"
+      }
     }
   }
 }

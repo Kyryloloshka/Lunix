@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { Decimal } from '@shared/lib/decimal';
 import {
   calculateBulkPurchase,
   calculateSkillEffects,
@@ -7,11 +8,22 @@ import {
   INITIAL_SKILL_LEVELS,
   SKILLS,
   skillById,
-  TECH_UPGRADES,
+  UPGRADES,
+  upgradeById,
   type PurchaseMode,
+  type SkillResource,
 } from '@entities/skill';
-import { CAREER_RANKS } from '@entities/career-rank';
-import { useCurrencyStore } from '@entities/currency';
+import {
+  areRankRequirementsMet,
+  clampRank,
+  getRankProgress,
+  getUnlockedResources,
+  isResourceUnlocked,
+  MAX_RANK,
+  type RankProgressContext,
+  type RequirementProgress,
+} from '@entities/career-rank';
+import { TAP_BASE, useCurrencyStore, type TapResult } from '@entities/currency';
 
 export function isSkillUnlocked(
   id: string,
@@ -32,16 +44,34 @@ export function syncRatesFromSkills(levels: Record<string, number>, purchasedUpg
     capitalPerSec: effects.capitalPerSec,
     cognitivePerSec: effects.cognitivePerSec,
     influencePerSec: effects.influencePerSec,
-    capitalPerClick: effects.capitalPerClick,
+    capitalPerClick: TAP_BASE.capital.multiplyScalar(effects.tapMultiplier.capital),
+    cognitivePerClick: TAP_BASE.cognitive.multiplyScalar(effects.tapMultiplier.cognitive),
+    influencePerClick: TAP_BASE.influence.multiplyScalar(effects.tapMultiplier.influence),
     stressPerClickMultiplier: getTapStressMultiplier(effects.stressReduction),
   });
 }
 
+function getProgressContext(levels: Record<string, number>): RankProgressContext {
+  const currency = useCurrencyStore.getState();
+  return {
+    earned: { cognitive: currency.totalCognitiveEarned, capital: currency.totalCapitalEarned },
+    balance: { cognitive: currency.cognitive, capital: currency.capital, influence: currency.influence },
+    levels,
+  };
+}
+
+/** Live progress toward a rank's requirements, read from the stores at call time. */
+export function getPromotionProgress(rankId: number): RequirementProgress[] {
+  return getRankProgress(rankId, getProgressContext(useSkillStore.getState().levels));
+}
+
 export function canPromote(nextRank: number): boolean {
-  const target = CAREER_RANKS[nextRank];
-  if (!target) return false;
-  const { totalCapitalEarned, influence } = useCurrencyStore.getState();
-  return totalCapitalEarned.gte(target.requiredCapital) && influence.gte(target.requiredInfluence);
+  return areRankRequirementsMet(nextRank, getProgressContext(useSkillStore.getState().levels));
+}
+
+/** The newest resource the player has: taps follow it until the tap-mode switch exists (T-016 stage 5). */
+function latestUnlockedResource(rank: number): SkillResource {
+  return getUnlockedResources(rank).at(-1) ?? 'cognitive';
 }
 
 export interface SkillSnapshot {
@@ -51,14 +81,16 @@ export interface SkillSnapshot {
 }
 
 interface SkillStore extends SkillSnapshot {
+  /** Which resource a tap produces. UI state, not saved. */
+  tapResource: SkillResource;
   buy: (id: string, mode?: PurchaseMode) => number;
   buyUpgrade: (id: string) => boolean;
   promote: () => boolean;
+  setTapResource: (resource: SkillResource) => boolean;
+  tap: () => TapResult;
   hydrate: (snapshot: SkillSnapshot) => void;
   reset: () => void;
 }
-
-const MAX_RANK = CAREER_RANKS.length - 1;
 
 function sanitizeSnapshot(snapshot: SkillSnapshot): SkillSnapshot {
   const levels = { ...INITIAL_SKILL_LEVELS };
@@ -68,18 +100,18 @@ function sanitizeSnapshot(snapshot: SkillSnapshot): SkillSnapshot {
     const level = Math.max(0, Math.floor(raw));
     levels[skill.id] = skill.maxLevel === undefined ? level : Math.min(level, skill.maxLevel);
   });
-  const knownUpgrades = new Set(TECH_UPGRADES.map((upgrade) => upgrade.id));
+  const knownUpgrades = new Set(UPGRADES.map((upgrade) => upgrade.id));
   const purchasedUpgrades = Array.isArray(snapshot.purchasedUpgrades)
     ? [...new Set(snapshot.purchasedUpgrades.filter((id) => knownUpgrades.has(id)))]
     : [];
-  const rank = Number.isFinite(snapshot.currentRank) ? Math.floor(snapshot.currentRank) : 0;
-  return { levels, purchasedUpgrades, currentRank: Math.min(MAX_RANK, Math.max(0, rank)) };
+  return { levels, purchasedUpgrades, currentRank: clampRank(snapshot.currentRank) };
 }
 
 export const useSkillStore = create<SkillStore>((set, get) => ({
   levels: INITIAL_SKILL_LEVELS,
   purchasedUpgrades: [],
   currentRank: 0,
+  tapResource: 'cognitive',
   buy: (id, mode = 1) => {
     const skill = skillById(id);
     const { levels, currentRank } = get();
@@ -89,30 +121,28 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
     const remaining = skill.maxLevel === undefined ? undefined : skill.maxLevel - level;
     if (remaining !== undefined && remaining <= 0) return 0;
 
-    // Read the live balance: a capital value captured during render can be stale.
-    const capital = useCurrencyStore.getState().capital;
-    const purchase = calculateBulkPurchase(skill.baseCost, skill.costGrowth, level, capital, mode);
+    // Read the live balance: a value captured during render can be stale.
+    const budget = useCurrencyStore.getState()[skill.costResource];
+    const purchase = calculateBulkPurchase(skill.baseCost, skill.costGrowth, level, budget, mode);
     const quantity = remaining === undefined ? purchase.levels : Math.min(purchase.levels, remaining);
     if (quantity <= 0) return 0;
 
     const totalCost = getBulkSkillCost(skill.baseCost, skill.costGrowth, level, quantity);
-    if (!useCurrencyStore.getState().spendResources({ capital: totalCost })) return 0;
+    if (!useCurrencyStore.getState().spendResources({ [skill.costResource]: totalCost })) return 0;
 
     set((state) => ({ levels: { ...state.levels, [id]: level + quantity } }));
     syncRatesFromSkills(get().levels, get().purchasedUpgrades);
     return quantity;
   },
   buyUpgrade: (id: string) => {
-    const { purchasedUpgrades, levels } = get();
+    const { purchasedUpgrades, levels, currentRank } = get();
     if (purchasedUpgrades.includes(id)) return false;
 
-    const upgrade = TECH_UPGRADES.find((item) => item.id === id);
-    if (!upgrade) return false;
+    const upgrade = upgradeById(id);
+    if (!upgrade || upgrade.unlockRank > currentRank) return false;
+    if (upgrade.requiredSkill && (levels[upgrade.requiredSkill.skillId] ?? 0) < upgrade.requiredSkill.level) return false;
 
-    const currentSkillLevel = levels[upgrade.targetSkillId] ?? 0;
-    if (currentSkillLevel < upgrade.requiredSkillLevel) return false;
-
-    if (!useCurrencyStore.getState().spendResources({ [upgrade.currency]: upgrade.cost })) return false;
+    if (!useCurrencyStore.getState().spendResources({ [upgrade.costResource]: upgrade.cost })) return false;
 
     set((state) => ({
       purchasedUpgrades: [...state.purchasedUpgrades, id],
@@ -122,17 +152,38 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
   },
   promote: () => {
     const nextRank = get().currentRank + 1;
-    if (!canPromote(nextRank)) return false;
+    if (nextRank > MAX_RANK || !canPromote(nextRank)) return false;
+
+    // Leadership promotions consume Influence; earned totals and skill levels are only checked.
+    const spend = getPromotionProgress(nextRank).reduce((total, { requirement }) => (
+      requirement.type === 'spend' ? total.add(requirement.amount) : total
+    ), Decimal.ZERO);
+    if (spend.isPositive() && !useCurrencyStore.getState().spendResources({ influence: spend })) return false;
+
+    const hadResources = getUnlockedResources(get().currentRank).length;
     set({ currentRank: nextRank });
+    if (getUnlockedResources(nextRank).length > hadResources) {
+      set({ tapResource: latestUnlockedResource(nextRank) });
+    }
     return true;
+  },
+  setTapResource: (resource) => {
+    if (!isResourceUnlocked(resource, get().currentRank)) return false;
+    set({ tapResource: resource });
+    return true;
+  },
+  tap: () => {
+    const { tapResource, currentRank } = get();
+    const resource = isResourceUnlocked(tapResource, currentRank) ? tapResource : 'cognitive';
+    return useCurrencyStore.getState().tap(resource);
   },
   hydrate: (snapshot) => {
     const sanitized = sanitizeSnapshot(snapshot);
-    set(sanitized);
+    set({ ...sanitized, tapResource: latestUnlockedResource(sanitized.currentRank) });
     syncRatesFromSkills(sanitized.levels, sanitized.purchasedUpgrades);
   },
   reset: () => {
-    set({ levels: INITIAL_SKILL_LEVELS, purchasedUpgrades: [], currentRank: 0 });
+    set({ levels: INITIAL_SKILL_LEVELS, purchasedUpgrades: [], currentRank: 0, tapResource: 'cognitive' });
     syncRatesFromSkills(INITIAL_SKILL_LEVELS, []);
   },
 }));

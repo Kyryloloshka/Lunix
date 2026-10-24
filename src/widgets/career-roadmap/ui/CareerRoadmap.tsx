@@ -1,9 +1,15 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCurrencyStore } from '@entities/currency';
-import { CAREER_RANKS } from '@entities/career-rank';
+import {
+  CAREER_RANKS,
+  getRankProgress,
+  type RankResource,
+  type RequirementProgress,
+} from '@entities/career-rank';
 import { Badge, DevGlyph, Panel, ProgressBar, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
-import { formatCurrency, formatInfluence } from '@shared/lib/formatters';
+import type { Decimal } from '@shared/lib/decimal';
+import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
 import { t, useLocale } from '@shared/i18n';
 import { useSkillStore } from '@features/purchase-skill';
 
@@ -14,21 +20,61 @@ interface CareerRoadmapProps {
 
 const RANK_GLYPHS: Record<number, GlyphName> = {
   0: 'terminal',
-  1: 'code',
-  2: 'git-commit',
-  3: 'git-branch',
-  4: 'cpu',
-  5: 'server',
-  6: 'system-design',
-  7: 'network',
-  8: 'rank',
+  1: 'html',
+  2: 'javascript',
+  3: 'code',
+  4: 'git-commit',
+  5: 'git-branch',
+  6: 'cpu',
+  7: 'server',
+  8: 'system-design',
+  9: 'network',
+  10: 'rank',
 };
+
+const FORMAT: Record<RankResource, (value: Decimal) => string> = {
+  cognitive: formatCognitive,
+  capital: formatCurrency,
+  influence: formatInfluence,
+};
+
+function requirementLabel({ requirement }: RequirementProgress): string {
+  switch (requirement.type) {
+    case 'earned':
+      return t('career.reqEarned', { resource: t(`resources.${requirement.resource}`) });
+    case 'spend':
+      return t('career.reqSpend', { resource: t(`resources.${requirement.resource}`) });
+    case 'skillLevel':
+      return t('career.reqSkill', { skill: t(`skills.items.${requirement.skillId}.name`) });
+  }
+}
+
+function requirementValue({ requirement, current, target }: RequirementProgress): string {
+  if (requirement.type === 'skillLevel') return `${current.toNumber()} / ${requirement.level}`;
+  const format = FORMAT[requirement.resource];
+  return `${format(current)} / ${format(target)}`;
+}
+
+/** 0–100 for a progress bar. Divides as Decimals: toNumber() on the raw values breaks past 1e308. */
+function requirementPercent({ current, target, met }: RequirementProgress): number {
+  if (met || target.isZero()) return 100;
+  return Math.min(100, Math.round(current.divide(target).toNumber() * 100));
+}
 
 export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) {
   useLocale();
   const totalCapitalEarned = useCurrencyStore((state) => state.totalCapitalEarned);
+  const totalCognitiveEarned = useCurrencyStore((state) => state.totalCognitiveEarned);
+  const capital = useCurrencyStore((state) => state.capital);
+  const cognitive = useCurrencyStore((state) => state.cognitive);
   const influence = useCurrencyStore((state) => state.influence);
+  const levels = useSkillStore((state) => state.levels);
   const promote = useSkillStore((state) => state.promote);
+  const progressContext = {
+    earned: { cognitive: totalCognitiveEarned, capital: totalCapitalEarned },
+    balance: { cognitive, capital, influence },
+    levels,
+  };
 
   return (
     <Panel tone="subtle" style={styles.container}>
@@ -55,10 +101,8 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
           const desc = t(`career.ranks.${rank.id}.desc`);
           const glyphName = RANK_GLYPHS[rank.id] || 'code';
 
-          // Divide as Decimals: toNumber() turns into Infinity/NaN past 1e308.
-          const capitalProgress = rank.requiredCapital.isZero()
-            ? 100
-            : Math.min(100, Math.round(totalCapitalEarned.divide(rank.requiredCapital).toNumber() * 100));
+          const progress = isNext ? getRankProgress(rank.id, progressContext) : [];
+          const canPromoteNow = progress.length > 0 && progress.every((item) => item.met);
 
           return (
             <View key={rank.id} style={styles.stepRow}>
@@ -100,7 +144,7 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
               >
                 <View style={styles.stepCardHeader}>
                   <Text style={[styles.stepTitle, !isUnlocked && styles.textMuted]}>
-                    {title !== `career.ranks.${rank.id}.title` ? title : rank.title}
+                    {title}
                   </Text>
                   {isCurrent ? (
                     <Badge tone="success" compact>
@@ -118,36 +162,30 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
                 </View>
 
                 <Text style={styles.stepSubtitle}>
-                  {desc !== `career.ranks.${rank.id}.desc` ? desc : rank.subtitle}
+                  {desc}
                 </Text>
 
                 {isNext ? (
                   <View style={styles.requirementsBox}>
                     <Text style={styles.reqTitle}>{t('career.reqTitle')}</Text>
-                    <View style={styles.reqRow}>
-                      <Text style={styles.reqLabel}>{t('career.reqCapital')}</Text>
-                      <Text style={styles.reqValue}>
-                        {formatCurrency(totalCapitalEarned)} / {formatCurrency(rank.requiredCapital)}
-                      </Text>
-                    </View>
-                    <ProgressBar
-                      value={capitalProgress}
-                      color={colors.accent.phosphor}
-                      trackColor={colors.bg.inset}
-                      style={styles.progressBar}
-                    />
-
-                    {!rank.requiredInfluence.isZero() ? (
-                      <View style={[styles.reqRow, styles.reqMargin]}>
-                        <Text style={styles.reqLabel}>{t('career.reqInfluence')}</Text>
-                        <Text style={styles.reqValue}>
-                          {formatInfluence(influence)} / {formatInfluence(rank.requiredInfluence)}
-                        </Text>
+                    {progress.map((item, itemIndex) => (
+                      <View key={itemIndex} style={itemIndex > 0 ? styles.reqMargin : undefined}>
+                        <View style={styles.reqRow}>
+                          <Text style={styles.reqLabel}>{requirementLabel(item)}</Text>
+                          <Text style={styles.reqValue}>{requirementValue(item)}</Text>
+                        </View>
+                        <ProgressBar
+                          value={requirementPercent(item)}
+                          color={item.met ? colors.accent.phosphor : colors.accent.amber}
+                          trackColor={colors.bg.inset}
+                          style={styles.progressBar}
+                        />
                       </View>
-                    ) : null}
-                    {totalCapitalEarned.gte(rank.requiredCapital) && influence.gte(rank.requiredInfluence) ? (
+                    ))}
+                    {canPromoteNow ? (
                       <Pressable
                         accessibilityRole="button"
+                        accessibilityLabel={t('career.promote')}
                         onPress={() => {
                           if (promote()) onPromote?.(rank.id);
                         }}

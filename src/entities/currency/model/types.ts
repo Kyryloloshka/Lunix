@@ -7,6 +7,9 @@ export interface ResourceState {
   stress: number;         // 🔥 Стрес (0..100)
 }
 
+/** A spendable resource a tap can produce; matches the ResourceState keys. */
+export type TapResource = 'cognitive' | 'capital' | 'influence';
+
 export interface ResourceRates {
   capitalPerSec: Decimal;
   cognitivePerSec: Decimal;

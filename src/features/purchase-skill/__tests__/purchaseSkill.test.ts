@@ -10,8 +10,8 @@ describe('purchase skill', () => {
     expect(getNextSkillCost(skill, 1).gt(skill.baseCost)).toBe(true);
   });
 
-  test('checks affordability', () => {
-    expect(canPurchaseSkill(Decimal.from(15), skill, 0)).toBe(true);
-    expect(canPurchaseSkill(Decimal.from(14), skill, 0)).toBe(false);
+  test('checks affordability against the base cost', () => {
+    expect(canPurchaseSkill(skill.baseCost, skill, 0)).toBe(true);
+    expect(canPurchaseSkill(skill.baseCost.subtract(Decimal.from(1)), skill, 0)).toBe(false);
   });
 });

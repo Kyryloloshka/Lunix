@@ -44,18 +44,18 @@
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",
-    "hint": "Торкніться буфера, щоб згенерувати капітал",
     "crit": "КРИТ!",
     "fileHeader": "workspace.ts — змінено",
     "line1": "const future = await build();",
     "line2": "if (bugs) fix(bugs);",
-    "line3": "return profit;"
+    "line3": "return profit;",
+    "hintCognitive": "Тапай, щоб вчитися",
+    "hintCapital": "Тапай, щоб працювати",
+    "hintInfluence": "Тапай, щоб нетворкати"
   },
   "skills": {
     "heading": "ТЕХНОЛОГІЧНИЙ СТЕК",
     "rateLabel": "+{amount}/с",
-    "hardTab": "HARD SKILLS",
-    "softTab": "SOFT SKILLS",
     "upgradesTab": "АПГРЕЙДИ",
     "lvl": "РІВ. {level}",
     "buy": "КУПИТИ",
@@ -63,17 +63,156 @@
     "multiplier": "x{mult} БУСТ",
     "reqLevel": "Потрібен {skill} Рів. {level}",
     "items": {
-      "html-css": { "name": "CSS Flexbox і Grid", "desc": "Центрування без болю" },
-      "javascript": { "name": "Async / Event Loop", "desc": "Черги мікрозадач і проміси" },
-      "react": { "name": "React Fiber і Hooks", "desc": "Узгодження та дерева стану" },
-      "node": { "name": "Node.js Streams", "desc": "Гігабайти даних без витоків пам'яті" },
-      "docker": { "name": "Docker і Kubernetes", "desc": "Кластери, інгреси та YAML-інфраструктура" },
-      "system-design": { "name": "Розподілені системи", "desc": "100K RPS, шардинг і узгодженість" },
-      "coffee": { "name": "Аеропрес і кардамон", "desc": "Більше фокусу й сили тапу" },
-      "daily": { "name": "Синхронізація на дейлі", "desc": "Зустрічі без блокерів" },
-      "linkedin": { "name": "Технічний блог", "desc": "Публікація архітектурних розборів" },
-      "delegate": { "name": "Делегування інтерну", "desc": "Автоматизована фонова розробка" }
-    }
+      "html-tags": {
+        "name": "HTML-теги з ютубу",
+        "desc": "Перший <div> і багато <br>"
+      },
+      "css-centering": {
+        "name": "Центрування діва",
+        "desc": "Найскладніша задача в інформатиці"
+      },
+      "js-basics": {
+        "name": "JavaScript без сліз",
+        "desc": "'1' + 1 === '11', і тебе це вже не лякає"
+      },
+      "git": {
+        "name": "Git: перший мердж-конфлікт",
+        "desc": "<<<<<<< HEAD — історія виживання"
+      },
+      "algorithms": {
+        "name": "Алгоритмічні задачки о 3 ночі",
+        "desc": "Розвернути бінарне дерево, а потім режим сну"
+      },
+      "reakt": {
+        "name": "Фреймворк Reakt",
+        "desc": "useEffect спрацьовує двічі, і це фіча"
+      },
+      "nodle": {
+        "name": "Бекенд на Nodle",
+        "desc": "node_modules важчі за чорну діру"
+      },
+      "dokker": {
+        "name": "Контейнери Dokker",
+        "desc": "У мене працює — тож відправляємо мою машину"
+      },
+      "distributed-systems": {
+        "name": "Розподілені системи",
+        "desc": "100K RPS, шардинг і eventual consistency"
+      },
+      "ml": {
+        "name": "ML на коліні",
+        "desc": "Навчити модель і помолитися на GPU"
+      },
+      "button-color": {
+        "name": "Змінити колір кнопки",
+        "desc": "Перша оплачувана таска. Третє коло «трохи синіше»"
+      },
+      "cafe-landing": {
+        "name": "Лендинг для кав'ярні",
+        "desc": "Оплата грошима і безкоштовним капучино"
+      },
+      "freelance": {
+        "name": "Фріланс на біржі",
+        "desc": "Фіксована ціна, безлімітні правки"
+      },
+      "pet-project": {
+        "name": "Pet-проєкт з підпискою",
+        "desc": "Троє платних юзерів, один із них — мама"
+      },
+      "internal-crm": {
+        "name": "Внутрішня CRM, яку ніхто не любить",
+        "desc": "Сімнадцять обов'язкових полів на формі"
+      },
+      "bank-microservices": {
+        "name": "Мікросервіси для банку",
+        "desc": "Сорок сервісів, одна спільна база"
+      },
+      "rps-platform": {
+        "name": "Платформа на 100K RPS",
+        "desc": "Чергування — це стиль життя"
+      },
+      "saas": {
+        "name": "Власний SaaS",
+        "desc": "Щомісячний дохід і щомісячна паніка"
+      },
+      "ai-startup": {
+        "name": "AI-стартап",
+        "desc": "Обгортка з раундом A"
+      },
+      "own-cloud": {
+        "name": "Своя хмара",
+        "desc": "Тепер інші стартапи платять тобі"
+      },
+      "code-review": {
+        "name": "Код-рев'ю джунам",
+        "desc": "«nit:» як стиль лідерства"
+      },
+      "tech-blog": {
+        "name": "Техблог",
+        "desc": "Розбори інцидентів, які хтось читає"
+      },
+      "meetup-talk": {
+        "name": "Доповідь на мітапі",
+        "desc": "Live-демо, що може піти не так"
+      },
+      "open-source": {
+        "name": "Open source із зірками",
+        "desc": "Ішʼю від незнайомців о 2 ночі"
+      },
+      "conference-tour": {
+        "name": "Конференц-тур",
+        "desc": "Та сама доповідь, дванадцять міст"
+      },
+      "podcast": {
+        "name": "Подкаст про архітектуру",
+        "desc": "Дві години про те, чи повернулися моноліти"
+      },
+      "aeropress": {
+        "name": "Аеропрес і кардамон",
+        "desc": "Кожен тап сильніший"
+      },
+      "sleep": {
+        "name": "Сон 8 годин",
+        "desc": "Кажуть, таке буває"
+      },
+      "mech-keyboard": {
+        "name": "Механічна клавіатура",
+        "desc": "Колеги чують кожен коміт"
+      }
+    },
+    "leadership": {
+      "delegation": {
+        "name": "Делегування"
+      },
+      "mentoring": {
+        "name": "Менторство"
+      },
+      "senior-hiring": {
+        "name": "Найм сеньйорів"
+      },
+      "learning-budget": {
+        "name": "Бюджет на навчання"
+      },
+      "okr": {
+        "name": "OKR, які хтось читає"
+      },
+      "board-seat": {
+        "name": "Місце в раді директорів"
+      }
+    },
+    "branches": {
+      "knowledge": "ЗНАННЯ",
+      "work": "РОБОТА",
+      "influence": "ВПЛИВ"
+    },
+    "upgradeTier": "{skill} · оптимізація {tier}",
+    "branchBoost": "{branch} ×{mult}",
+    "perkTapAll": "+{pct}% сили тапу",
+    "perkTapWork": "+{pct}% тапу «Працювати»",
+    "perkStress": "−{pct}% стресу за тап",
+    "targetLevel": "{skill} · РІВ. {level}",
+    "leadershipHint": "Підсилює всю гілку",
+    "active": "АКТИВНО"
   },
   "career": {
     "heading": "КАР'ЄРНИЙ МАРШРУТ",
@@ -83,20 +222,56 @@
     "unlocked": "ЗДОБУТО",
     "locked": "ЗАБЛОКОВАНО",
     "reqTitle": "УМОВИ ПІДВИЩЕННЯ:",
-    "reqCapital": "Капітал:",
-    "reqInfluence": "Вплив:",
     "promote": "ПРОЙТИ ПІДВИЩЕННЯ",
     "ranks": {
-      "0": { "title": "Самоучка", "desc": "Перший запуск термінала та hello world" },
-      "1": { "title": "Trainee Engineer", "desc": "Виправлення документації й дрібних дефектів" },
-      "2": { "title": "Junior Developer", "desc": "Перші pull request і код-рев'ю" },
-      "3": { "title": "Middle Engineer", "desc": "Самостійна розробка модулів" },
-      "4": { "title": "Senior Engineer", "desc": "Менторство, продуктивність і ключові підсистеми" },
-      "5": { "title": "Tech Lead", "desc": "Розвиток команди та постачання продукту" },
-      "6": { "title": "Principal Architect", "desc": "Стратегія систем усієї компанії" },
-      "7": { "title": "Unicorn CTO", "desc": "Технічне бачення продукту для мільйонів" },
-      "8": { "title": "CEO Google", "desc": "Керування глобальною технологічною компанією" }
-    }
+      "0": {
+        "title": "Першокурсник",
+        "desc": "Ноутбук, Stack Overflow і велика мрія"
+      },
+      "1": {
+        "title": "Студент-самоучка",
+        "desc": "Туторіали на швидкості 2x"
+      },
+      "2": {
+        "title": "Кандидат на стажування",
+        "desc": "Резюме з одним pet-проєктом"
+      },
+      "3": {
+        "title": "Trainee",
+        "desc": "Перша зарплата! Перша таска — змінити колір кнопки"
+      },
+      "4": {
+        "title": "Junior Developer",
+        "desc": "Перші pull request і код-рев'ю"
+      },
+      "5": {
+        "title": "Middle Engineer",
+        "desc": "Самостійна розробка модулів"
+      },
+      "6": {
+        "title": "Senior Engineer",
+        "desc": "Менторство, продуктивність і ключові підсистеми"
+      },
+      "7": {
+        "title": "Tech Lead",
+        "desc": "Розвиток команди та постачання продукту"
+      },
+      "8": {
+        "title": "Principal Architect",
+        "desc": "Стратегія систем усієї компанії"
+      },
+      "9": {
+        "title": "Unicorn CTO",
+        "desc": "Технічне бачення продукту для мільйонів"
+      },
+      "10": {
+        "title": "CEO Google",
+        "desc": "Керування глобальною технологічною компанією"
+      }
+    },
+    "reqEarned": "Зароблено ({resource}):",
+    "reqSpend": "Витратити ({resource}):",
+    "reqSkill": "{skill}, рівень:"
   },
   "leaderboard": {
     "heading": "РЕЙТИНГ РОЗРОБНИКІВ",
@@ -107,15 +282,42 @@
     "playerName": "ВИ ({label})",
     "playerRole": "Junior → CEO",
     "entries": {
-      "sundar": { "name": "Сундар Пічаї", "role": "CEO Google" },
-      "satya": { "name": "Сатья Наделла", "role": "CEO Microsoft" },
-      "musk": { "name": "Ілон Маск", "role": "Головний мем-директор" },
-      "alex-arch": { "name": "Саня Архітектор", "role": "Колишній FAANG Principal" },
-      "dima-lead": { "name": "Дмитро Тімлід", "role": "Tech Lead єдинорога" },
-      "katya-senior": { "name": "Катя Сеньйор", "role": "Senior Rust-розробниця" },
-      "vasya-middle": { "name": "Вася Мідл", "role": "Дві роботи одночасно" },
-      "petya-jun": { "name": "Петя Джун", "role": "Шукає ментора" },
-      "olex-trainee": { "name": "Олексій Трейні", "role": "Перше резюме" }
+      "sundar": {
+        "name": "Сундар Пічаї",
+        "role": "CEO Google"
+      },
+      "satya": {
+        "name": "Сатья Наделла",
+        "role": "CEO Microsoft"
+      },
+      "musk": {
+        "name": "Ілон Маск",
+        "role": "Головний мем-директор"
+      },
+      "alex-arch": {
+        "name": "Саня Архітектор",
+        "role": "Колишній FAANG Principal"
+      },
+      "dima-lead": {
+        "name": "Дмитро Тімлід",
+        "role": "Tech Lead єдинорога"
+      },
+      "katya-senior": {
+        "name": "Катя Сеньйор",
+        "role": "Senior Rust-розробниця"
+      },
+      "vasya-middle": {
+        "name": "Вася Мідл",
+        "role": "Дві роботи одночасно"
+      },
+      "petya-jun": {
+        "name": "Петя Джун",
+        "role": "Шукає ментора"
+      },
+      "olex-trainee": {
+        "name": "Олексій Трейні",
+        "role": "Перше резюме"
+      }
     }
   }
 }

@@ -1,65 +1,75 @@
 import { Decimal } from '@shared/lib/decimal';
+import { SKILLS } from './skillRegistry';
+import type { ProducerSkill, Upgrade } from './types';
 
-export interface TechUpgrade {
-  id: string;
-  name: string;
-  description: string;
-  cost: Decimal;
-  currency: 'capital' | 'cognitive' | 'influence';
-  targetSkillId: string;
-  multiplier: number;
-  requiredSkillLevel: number;
+/** Tech upgrade tiers for Knowledge and Work skills: paid in Cognitive, priced from the knowledge behind the skill. */
+const TECH_TIERS = [
+  { level: 10, multiplier: 2, costFactor: 25 },
+  { level: 25, multiplier: 1.5, costFactor: 120 },
+  { level: 40, multiplier: 2, costFactor: 400 },
+  { level: 60, multiplier: 1.5, costFactor: 2_500 },
+] as const;
+
+/** Influence skills upgrade with Influence itself; priced from the skill's per-level output. */
+const INFLUENCE_TIERS = [
+  { level: 10, multiplier: 2, costFactor: 400 },
+  { level: 25, multiplier: 2, costFactor: 3_000 },
+] as const;
+
+const producers = SKILLS.filter((skill): skill is ProducerSkill => skill.kind === 'producer');
+
+/** The knowledge skill whose base cost prices a skill's tech upgrades (own base for knowledge skills). */
+function knowledgeBasis(skill: ProducerSkill): ProducerSkill {
+  if (skill.branch === 'knowledge') return skill;
+  const knowledgeRequirement = skill.prerequisites
+    ?.map((requirement) => producers.find((candidate) => candidate.id === requirement.skillId))
+    .find((candidate) => candidate?.branch === 'knowledge');
+  // Skills gated only by another work skill (own-cloud) price from the last knowledge skill.
+  return knowledgeRequirement ?? producers.filter((candidate) => candidate.branch === 'knowledge').at(-1)!;
 }
 
-export const TECH_UPGRADES: TechUpgrade[] = [
-  {
-    id: 'tailwind-macro',
-    name: 'Tailwind JIT Engine',
-    description: 'Triple Flexbox & Grid throughput (+200%)',
-    cost: Decimal.from(250),
-    currency: 'capital',
-    targetSkillId: 'html-css',
-    multiplier: 3,
-    requiredSkillLevel: 5,
-  },
-  {
-    id: 'v8-turbofan',
-    name: 'V8 Turbofan JIT',
-    description: 'Double Async/Event Loop output (+100%)',
-    cost: Decimal.from(1_200),
-    currency: 'capital',
-    targetSkillId: 'javascript',
-    multiplier: 2,
-    requiredSkillLevel: 5,
-  },
-  {
-    id: 'react-compiler',
-    name: 'React 19 Forget Compiler',
-    description: 'Auto memoize state trees, x3 React gain (+200%)',
-    cost: Decimal.from(15_000),
-    currency: 'capital',
-    targetSkillId: 'react',
-    multiplier: 3,
-    requiredSkillLevel: 5,
-  },
-  {
-    id: 'libuv-worker',
-    name: 'Libuv Threadpool Tuning',
-    description: 'x2.5 throughput on Node.js streams',
-    cost: Decimal.from(100_000),
-    currency: 'capital',
-    targetSkillId: 'node',
-    multiplier: 2.5,
-    requiredSkillLevel: 5,
-  },
-  {
-    id: 'k8s-operator',
-    name: 'Kubernetes Custom Operator',
-    description: 'Automate cluster deployments, x3 Docker efficiency',
-    cost: Decimal.from(750_000),
-    currency: 'capital',
-    targetSkillId: 'docker',
-    multiplier: 3,
-    requiredSkillLevel: 5,
-  },
+function buildTechUpgrades(): Upgrade[] {
+  return producers.flatMap((skill): Upgrade[] => {
+    if (skill.branch === 'influence') {
+      return INFLUENCE_TIERS.map((tier, index) => ({
+        id: `${skill.id}-opt-${index + 1}`,
+        kind: 'tech' as const,
+        tier: index + 1,
+        unlockRank: skill.unlockRank,
+        costResource: 'influence' as const,
+        cost: skill.perLevel.multiplyScalar(tier.costFactor),
+        requiredSkill: { skillId: skill.id, level: tier.level },
+        effect: { type: 'skillMultiplier' as const, skillId: skill.id, multiplier: tier.multiplier },
+      }));
+    }
+    const basis = knowledgeBasis(skill).baseCost;
+    return TECH_TIERS.map((tier, index) => ({
+      id: `${skill.id}-opt-${index + 1}`,
+      kind: 'tech' as const,
+      tier: index + 1,
+      unlockRank: skill.unlockRank,
+      costResource: 'cognitive' as const,
+      cost: basis.multiplyScalar(tier.costFactor),
+      requiredSkill: { skillId: skill.id, level: tier.level },
+      effect: { type: 'skillMultiplier' as const, skillId: skill.id, multiplier: tier.multiplier },
+    }));
+  });
+}
+
+const D = (value: number) => Decimal.from(value);
+
+/** One-off Influence purchases that multiply a whole branch. */
+export const LEADERSHIP_PERKS: Upgrade[] = [
+  { id: 'delegation', kind: 'leadership', unlockRank: 6, costResource: 'influence', cost: D(150), effect: { type: 'branchMultiplier', branch: 'work', multiplier: 2 } },
+  { id: 'mentoring', kind: 'leadership', unlockRank: 6, costResource: 'influence', cost: D(600), effect: { type: 'branchMultiplier', branch: 'knowledge', multiplier: 2 } },
+  { id: 'senior-hiring', kind: 'leadership', unlockRank: 7, costResource: 'influence', cost: D(12_000), effect: { type: 'branchMultiplier', branch: 'work', multiplier: 3 } },
+  { id: 'learning-budget', kind: 'leadership', unlockRank: 7, costResource: 'influence', cost: D(50_000), effect: { type: 'branchMultiplier', branch: 'knowledge', multiplier: 3 } },
+  { id: 'okr', kind: 'leadership', unlockRank: 8, costResource: 'influence', cost: D(6e5), effect: { type: 'branchMultiplier', branch: 'work', multiplier: 4 } },
+  { id: 'board-seat', kind: 'leadership', unlockRank: 9, costResource: 'influence', cost: D(1e7), effect: { type: 'branchMultiplier', branch: 'work', multiplier: 5 } },
 ];
+
+export const TECH_UPGRADES: Upgrade[] = buildTechUpgrades();
+
+export const UPGRADES: Upgrade[] = [...TECH_UPGRADES, ...LEADERSHIP_PERKS];
+
+export const upgradeById = (id: string): Upgrade | undefined => UPGRADES.find((upgrade) => upgrade.id === id);

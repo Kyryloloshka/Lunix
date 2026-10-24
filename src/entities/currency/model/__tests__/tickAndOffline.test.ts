@@ -49,6 +49,33 @@ describe('ticks, combo and offline progress', () => {
     expect(useCurrencyStore.getState().totalCapitalEarned.toNumber()).toBeCloseTo(200);
   });
 
+  it('taps one resource and counts it toward its lifetime total', () => {
+    const spy = jest.spyOn(Math, 'random').mockReturnValue(0.99);
+    const study = useCurrencyStore.getState().tap();
+    expect(study.resource).toBe('cognitive');
+    expect(useCurrencyStore.getState().totalCognitiveEarned.toNumber()).toBe(study.amount.toNumber());
+    expect(useCurrencyStore.getState().capital.isZero()).toBe(true);
+
+    const work = useCurrencyStore.getState().tap('capital');
+    expect(work.amount.toNumber()).toBe(2);
+    expect(useCurrencyStore.getState().totalCapitalEarned.toNumber()).toBe(2);
+    spy.mockRestore();
+  });
+
+  it('adds 5% of passive income to each tap', () => {
+    const spy = jest.spyOn(Math, 'random').mockReturnValue(0.99);
+    useCurrencyStore.getState().updateRates({ cognitivePerSec: Decimal.from(100) });
+    expect(useCurrencyStore.getState().tap('cognitive').amount.toNumber()).toBeCloseTo(1 + 5);
+    spy.mockRestore();
+  });
+
+  it('counts passive and offline Cognitive toward the lifetime total', () => {
+    useCurrencyStore.getState().updateRates({ cognitivePerSec: Decimal.from(3) });
+    useCurrencyStore.getState().tick(2);
+    useCurrencyStore.getState().applyOfflineProgress(10);
+    expect(useCurrencyStore.getState().totalCognitiveEarned.toNumber()).toBeCloseTo(36);
+  });
+
   it('scales tap stress with the skill multiplier', () => {
     useCurrencyStore.getState().updateRates({ stressPerClickMultiplier: 0.5 });
     useCurrencyStore.getState().tap();

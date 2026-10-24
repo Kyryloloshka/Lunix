@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Decimal } from '@shared/lib/decimal';
-import type { FlowState, ResourceRates, ResourceState } from './types';
+import type { FlowState, ResourceRates, ResourceState, TapResource } from './types';
 
 const FLOW_DURATION_MS = 10_000;
 const FLOW_MULTIPLIER = 3;
@@ -13,6 +13,36 @@ const BASE_STRESS_PER_TAP = 0.35;
 const STRESS_DECAY_PER_SEC = 0.25;
 /** Live ticks never apply more than this; longer gaps go through offline earnings. */
 export const MAX_TICK_SECONDS = 5;
+/** Base value of one tap per mode, before perks (docs/economy/phases.md §4). */
+export const TAP_BASE: Record<TapResource, Decimal> = {
+  cognitive: Decimal.from(1),
+  capital: Decimal.from(2),
+  influence: Decimal.from(0.2),
+};
+/** Each tap also yields this share of the resource's passive income per second, so taps stay relevant. */
+export const TAP_PASSIVE_SHARE = 0.05;
+
+const PER_SEC_KEY: Record<TapResource, 'capitalPerSec' | 'cognitivePerSec' | 'influencePerSec'> = {
+  capital: 'capitalPerSec',
+  cognitive: 'cognitivePerSec',
+  influence: 'influencePerSec',
+};
+const PER_CLICK_KEY: Record<TapResource, 'capitalPerClick' | 'cognitivePerClick' | 'influencePerClick'> = {
+  capital: 'capitalPerClick',
+  cognitive: 'cognitivePerClick',
+  influence: 'influencePerClick',
+};
+
+/** Value of one tap before flow, crit and stress: perk-boosted base plus a share of passive income. */
+export function getTapValue(rates: ResourceRates, resource: TapResource): Decimal {
+  return rates[PER_CLICK_KEY[resource]].add(rates[PER_SEC_KEY[resource]].multiplyScalar(TAP_PASSIVE_SHARE));
+}
+
+export interface TapResult {
+  resource: TapResource;
+  amount: Decimal;
+  isCritical: boolean;
+}
 
 export function getStressOutputMultiplier(stress: number): number {
   const safeStress = Math.min(MAX_STRESS, Math.max(0, Number.isFinite(stress) ? stress : 0));
@@ -31,7 +61,9 @@ export interface CurrencyStore extends ResourceState {
   rates: ResourceRates;
   lastSavedAt: number;
   totalCapitalEarned: Decimal;
-  tap: () => { capital: Decimal; cognitive: Decimal; influence: Decimal; isCritical: boolean };
+  totalCognitiveEarned: Decimal;
+  /** Unlock checks live in the caller (career progression); this only applies the tap. */
+  tap: (resource?: TapResource) => TapResult;
   tick: (deltaSeconds: number) => void;
   addResources: (resources: Partial<Omit<ResourceState, 'stress'>>) => void;
   spendCapital: (amount: Decimal) => boolean;
@@ -65,6 +97,7 @@ export function getOfflineSeconds(savedAt: number, now: number): number {
 /** Persistable subset of the currency state (rates are derived from skills). */
 export interface CurrencySnapshot extends ResourceState {
   totalCapitalEarned: Decimal;
+  totalCognitiveEarned: Decimal;
 }
 
 function clampStress(value: number): number {
@@ -75,13 +108,19 @@ const initialRates: ResourceRates = {
   capitalPerSec: Decimal.from(0),
   cognitivePerSec: Decimal.from(0),
   influencePerSec: Decimal.from(0),
-  capitalPerClick: Decimal.from(1),
-  cognitivePerClick: Decimal.from(0.1),
-  influencePerClick: Decimal.from(0),
+  capitalPerClick: TAP_BASE.capital,
+  cognitivePerClick: TAP_BASE.cognitive,
+  influencePerClick: TAP_BASE.influence,
   stressPerClickMultiplier: 1,
 };
 
-const initialState = (): ResourceState & { flow: FlowState; rates: ResourceRates; lastSavedAt: number; totalCapitalEarned: Decimal } => ({
+const initialState = (): ResourceState & {
+  flow: FlowState;
+  rates: ResourceRates;
+  lastSavedAt: number;
+  totalCapitalEarned: Decimal;
+  totalCognitiveEarned: Decimal;
+} => ({
   capital: Decimal.ZERO,
   cognitive: Decimal.ZERO,
   influence: Decimal.ZERO,
@@ -98,20 +137,19 @@ const initialState = (): ResourceState & { flow: FlowState; rates: ResourceRates
   rates: initialRates,
   lastSavedAt: Date.now(),
   totalCapitalEarned: Decimal.ZERO,
+  totalCognitiveEarned: Decimal.ZERO,
 });
 
 export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
   ...initialState(),
 
-  tap: () => {
+  tap: (resource = 'cognitive') => {
     const { rates, flow, stress } = get();
     // Flow already multiplies output, so crits only roll outside of it.
     const isCritical = !flow.isActive && Math.random() < 0.08;
     const bonusMultiplier = flow.isActive ? flow.multiplier : isCritical ? 2 : 1;
     const outputMultiplier = bonusMultiplier * getStressOutputMultiplier(stress);
-    const capital = rates.capitalPerClick.multiplyScalar(outputMultiplier);
-    const cognitive = rates.cognitivePerClick.multiplyScalar(outputMultiplier);
-    const influence = rates.influencePerClick.multiplyScalar(outputMultiplier);
+    const amount = getTapValue(rates, resource).multiplyScalar(outputMultiplier);
 
     set((state) => {
       const now = Date.now();
@@ -122,11 +160,10 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
         : (windowOpen ? state.flow.comboCount + 1 : 1);
       const flowIsActive = state.flow.isActive || nextCombo >= FLOW_COMBO_THRESHOLD;
       return {
-        capital: state.capital.add(capital),
-        cognitive: state.cognitive.add(cognitive),
-        influence: state.influence.add(influence),
+        [resource]: state[resource].add(amount),
+        ...(resource === 'capital' ? { totalCapitalEarned: state.totalCapitalEarned.add(amount) } : {}),
+        ...(resource === 'cognitive' ? { totalCognitiveEarned: state.totalCognitiveEarned.add(amount) } : {}),
         stress: nextStress,
-        totalCapitalEarned: state.totalCapitalEarned.add(capital),
         flow: {
           ...state.flow,
           comboCount: nextCombo,
@@ -138,7 +175,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
       };
     });
 
-    return { capital, cognitive, influence, isCritical };
+    return { resource, amount, isCritical };
   },
 
   tick: (deltaSeconds) => {
@@ -162,6 +199,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
         influence: state.influence.add(influence),
         stress: clampStress(state.stress - deltaSeconds * STRESS_DECAY_PER_SEC),
         totalCapitalEarned: state.totalCapitalEarned.add(capital),
+        totalCognitiveEarned: state.totalCognitiveEarned.add(cognitive),
         flow: {
           ...state.flow,
           remainingMs,
@@ -180,6 +218,9 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
       ? state.totalCapitalEarned.add(resources.capital)
       : state.totalCapitalEarned,
     cognitive: resources.cognitive?.isPositive() ? state.cognitive.add(resources.cognitive) : state.cognitive,
+    totalCognitiveEarned: resources.cognitive?.isPositive()
+      ? state.totalCognitiveEarned.add(resources.cognitive)
+      : state.totalCognitiveEarned,
     influence: resources.influence?.isPositive() ? state.influence.add(resources.influence) : state.influence,
   })),
 
@@ -221,6 +262,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
     influence: snapshot.influence,
     stress: clampStress(snapshot.stress),
     totalCapitalEarned: snapshot.totalCapitalEarned,
+    totalCognitiveEarned: snapshot.totalCognitiveEarned,
   }),
   applyOfflineProgress: (elapsedSeconds) => {
     const seconds = Math.min(MAX_OFFLINE_SECONDS, Math.max(0, Number.isFinite(elapsedSeconds) ? elapsedSeconds : 0));

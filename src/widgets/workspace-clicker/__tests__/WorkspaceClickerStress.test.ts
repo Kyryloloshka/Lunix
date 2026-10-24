@@ -8,12 +8,12 @@ describe('WorkspaceClicker high-TPS model', () => {
 
   it('processes 300 rapid game taps without losing resource updates', () => {
     const tap = useCurrencyStore.getState().tap;
-    const initialCapital = useCurrencyStore.getState().capital;
+    const initialCognitive = useCurrencyStore.getState().cognitive;
     const results = Array.from({ length: 300 }, () => tap());
 
     expect(results).toHaveLength(300);
-    expect(useCurrencyStore.getState().capital.gt(initialCapital)).toBe(true);
-    expect(results.every((result) => result.capital.isPositive())).toBe(true);
+    expect(useCurrencyStore.getState().cognitive.gt(initialCognitive)).toBe(true);
+    expect(results.every((result) => result.amount.isPositive())).toBe(true);
   });
 
   it('maps three simultaneous pointers to independent local points', () => {

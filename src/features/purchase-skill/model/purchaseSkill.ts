@@ -6,10 +6,11 @@ export function getNextSkillCost(skill: SkillDefinition, level: number): Decimal
   return getSkillCost(skill.baseCost, skill.costGrowth, level);
 }
 
+/** `balance` is the player's amount of the skill's cost resource. */
 export function canPurchaseSkill(
-  capital: Decimal,
+  balance: Decimal,
   skill: SkillDefinition,
   level: number,
 ): boolean {
-  return capital.gte(getNextSkillCost(skill, level));
+  return balance.gte(getNextSkillCost(skill, level));
 }

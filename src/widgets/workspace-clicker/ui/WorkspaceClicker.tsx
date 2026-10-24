@@ -13,9 +13,10 @@ import {
   useManualGesture,
   type GestureTouchEvent,
 } from 'react-native-gesture-handler';
-import { useCurrencyStore } from '@entities/currency';
+import type { TapResource } from '@entities/currency';
+import type { Decimal } from '@shared/lib/decimal';
 import { useSkillStore } from '@features/purchase-skill';
-import { formatCurrency } from '@shared/lib/formatters';
+import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
 import { DevGlyph } from '@shared/ui';
 import { colors, getRankTheme, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
@@ -28,6 +29,18 @@ const HAPTIC_THROTTLE_MS = 60;
 const FLOATER_ANCHOR_WIDTH = 240;
 // Non-zero so Android doesn't measure the floater text at height 0 and draw nothing
 const FLOATER_ANCHOR_HEIGHT = 48;
+
+const TAP_HINT: Record<TapResource, string> = {
+  cognitive: 'workspace.hintCognitive',
+  capital: 'workspace.hintCapital',
+  influence: 'workspace.hintInfluence',
+};
+
+const FORMAT_TAP: Record<TapResource, (value: Decimal) => string> = {
+  cognitive: formatCognitive,
+  capital: formatCurrency,
+  influence: formatInfluence,
+};
 
 interface FloatingNumber {
   id: number;
@@ -44,7 +57,10 @@ export function WorkspaceClicker() {
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
   const reducedMotion = useSettingsStore((state) => state.reducedMotion);
   const rankTheme = getRankTheme(currentRank);
-  const tap = useCurrencyStore((state) => state.tap);
+  const tap = useSkillStore((state) => state.tap);
+  // Feedback must match the effect: the hint names what a tap produces right now.
+  const tapResource = useSkillStore((state) => state.tapResource);
+  const tapHint = t(TAP_HINT[tapResource]);
   const [pressed, setPressed] = useState(false);
   const [floaters, setFloaters] = useState<FloatingNumber[]>([]);
   const scale = useRef(new Animated.Value(1)).current;
@@ -79,9 +95,8 @@ export function WorkspaceClicker() {
   const spawnFloater = useCallback((x: number, y: number) => {
     const result = tap();
     const id = ++nextFloaterId.current;
-    const text = result.isCritical
-      ? `${formatCurrency(result.capital)} ${t('workspace.crit')}`
-      : `+${formatCurrency(result.capital)}`;
+    const amount = FORMAT_TAP[result.resource](result.amount);
+    const text = result.isCritical ? `${amount} ${t('workspace.crit')}` : `+${amount}`;
 
     triggerHaptic(result.isCritical);
 
@@ -149,7 +164,7 @@ export function WorkspaceClicker() {
     <GestureDetector gesture={tapGesture}>
       <View
         accessibilityRole="button"
-        accessibilityLabel={t('workspace.hint')}
+        accessibilityLabel={tapHint}
         style={styles.container}
       >
         <View pointerEvents="none" style={styles.statusRow}>
@@ -200,7 +215,7 @@ export function WorkspaceClicker() {
               </View>
 
               <Text pointerEvents="none" style={styles.tapPrompt}>{t('workspace.prompt')}</Text>
-              <Text pointerEvents="none" style={styles.tapSub}>{t('workspace.hint')}</Text>
+              <Text pointerEvents="none" style={styles.tapSub}>{tapHint}</Text>
             </Animated.View>
 
             {/* Floaters layer shares the exact unscaled bounding space of touchSurface */}
