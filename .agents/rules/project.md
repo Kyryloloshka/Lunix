@@ -9,7 +9,7 @@
 - Keep the first release local-only; no account, backend, or real leaderboard unless explicitly approved.
 
 ## Architecture: Feature-Sliced Design
-- Use `src/app`, `src/pages`, `src/widgets`, `src/features`, `src/entities`, and `src/shared` as FSD layers.
+- Use `src/application` (app layer), `src/pages`, `src/widgets`, `src/features`, `src/entities`, and `src/shared` as FSD layers.
 - Import only downward through layers: `app -> pages -> widgets -> features -> entities -> shared`. Same-layer slices must not import each other directly; communicate through public APIs or composition at a higher layer.
 - Each slice exposes a deliberate public API from `index.ts`. Do not import another slice's internal paths.
 - Keep feature-specific UI, model/business logic, hooks, and tests inside that feature's slice (`ui/`, `model/`, `hooks/`, `__tests__/`). Avoid root-level generic `components/`, `hooks/`, or `tests/` buckets for domain code.

@@ -32,7 +32,7 @@ The source code follows Feature-Sliced Design:
 
 ```text
 src/
-  app/       # application bootstrap and providers
+  application/ # app bootstrap, providers, save/load
   pages/     # screen composition
   widgets/   # large UI compositions
   features/  # user actions / use cases
@@ -40,4 +40,4 @@ src/
   shared/    # reusable, domain-agnostic infrastructure
 ```
 
-Feature-specific UI, hooks, model logic, and tests stay within their owning slice. Detailed conventions and product decisions are in [`.agents/rules/project.md`](.agents/rules/project.md).
+Feature-specific UI, hooks, model logic, and tests stay within their owning slice. Detailed conventions and product decisions are in [`.agents/rules/project.md`](.agents/rules/project.md); safe-code rules learned from past bugs are in [`.agents/rules/safe-code.md`](.agents/rules/safe-code.md).
