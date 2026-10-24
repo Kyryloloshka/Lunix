@@ -12,7 +12,7 @@ import {
   type PointerEvent,
 } from 'react-native';
 import { useCurrencyStore } from '@entities/currency';
-import { useSkillStore } from '@widgets/skills-catalog/model/skillStore';
+import { useSkillStore } from '@features/purchase-skill';
 import { formatCurrency } from '@shared/lib/formatters';
 import { DevGlyph } from '@shared/ui';
 import { colors, getRankTheme, radii, spacing, typography } from '@shared/theme';
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   keyWide: { width: 48 },
   tapPrompt: { color: colors.text.primary, fontFamily: typography.mono, fontWeight: '900', fontSize: typography.sizes.sm, letterSpacing: 1.2, marginTop: spacing.md },
   tapSub: { color: colors.text.secondary, fontSize: typography.sizes.xs, marginTop: 4 },
-  floatersLayer: { ...StyleSheet.absoluteFillObject, zIndex: 30 },
+  floatersLayer: { ...StyleSheet.absoluteFill, zIndex: 30 },
   floaterAnchor: {
     position: 'absolute',
     width: 0,

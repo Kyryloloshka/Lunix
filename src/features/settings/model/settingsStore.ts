@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocale, setLocale as setI18nLocale, isLocale, type Locale } from '@shared/i18n';
+import { setGlobalNotation } from '@shared/lib/formatters/notationContext';
 
 export type NumberNotation = 'compact' | 'scientific';
 
@@ -33,7 +34,11 @@ function sanitizeValues(source: Partial<SettingsValues>): SettingsValues {
   };
 }
 
+// Set once the player changes anything, so a slow cold-boot load can't overwrite that choice.
+let changedBeforeLoad = false;
+
 async function persistValues(values: SettingsValues): Promise<void> {
+  changedBeforeLoad = true;
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(values));
   } catch {
@@ -64,6 +69,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     void persistValues({ soundEnabled, hapticsEnabled, reducedMotion, notation, locale });
   },
   setNotation: (notation) => {
+    setGlobalNotation(notation);
     set({ notation });
     const { soundEnabled, hapticsEnabled, reducedMotion, locale } = get();
     void persistValues({ soundEnabled, hapticsEnabled, reducedMotion, notation, locale });
@@ -77,10 +83,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   load: async () => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
+      if (stored && !changedBeforeLoad) {
         const parsed = JSON.parse(stored) as Partial<SettingsValues>;
         const sanitized = sanitizeValues(parsed);
         setI18nLocale(sanitized.locale);
+        setGlobalNotation(sanitized.notation);
         set(sanitized);
       }
     } catch {

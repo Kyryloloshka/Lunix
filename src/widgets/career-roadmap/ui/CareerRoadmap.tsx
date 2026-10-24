@@ -5,7 +5,7 @@ import { Badge, DevGlyph, Panel, ProgressBar, type GlyphName } from '@shared/ui'
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { formatCurrency, formatInfluence } from '@shared/lib/formatters';
 import { t, useLocale } from '@shared/i18n';
-import { useSkillStore } from '@widgets/skills-catalog/model/skillStore';
+import { useSkillStore } from '@features/purchase-skill';
 
 interface CareerRoadmapProps {
   currentRankId: number;
@@ -28,7 +28,7 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
   useLocale();
   const totalCapitalEarned = useCurrencyStore((state) => state.totalCapitalEarned);
   const influence = useCurrencyStore((state) => state.influence);
-  const promote = useSkillStore((state) => state.setRank);
+  const promote = useSkillStore((state) => state.promote);
 
   return (
     <Panel tone="subtle" style={styles.container}>
@@ -55,14 +55,10 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
           const desc = t(`career.ranks.${rank.id}.desc`);
           const glyphName = RANK_GLYPHS[rank.id] || 'code';
 
-          const capitalProgress = Math.min(
-            100,
-            rank.requiredCapital.isZero()
-              ? 100
-              : Math.round(
-                  (totalCapitalEarned.toNumber() / rank.requiredCapital.toNumber()) * 100,
-                ),
-          );
+          // Divide as Decimals: toNumber() turns into Infinity/NaN past 1e308.
+          const capitalProgress = rank.requiredCapital.isZero()
+            ? 100
+            : Math.min(100, Math.round(totalCapitalEarned.divide(rank.requiredCapital).toNumber() * 100));
 
           return (
             <View key={rank.id} style={styles.stepRow}>
@@ -153,8 +149,7 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
                       <Pressable
                         accessibilityRole="button"
                         onPress={() => {
-                          promote(rank.id);
-                          onPromote?.(rank.id);
+                          if (promote()) onPromote?.(rank.id);
                         }}
                         style={styles.promoteButton}
                       >

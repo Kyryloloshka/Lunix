@@ -2,7 +2,7 @@ module.exports = {
   preset: 'jest-expo',
   testPathIgnorePatterns: ['/node_modules/', '/\.expo/'],
   moduleNameMapper: {
-    '^@app/(.*)$': '<rootDir>/src/app/$1',
+    '^@application/(.*)$': '<rootDir>/src/application/$1',
     '^@pages/(.*)$': '<rootDir>/src/pages/$1',
     '^@widgets/(.*)$': '<rootDir>/src/widgets/$1',
     '^@features/(.*)$': '<rootDir>/src/features/$1',

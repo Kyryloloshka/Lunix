@@ -9,9 +9,9 @@ import { SkillsCatalog } from '@widgets/skills-catalog';
 import { CareerRoadmap } from '@widgets/career-roadmap';
 import { SimulatedLeaderboard } from '@widgets/simulated-leaderboard';
 import { BottomDock, type ActiveTab } from '@widgets/bottom-dock';
-import { useSkillStore } from '@widgets/skills-catalog/model/skillStore';
+import { useSkillStore } from '@features/purchase-skill';
 import { SettingsPanel } from '@widgets/settings';
-import { getRankTheme, spacing, typography } from '@shared/theme';
+import { colors, getRankTheme, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 
 export function GameScreen() {

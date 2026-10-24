@@ -22,19 +22,11 @@ export interface BulkPurchase {
   nextCost: Decimal;
 }
 
-function geometricSum(growth: number, count: number): number {
-  if (count <= 0) return 0;
-  if (Math.abs(growth - 1) < Number.EPSILON) return count;
-  const logValue = count * Math.log(growth);
-  if (logValue > 709) return Infinity;
-  return (Math.exp(logValue) - 1) / (growth - 1);
-}
-
 export function getSkillCost(baseCost: Decimal, growth: number, level: number): Decimal {
   const safeLevel = Math.max(0, Math.floor(level));
-  const exponent = safeLevel * Math.log10(Math.max(growth, 1));
-  if (exponent > 308) return new Decimal(1, 309);
-  return baseCost.multiplyScalar(Math.pow(Math.max(growth, 1), safeLevel));
+  const safeGrowth = Math.max(growth, 1);
+  // Log space keeps costs growing past 1e308 instead of overflowing to Infinity.
+  return baseCost.multiply(Decimal.fromLog10(safeLevel * Math.log10(safeGrowth)));
 }
 
 export function getBulkSkillCost(
@@ -45,10 +37,18 @@ export function getBulkSkillCost(
 ): Decimal {
   const safeCount = Math.max(0, Math.floor(count));
   if (safeCount === 0) return Decimal.ZERO;
-  const firstCost = getSkillCost(baseCost, growth, level);
-  const sum = geometricSum(Math.max(growth, 1), safeCount);
-  if (!Number.isFinite(sum)) return new Decimal(1, 309);
-  return firstCost.multiplyScalar(sum);
+  const safeGrowth = Math.max(growth, 1);
+  const firstCost = getSkillCost(baseCost, safeGrowth, level);
+  if (safeGrowth - 1 < Number.EPSILON) return firstCost.multiplyScalar(safeCount);
+
+  // Geometric series: firstCost * (growth^count - 1) / (growth - 1).
+  const growthPow = Decimal.fromLog10(safeCount * Math.log10(safeGrowth));
+  if (growthPow.exponent < 12) {
+    // Remove floating-point noise from small geometric sums (e.g. 1 + 2 + 4 = 7).
+    const sum = (growthPow.toNumber() - 1) / (safeGrowth - 1);
+    return firstCost.multiplyScalar(Math.round(sum * 1e12) / 1e12);
+  }
+  return firstCost.multiply(growthPow.subtract(1)).divide(safeGrowth - 1);
 }
 
 export function isSkillTreeReachable(levels: Record<string, number>, currentRank: number): boolean {
@@ -91,6 +91,12 @@ export function calculateBulkPurchase(
     : Math.max(0, mode);
   const totalCost = getBulkSkillCost(baseCost, growth, level, levels);
   return { levels, totalCost, nextCost: getSkillCost(baseCost, growth, level + levels) };
+}
+
+/** Each point of stress reduction makes taps ~1% less stressful, with diminishing returns. */
+export function getTapStressMultiplier(stressReduction: number): number {
+  const safeReduction = Number.isFinite(stressReduction) ? Math.max(0, stressReduction) : 0;
+  return 1 / (1 + safeReduction / 100);
 }
 
 export function calculateSkillEffects(

@@ -37,3 +37,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# IDE
+.idea/
+
+# EAS build logs
+eas-build*.log
+eas-build*.txt

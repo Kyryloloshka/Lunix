@@ -8,6 +8,7 @@ export {
   getBulkSkillCost,
   getMaxAffordableLevel,
   getSkillCost,
+  getTapStressMultiplier,
 } from './model/skillEffects';
 export type { BulkPurchase, PurchaseMode } from './model/skillEffects';
 export type { SkillCategory, SkillDefinition, SkillPrerequisite } from './model/types';

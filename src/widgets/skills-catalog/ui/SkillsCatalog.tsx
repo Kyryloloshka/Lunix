@@ -12,10 +12,10 @@ import {
 import { useCurrencyStore } from '@entities/currency';
 import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
 import { DevGlyph, type GlyphName } from '@shared/ui';
-import { colors, getRankTheme, radii, spacing, typography } from '@shared/theme';
+import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useSettingsStore } from '@features/settings';
-import { isSkillUnlocked, useSkillStore } from '../model/skillStore';
+import { isSkillUnlocked, useSkillStore } from '@features/purchase-skill';
 
 const SKILL_GLYPHS: Record<string, GlyphName> = {
   'html-css': 'html',
@@ -45,7 +45,6 @@ export function SkillsCatalog() {
   const buyUpgrade = useSkillStore((state) => state.buyUpgrade);
   const levels = useSkillStore((state) => state.levels);
   const purchasedUpgrades = useSkillStore((state) => state.purchasedUpgrades);
-  const updateRates = useCurrencyStore((state) => state.updateRates);
 
   const visibleSkills = useMemo(() => {
     if (category === 'upgrades') return [];
@@ -59,21 +58,8 @@ export function SkillsCatalog() {
     [levels, purchasedUpgrades],
   );
 
-  const syncRates = () => {
-    const nextEffects = calculateSkillEffects(
-      useSkillStore.getState().levels,
-      useSkillStore.getState().purchasedUpgrades,
-    );
-    updateRates({
-      capitalPerSec: nextEffects.capitalPerSec,
-      cognitivePerSec: nextEffects.cognitivePerSec,
-      influencePerSec: nextEffects.influencePerSec,
-      capitalPerClick: nextEffects.capitalPerClick,
-    });
-  };
-
   const handleBuy = (id: string) => {
-    if (buy(id, capital, purchaseMode) > 0) {
+    if (buy(id, purchaseMode) > 0) {
       if (!reducedMotion) {
         setUpgradedSkillId(id);
         upgradePulse.setValue(0);
@@ -83,7 +69,6 @@ export function SkillsCatalog() {
           useNativeDriver: true,
         }).start(() => setUpgradedSkillId(null));
       }
-      syncRates();
     }
   };
 
@@ -98,7 +83,6 @@ export function SkillsCatalog() {
           useNativeDriver: true,
         }).start(() => setUpgradedSkillId(null));
       }
-      syncRates();
     }
   };
 
@@ -427,7 +411,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   pulseClone: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 2,
     borderColor: colors.accent.amber,
     borderRadius: radii.md,

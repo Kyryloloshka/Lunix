@@ -9,6 +9,10 @@ export const COMBO_WINDOW_MS = 4_000;
 const MAX_STRESS = 100;
 const OVERLOAD_THRESHOLD = 70;
 const OVERLOAD_MIN_OUTPUT = 0.5;
+const BASE_STRESS_PER_TAP = 0.35;
+const STRESS_DECAY_PER_SEC = 0.25;
+/** Live ticks never apply more than this; longer gaps go through offline earnings. */
+export const MAX_TICK_SECONDS = 5;
 
 export function getStressOutputMultiplier(stress: number): number {
   const safeStress = Math.min(MAX_STRESS, Math.max(0, Number.isFinite(stress) ? stress : 0));
@@ -36,7 +40,35 @@ export interface CurrencyStore extends ResourceState {
   reduceStress: (amount: number) => void;
   updateRates: (rates: Partial<ResourceRates>) => void;
   saveTimestamp: () => void;
+  hydrate: (snapshot: CurrencySnapshot) => void;
+  applyOfflineProgress: (elapsedSeconds: number) => OfflineEarnings;
   reset: () => void;
+}
+
+export interface OfflineEarnings {
+  seconds: number;
+  capital: Decimal;
+  cognitive: Decimal;
+  influence: Decimal;
+}
+
+export const MAX_OFFLINE_SECONDS = 8 * 60 * 60;
+/** Share of passive income earned while the app is closed. */
+export const OFFLINE_EFFICIENCY = 1;
+
+/** Clamp the time away: negative (clock moved back) or missing timestamps earn nothing. */
+export function getOfflineSeconds(savedAt: number, now: number): number {
+  if (!Number.isFinite(savedAt) || !Number.isFinite(now) || savedAt <= 0) return 0;
+  return Math.min(MAX_OFFLINE_SECONDS, Math.max(0, (now - savedAt) / 1000));
+}
+
+/** Persistable subset of the currency state (rates are derived from skills). */
+export interface CurrencySnapshot extends ResourceState {
+  totalCapitalEarned: Decimal;
+}
+
+function clampStress(value: number): number {
+  return Math.min(MAX_STRESS, Math.max(0, Number.isFinite(value) ? value : 0));
 }
 
 const initialRates: ResourceRates = {
@@ -46,6 +78,7 @@ const initialRates: ResourceRates = {
   capitalPerClick: Decimal.from(1),
   cognitivePerClick: Decimal.from(0.1),
   influencePerClick: Decimal.from(0),
+  stressPerClickMultiplier: 1,
 };
 
 const initialState = (): ResourceState & { flow: FlowState; rates: ResourceRates; lastSavedAt: number; totalCapitalEarned: Decimal } => ({
@@ -72,7 +105,8 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
 
   tap: () => {
     const { rates, flow, stress } = get();
-    const isCritical = Math.random() < 0.08;
+    // Flow already multiplies output, so crits only roll outside of it.
+    const isCritical = !flow.isActive && Math.random() < 0.08;
     const bonusMultiplier = flow.isActive ? flow.multiplier : isCritical ? 2 : 1;
     const outputMultiplier = bonusMultiplier * getStressOutputMultiplier(stress);
     const capital = rates.capitalPerClick.multiplyScalar(outputMultiplier);
@@ -81,7 +115,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
 
     set((state) => {
       const now = Date.now();
-      const nextStress = Math.min(MAX_STRESS, state.stress + 0.35);
+      const nextStress = clampStress(state.stress + BASE_STRESS_PER_TAP * state.rates.stressPerClickMultiplier);
       const windowOpen = now - state.flow.windowStartedAt <= COMBO_WINDOW_MS;
       const nextCombo = state.flow.isActive
         ? state.flow.comboCount
@@ -109,6 +143,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
 
   tick: (deltaSeconds) => {
     if (deltaSeconds <= 0 || !Number.isFinite(deltaSeconds)) return;
+    deltaSeconds = Math.min(deltaSeconds, MAX_TICK_SECONDS);
     const { rates, flow, stress } = get();
     const bonusMultiplier = flow.isActive ? flow.multiplier : 1;
     const outputMultiplier = bonusMultiplier * getStressOutputMultiplier(stress);
@@ -119,26 +154,33 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
 
     set((state) => {
       const remainingMs = Math.max(0, state.flow.remainingMs - flowDelta);
+      const flowEnded = state.flow.isActive && remainingMs === 0;
+      const comboExpired = Date.now() - state.flow.windowStartedAt > COMBO_WINDOW_MS;
       return {
         capital: state.capital.add(capital),
         cognitive: state.cognitive.add(cognitive),
         influence: state.influence.add(influence),
-        stress: Math.max(0, state.stress - deltaSeconds * 0.25),
+        stress: clampStress(state.stress - deltaSeconds * STRESS_DECAY_PER_SEC),
         totalCapitalEarned: state.totalCapitalEarned.add(capital),
         flow: {
           ...state.flow,
           remainingMs,
           isActive: remainingMs > 0,
-          comboCount: remainingMs > 0 ? state.flow.comboCount : 0,
+          // Only drop the combo when flow ends or the combo window runs out,
+          // otherwise every tick would wipe the taps the player is building up.
+          comboCount: flowEnded || (!state.flow.isActive && comboExpired) ? 0 : state.flow.comboCount,
         },
       };
     });
   },
 
   addResources: (resources) => set((state) => ({
-    capital: resources.capital ? state.capital.add(resources.capital) : state.capital,
-    cognitive: resources.cognitive ? state.cognitive.add(resources.cognitive) : state.cognitive,
-    influence: resources.influence ? state.influence.add(resources.influence) : state.influence,
+    capital: resources.capital?.isPositive() ? state.capital.add(resources.capital) : state.capital,
+    totalCapitalEarned: resources.capital?.isPositive()
+      ? state.totalCapitalEarned.add(resources.capital)
+      : state.totalCapitalEarned,
+    cognitive: resources.cognitive?.isPositive() ? state.cognitive.add(resources.cognitive) : state.cognitive,
+    influence: resources.influence?.isPositive() ? state.influence.add(resources.influence) : state.influence,
   })),
 
   spendCapital: (amount) => {
@@ -169,10 +211,36 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
     return true;
   },
 
-  addStress: (amount) => set((state) => ({ stress: Math.min(MAX_STRESS, Math.max(0, state.stress + amount)) })),
+  addStress: (amount) => set((state) => ({ stress: clampStress(state.stress + amount) })),
   reduceStress: (amount) => set((state) => ({ stress: Math.max(0, state.stress - Math.max(0, amount)) })),
   updateRates: (rates) => set((state) => ({ rates: { ...state.rates, ...rates } })),
   saveTimestamp: () => set({ lastSavedAt: Date.now() }),
+  hydrate: (snapshot) => set({
+    capital: snapshot.capital,
+    cognitive: snapshot.cognitive,
+    influence: snapshot.influence,
+    stress: clampStress(snapshot.stress),
+    totalCapitalEarned: snapshot.totalCapitalEarned,
+  }),
+  applyOfflineProgress: (elapsedSeconds) => {
+    const seconds = Math.min(MAX_OFFLINE_SECONDS, Math.max(0, Number.isFinite(elapsedSeconds) ? elapsedSeconds : 0));
+    const { rates } = get();
+    // Offline time runs at base rate: no flow bonus and no stress penalty.
+    const factor = seconds * OFFLINE_EFFICIENCY;
+    const earnings: OfflineEarnings = {
+      seconds,
+      capital: rates.capitalPerSec.multiplyScalar(factor),
+      cognitive: rates.cognitivePerSec.multiplyScalar(factor),
+      influence: rates.influencePerSec.multiplyScalar(factor),
+    };
+    if (seconds <= 0) return earnings;
+    get().addResources(earnings);
+    set((state) => ({
+      stress: clampStress(state.stress - seconds * STRESS_DECAY_PER_SEC),
+      flow: { ...state.flow, isActive: false, remainingMs: 0, comboCount: 0 },
+    }));
+    return earnings;
+  },
   reset: () => set(initialState()),
 }));
 

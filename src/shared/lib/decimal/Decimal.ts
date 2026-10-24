@@ -11,15 +11,35 @@ export class Decimal {
 
   // ─── Construction ────────────────────────────────────────────
   constructor(mantissa: number, exponent: number = 0) {
-    if (mantissa === 0 || !Number.isFinite(mantissa)) {
+    if (mantissa === 0 || !Number.isFinite(mantissa) || !Number.isFinite(exponent)) {
       this.mantissa = 0;
       this.exponent = 0;
       return;
     }
+    // Fold a fractional exponent into the mantissa so the exponent stays an integer.
+    const intExponent = Math.floor(exponent);
+    let m = intExponent === exponent ? mantissa : mantissa * 10 ** (exponent - intExponent);
     // normalize so that 1 <= |mantissa| < 10
-    const log = Math.floor(Math.log10(Math.abs(mantissa)));
-    this.mantissa = mantissa / 10 ** log;
-    this.exponent = exponent + log;
+    let log = Math.floor(Math.log10(Math.abs(m)));
+    // 10 ** log can be imprecise for very small/large magnitudes; divide in two steps.
+    m = log > 300 || log < -300 ? m / 10 ** Math.trunc(log / 2) / 10 ** (log - Math.trunc(log / 2)) : m / 10 ** log;
+    // Guard against float drift leaving the mantissa at 10 or just under 1.
+    if (Math.abs(m) >= 10) {
+      m /= 10;
+      log += 1;
+    } else if (Math.abs(m) < 1) {
+      m *= 10;
+      log -= 1;
+    }
+    this.mantissa = m;
+    this.exponent = intExponent + log;
+  }
+
+  /** Build 10^log10Value without overflowing JS numbers. */
+  static fromLog10(log10Value: number): Decimal {
+    if (!Number.isFinite(log10Value)) return Decimal.ZERO;
+    const exponent = Math.floor(log10Value);
+    return new Decimal(10 ** (log10Value - exponent), exponent);
   }
 
   static ZERO = new Decimal(0, 0);
@@ -41,11 +61,13 @@ export class Decimal {
     return { m: this.mantissa, e: this.exponent };
   }
 
-  static fromJSON(json: { m: number; e: number }): Decimal {
-    if (!json || typeof json.m !== 'number' || typeof json.e !== 'number') {
+  static fromJSON(json: unknown): Decimal {
+    if (!json || typeof json !== 'object') return Decimal.ZERO;
+    const { m, e } = json as { m?: unknown; e?: unknown };
+    if (typeof m !== 'number' || typeof e !== 'number' || !Number.isFinite(m) || !Number.isFinite(e)) {
       return Decimal.ZERO;
     }
-    return new Decimal(json.m, json.e);
+    return new Decimal(m, e);
   }
 
   // ─── Helpers ─────────────────────────────────────────────────
@@ -111,7 +133,7 @@ export class Decimal {
   }
 
   multiplyScalar(n: number): Decimal {
-    if (n === 0 || this.isZero()) return Decimal.ZERO;
+    if (n === 0 || this.isZero() || !Number.isFinite(n)) return Decimal.ZERO;
     return new Decimal(this.mantissa * n, this.exponent);
   }
 
@@ -125,11 +147,12 @@ export class Decimal {
   }
 
   pow(n: number): Decimal {
-    if (this.isZero()) return Decimal.ZERO;
     if (n === 0) return Decimal.ONE;
-    const newMantissa = Math.pow(Math.abs(this.mantissa), n);
-    const sign = this.mantissa < 0 && n % 2 !== 0 ? -1 : 1;
-    return new Decimal(sign * newMantissa, this.exponent * n);
+    if (this.isZero() || !Number.isFinite(n)) return Decimal.ZERO;
+    // Work in log space: Math.pow(mantissa, n) overflows to Infinity for large n.
+    const log10Value = n * (Math.log10(Math.abs(this.mantissa)) + this.exponent);
+    const magnitude = Decimal.fromLog10(log10Value);
+    return this.mantissa < 0 && n % 2 !== 0 ? magnitude.multiplyScalar(-1) : magnitude;
   }
 
   // ─── Comparison ──────────────────────────────────────────────

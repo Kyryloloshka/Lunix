@@ -1,5 +1,7 @@
 import { Decimal } from '../decimal';
-import { useSettingsStore, type NumberNotation } from '@features/settings';
+import { getGlobalNotation, type NumberNotation } from './notationContext';
+
+export type { NumberNotation };
 
 /**
  * Standard incremental game short suffixes.
@@ -48,7 +50,7 @@ export function formatDecimal(
   const precision = options?.precision ?? 2;
   const prefix = options?.prefix ?? '';
   const suffix = options?.suffix ?? '';
-  const activeNotation = options?.notation ?? useSettingsStore.getState().notation ?? 'compact';
+  const activeNotation = options?.notation ?? getGlobalNotation();
 
   if (value.isZero()) {
     return `${prefix}0${suffix}`;

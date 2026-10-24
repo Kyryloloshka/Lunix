@@ -14,6 +14,7 @@ export interface ResourceRates {
   capitalPerClick: Decimal;
   cognitivePerClick: Decimal;
   influencePerClick: Decimal;
+  stressPerClickMultiplier: number; // 1 = базовий стрес за тап, менше — кава/делегування
 }
 
 export interface FlowState {
