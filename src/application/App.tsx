@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
 import { GameScreen } from '@pages/game-screen';
@@ -16,9 +17,15 @@ export default function App() {
   }, [loadSettings]);
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      {isGameLoaded ? <GameScreen /> : <View style={{ flex: 1, backgroundColor: colors.bg.app }} />}
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        {isGameLoaded ? <GameScreen /> : <View style={{ flex: 1, backgroundColor: colors.bg.app }} />}
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});
