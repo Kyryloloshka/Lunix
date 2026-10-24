@@ -1,10 +1,13 @@
 # Dev Clicker: Junior → CEO
 
-Offline-first Expo + React Native + TypeScript incremental game. Read both rule files below before
-changing code; they are binding for every task in this repo.
+Offline-first Expo + React Native + TypeScript incremental game. Read the rule files below before
+changing code; they are binding for every task in this repo. The full product spec (market, hooks,
+economy, epics E1–E20, architecture, roadmap) is in `docs/PRD.md` — open the relevant section before
+designing a feature or changing balance.
 
 @.agents/rules/project.md
 @.agents/rules/safe-code.md
+@.agents/rules/product.md
 
 ## Commands
 - Typecheck: `npm run ts:check`

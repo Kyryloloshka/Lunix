@@ -3,7 +3,7 @@
 ## Product decisions
 - Build an offline-first career clicker for Expo + React Native + TypeScript.
 - The player progresses from student/trainee through engineering and leadership roles toward the fictionalized “Google CEO” endgame; do not imply endorsement by or affiliation with Google.
-- Use four resources: Capital ($), Cognitive Power, Influence/Rep, and Burnout/Stress. These have distinct roles; stress is a bounded gameplay meter, not a spendable currency.
+- Core resources: Capital ($), Cognitive Power, Influence/Rep, and Burnout/Stress. These have distinct roles; stress is a bounded gameplay meter, not a spendable currency. Planned additions per the PRD: Equity (prestige) and GitHub Stars (soft premium); see `product.md`.
 - Use a clearly disclosed simulated NPC leaderboard. Never present generated NPC scores as real users, friends, or live rankings.
 - Include hard/soft skills, career promotions/interviews, random incidents, offline earnings, haptics, and sound as modular features.
 - Keep the first release local-only; no account, backend, or real leaderboard unless explicitly approved.
