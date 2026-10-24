@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/verify-src.js\"",
+            "timeout": 180,
+            "statusMessage": "Typecheck + related tests..."
+          }
+        ]
+      }
+    ]
+  }
+}
