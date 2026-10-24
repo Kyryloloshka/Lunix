@@ -44,3 +44,6 @@ yarn-error.*
 # EAS build logs
 eas-build*.log
 eas-build*.txt
+
+# Claude Code local settings
+.claude/settings.local.json
