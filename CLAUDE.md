@@ -9,6 +9,11 @@ designing a feature or changing balance.
 @.agents/rules/safe-code.md
 @.agents/rules/product.md
 
+## Task hub
+Larger features, refactors and UX batches live in `docs/tasks/` (index and format in
+`docs/tasks/README.md`). When picking one up, set its `status`, follow its acceptance criteria, stop at
+any `needs-approval` step, and update the index table when done.
+
 ## Commands
 - Typecheck: `npm run ts:check`
 - Tests: `npm test`
