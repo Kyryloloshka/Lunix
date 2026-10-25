@@ -245,7 +245,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   statBox: {
-    flex: 1,
+    // flexGrow, not flex: 1: inside the auto-height statSlot, flex: 1 means flexBasis 0 and Android collapses the box to 0 height
+    flexGrow: 1,
     backgroundColor: colors.bg.inset,
     padding: 7,
     borderRadius: radii.sm,
