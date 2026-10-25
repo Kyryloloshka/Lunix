@@ -55,10 +55,15 @@ describe('resolveDuration', () => {
 });
 
 describe('isReducedMotion', () => {
-  it('is on when either the game setting or the OS asks for it', () => {
-    expect(isReducedMotion(false, false)).toBe(false);
+  it('follows the OS until the player makes a choice', () => {
+    expect(isReducedMotion(null, false)).toBe(false);
+    expect(isReducedMotion(null, true)).toBe(true);
+  });
+
+  it('lets an explicit player choice win over the OS', () => {
     expect(isReducedMotion(true, false)).toBe(true);
-    expect(isReducedMotion(false, true)).toBe(true);
+    expect(isReducedMotion(false, true)).toBe(false);
     expect(isReducedMotion(true, true)).toBe(true);
+    expect(isReducedMotion(false, false)).toBe(false);
   });
 });

@@ -15,7 +15,12 @@ import { CONTENT_MAX_WIDTH, TEXT_MAX_FONT_SCALE } from '@shared/ui';
 import { colors, getRankTheme, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 
-export function GameScreen() {
+interface GameScreenProps {
+  /** Wired by the app layer, which owns save/load. */
+  onResetProgress: () => Promise<void>;
+}
+
+export function GameScreen({ onResetProgress }: GameScreenProps) {
   useGameLoop();
   useLocale();
   const [activeTab, setActiveTab] = useState<ActiveTab>('work');
@@ -33,7 +38,7 @@ export function GameScreen() {
       case 'leaders':
         return <SimulatedLeaderboard />;
       case 'settings':
-        return <SettingsPanel />;
+        return <SettingsPanel onResetProgress={onResetProgress} />;
       case 'work':
       default:
         return <WorkspaceClicker />;

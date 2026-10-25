@@ -21,6 +21,7 @@ import { DevGlyph } from '@shared/ui';
 import { colors, getRankTheme, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useSettingsStore } from '@features/settings';
+import { useMotionPreference } from '@shared/lib/motion';
 
 const FLOATER_LIFETIME_MS = 1_050;
 const MAX_FLOATERS = 20;
@@ -59,7 +60,7 @@ export function WorkspaceClicker() {
   useLocale();
   const currentRank = useSkillStore((state) => state.currentRank);
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
-  const reducedMotion = useSettingsStore((state) => state.reducedMotion);
+  const { reducedMotion } = useMotionPreference();
   const rankTheme = getRankTheme(currentRank);
   const tap = useSkillStore((state) => state.tap);
   // Feedback must match the effect: the hint names what a tap produces right now.
