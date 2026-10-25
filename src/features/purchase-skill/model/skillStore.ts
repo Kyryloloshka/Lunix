@@ -2,9 +2,7 @@ import { create } from 'zustand';
 import { Decimal } from '@shared/lib/decimal';
 import {
   calculateBulkPurchase,
-  calculateSkillEffects,
   getBulkSkillCost,
-  getTapStressMultiplier,
   INITIAL_SKILL_LEVELS,
   SKILLS,
   skillById,
@@ -24,7 +22,8 @@ import {
   type RankProgressContext,
   type RequirementProgress,
 } from '@entities/career-rank';
-import { TAP_BASE, useCurrencyStore, type TapResult } from '@entities/currency';
+import { useCurrencyStore, type TapResult } from '@entities/currency';
+import { calculateRates } from './skillIncome';
 
 export function isSkillUnlocked(
   id: string,
@@ -40,16 +39,7 @@ export function isSkillUnlocked(
 
 /** Rates are derived from skills, so recompute them after every change instead of trusting UI to do it. */
 export function syncRatesFromSkills(levels: Record<string, number>, purchasedUpgrades: string[]): void {
-  const effects = calculateSkillEffects(levels, purchasedUpgrades);
-  useCurrencyStore.getState().updateRates({
-    capitalPerSec: effects.capitalPerSec,
-    cognitivePerSec: effects.cognitivePerSec,
-    influencePerSec: effects.influencePerSec,
-    capitalPerClick: TAP_BASE.capital.multiplyScalar(effects.tapMultiplier.capital),
-    cognitivePerClick: TAP_BASE.cognitive.multiplyScalar(effects.tapMultiplier.cognitive),
-    influencePerClick: TAP_BASE.influence.multiplyScalar(effects.tapMultiplier.influence),
-    stressPerClickMultiplier: getTapStressMultiplier(effects.stressReduction),
-  });
+  useCurrencyStore.getState().updateRates(calculateRates(levels, purchasedUpgrades));
 }
 
 function getProgressContext(levels: Record<string, number>): RankProgressContext {
