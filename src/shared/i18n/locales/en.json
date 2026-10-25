@@ -271,7 +271,22 @@
     },
     "reqEarned": "Earned ({resource}):",
     "reqSpend": "Spend ({resource}):",
-    "reqSkill": "{skill}, level:"
+    "reqSkill": "{skill}, level:",
+    "nextGoal": "NEXT GOAL",
+    "silhouetteTitle": "???",
+    "silhouetteDesc": "Something is waiting further up",
+    "silhouetteA11y": "Hidden rank. It reveals itself after the next promotion.",
+    "missingResource": "Need {amount} more {resource}",
+    "missingSkill": "Need {skill} at level {level}",
+    "readyToPromote": "All requirements met",
+    "promoteA11y": "Claim promotion to {rank}",
+    "promoteBlockedA11y": "Promotion to {rank} unavailable. {reason}",
+    "celebrateEyebrow": "PROMOTION",
+    "celebrateTitle": "You are now {rank}",
+    "celebrateUnlocked": "Unlocked: {resource}",
+    "celebrateNextGoal": "New goal: {rank}",
+    "celebrateContinue": "CONTINUE",
+    "celebrateA11y": "Promotion. You are now {rank}. Tap to continue."
   },
   "leaderboard": {
     "heading": "DEVELOPER LEADERBOARD",

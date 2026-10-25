@@ -271,7 +271,22 @@
     },
     "reqEarned": "Ganado ({resource}):",
     "reqSpend": "Gastar ({resource}):",
-    "reqSkill": "{skill}, nivel:"
+    "reqSkill": "{skill}, nivel:",
+    "nextGoal": "SIGUIENTE META",
+    "silhouetteTitle": "???",
+    "silhouetteDesc": "Algo te espera más arriba",
+    "silhouetteA11y": "Rango oculto. Se revelará tras el próximo ascenso.",
+    "missingResource": "Faltan {amount} de {resource}",
+    "missingSkill": "Necesitas {skill} en nivel {level}",
+    "readyToPromote": "Todos los requisitos cumplidos",
+    "promoteA11y": "Obtener ascenso a {rank}",
+    "promoteBlockedA11y": "Ascenso a {rank} no disponible. {reason}",
+    "celebrateEyebrow": "ASCENSO",
+    "celebrateTitle": "Ahora eres {rank}",
+    "celebrateUnlocked": "Desbloqueado: {resource}",
+    "celebrateNextGoal": "Nueva meta: {rank}",
+    "celebrateContinue": "CONTINUAR",
+    "celebrateA11y": "Ascenso. Ahora eres {rank}. Toca para continuar."
   },
   "leaderboard": {
     "heading": "RANKING DE DESARROLLADORES",

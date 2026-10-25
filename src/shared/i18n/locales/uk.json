@@ -271,7 +271,22 @@
     },
     "reqEarned": "Зароблено ({resource}):",
     "reqSpend": "Витратити ({resource}):",
-    "reqSkill": "{skill}, рівень:"
+    "reqSkill": "{skill}, рівень:",
+    "nextGoal": "НАСТУПНА ЦІЛЬ",
+    "silhouetteTitle": "???",
+    "silhouetteDesc": "Вище на тебе ще щось чекає",
+    "silhouetteA11y": "Прихований ранг. Відкриється після наступного підвищення.",
+    "missingResource": "Бракує {amount} {resource}",
+    "missingSkill": "Потрібно {skill} рівня {level}",
+    "readyToPromote": "Усі умови виконано",
+    "promoteA11y": "Пройти підвищення до рангу {rank}",
+    "promoteBlockedA11y": "Підвищення до рангу {rank} недоступне. {reason}",
+    "celebrateEyebrow": "ПІДВИЩЕННЯ",
+    "celebrateTitle": "Тепер ти {rank}",
+    "celebrateUnlocked": "Відкрито: {resource}",
+    "celebrateNextGoal": "Нова ціль: {rank}",
+    "celebrateContinue": "ДАЛІ",
+    "celebrateA11y": "Підвищення. Тепер ти {rank}. Торкнись, щоб продовжити."
   },
   "leaderboard": {
     "heading": "РЕЙТИНГ РОЗРОБНИКІВ",
