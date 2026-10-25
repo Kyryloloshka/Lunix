@@ -10,7 +10,7 @@
  * - `typography.roles`: text styles by role; every readable size is ≥ `MIN_READABLE_FONT_SIZE`.
  */
 
-import type { TextStyle } from 'react-native';
+import { Platform, type TextStyle } from 'react-native';
 
 /** Raw palette. Prefer semantic tokens in `colors`; the palette exists so themes can remap it. */
 export const palette = {
@@ -197,10 +197,26 @@ export const radii = {
 /** Smallest font size allowed for any readable text (pt). */
 export const MIN_READABLE_FONT_SIZE = 11;
 
+/**
+ * Brand mono font: JetBrains Mono (SIL Open Font License 1.1), loaded at app start by
+ * `src/application/fonts` as ONE family with several weight faces (400/700/800), so `fontWeight`
+ * picks the face on iOS, Android (API 29+) and web. JetBrains Mono has no 900 face; 900 renders
+ * as the closest one (800).
+ */
+export const BRAND_MONO_FAMILY = 'JetBrainsMono';
+
+/** Weights that have a real face in the loaded family. */
+export const BRAND_MONO_WEIGHTS = [400, 700, 800] as const;
+
+/**
+ * On web the CSS stack falls back to the system monospace if the font didn't load. On native an
+ * unloaded custom family falls back to the system font.
+ */
+const brandMono = Platform.OS === 'web' ? `${BRAND_MONO_FAMILY}, monospace` : BRAND_MONO_FAMILY;
+
 const fontFamilies = {
-  display: 'monospace',
-  mono: 'monospace',
-  // Stage 3 (needs approval) replaces these with a bundled open-licensed mono font.
+  display: brandMono,
+  mono: brandMono,
 } as const;
 
 const sizes = {
@@ -221,6 +237,7 @@ const weights = {
   medium: '500',
   semibold: '600',
   bold: '700',
+  extraBold: '800',
   black: '900',
 } as const;
 
@@ -228,18 +245,18 @@ const weights = {
 const roles = {
   /** Big counters and hero numbers. */
   display: {
-    fontFamily: fontFamilies.display,
+    fontFamily: fontFamilies.mono,
+    fontWeight: weights.extraBold,
     fontSize: sizes.xxl,
     lineHeight: 36,
-    fontWeight: weights.black,
     fontVariant: ['tabular-nums'],
   },
   /** Panel and section titles. */
   title: {
     fontFamily: fontFamilies.mono,
+    fontWeight: weights.extraBold,
     fontSize: sizes.lg,
     lineHeight: 26,
-    fontWeight: weights.black,
   },
   /** Running text, descriptions. */
   body: {
@@ -250,17 +267,17 @@ const roles = {
   /** Small caps-like labels, captions, eyebrows, chips. */
   label: {
     fontFamily: fontFamilies.mono,
+    fontWeight: weights.bold,
     fontSize: sizes.xs,
     lineHeight: 15,
-    fontWeight: weights.bold,
     letterSpacing: 0.6,
   },
   /** Counters and prices: tabular digits so values don't jump while ticking. */
   monoNum: {
     fontFamily: fontFamilies.mono,
+    fontWeight: weights.extraBold,
     fontSize: sizes.sm,
     lineHeight: 18,
-    fontWeight: weights.black,
     fontVariant: ['tabular-nums'],
   },
 } satisfies Record<string, TextStyle>;

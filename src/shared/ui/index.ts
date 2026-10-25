@@ -4,6 +4,8 @@ export { GameButton, FILLED_TONES } from './GameButton';
 export { Panel } from './Panel';
 export { ProgressBar } from './ProgressBar';
 export { ResourcePill } from './ResourcePill';
+export { ResourceValue, getResourceValueParts } from './ResourceValue';
+export type { ResourceValueParts } from './ResourceValue';
 export { SectionHeader } from './SectionHeader';
 export { StatPlate } from './StatPlate';
 export type { GlyphName } from './DevGlyph';

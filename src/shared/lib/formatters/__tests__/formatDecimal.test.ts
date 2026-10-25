@@ -1,10 +1,9 @@
 import { Decimal } from '../../decimal';
-import {
-  formatCognitive,
-  formatCurrency,
-  formatDecimal,
-  formatInfluence,
-} from '../formatDecimal';
+import { formatCurrency, formatDecimal } from '../formatDecimal';
+import * as formatters from '..';
+
+// Any pictographic emoji (🧠, ⚡, 💰 …). Resource identity is drawn by the UI, not by the string.
+const EMOJI = /\p{Extended_Pictographic}/u;
 
 describe('formatDecimal', () => {
   test('formats zero', () => {
@@ -40,11 +39,26 @@ describe('formatDecimal', () => {
     expect(formatCurrency(Decimal.from(1000))).toBe('$1.00K');
   });
 
-  test('formatCognitive appends brain emoji', () => {
-    expect(formatCognitive(Decimal.from(50000))).toBe('50.00K 🧠');
+  test('formatted values never contain emoji, in any notation or magnitude', () => {
+    const values = [
+      Decimal.ZERO,
+      Decimal.from(0.5),
+      Decimal.from(42),
+      Decimal.from(50000),
+      Decimal.from(1e6),
+      new Decimal(3.14, 100),
+      new Decimal(9.99, 400),
+    ];
+    for (const value of values) {
+      for (const notation of ['compact', 'scientific'] as const) {
+        expect(formatDecimal(value, { notation })).not.toMatch(EMOJI);
+        expect(formatCurrency(value, { notation })).not.toMatch(EMOJI);
+      }
+    }
+    expect(formatDecimal(Decimal.from(50000), { notation: 'compact' })).toBe('50.00K');
   });
 
-  test('formatInfluence appends lightning emoji', () => {
-    expect(formatInfluence(Decimal.from(1000000))).toBe('1.00M ⚡');
+  test('public API exposes no per-resource emoji formatters', () => {
+    expect(Object.keys(formatters).sort()).toEqual(['formatCurrency', 'formatDecimal']);
   });
 });

@@ -16,8 +16,8 @@ import {
 import type { TapResource } from '@entities/currency';
 import type { Decimal } from '@shared/lib/decimal';
 import { useSkillStore } from '@features/purchase-skill';
-import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
-import { DevGlyph } from '@shared/ui';
+import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
+import { DevGlyph, ResourceValue } from '@shared/ui';
 import { colors, getRankTheme, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useSettingsStore } from '@features/settings';
@@ -37,14 +37,16 @@ const TAP_HINT: Record<TapResource, string> = {
 };
 
 const FORMAT_TAP: Record<TapResource, (value: Decimal) => string> = {
-  cognitive: formatCognitive,
-  capital: formatCurrency,
-  influence: formatInfluence,
+  cognitive: (value) => formatDecimal(value),
+  capital: (value) => formatCurrency(value),
+  influence: (value) => formatDecimal(value),
 };
 
 interface FloatingNumber {
   id: number;
+  /** Formatted amount; the resource glyph and the crit label are drawn after it. */
   text: string;
+  resource: TapResource;
   isCrit: boolean;
   x: number;
   y: number;
@@ -96,7 +98,7 @@ export function WorkspaceClicker() {
     const result = tap();
     const id = ++nextFloaterId.current;
     const amount = FORMAT_TAP[result.resource](result.amount);
-    const text = result.isCritical ? `${amount} ${t('workspace.crit')}` : `+${amount}`;
+    const text = result.isCritical ? amount : `+${amount}`;
 
     triggerHaptic(result.isCritical);
 
@@ -104,7 +106,7 @@ export function WorkspaceClicker() {
     const localY = y - floatersOffset.current.y;
     setFloaters((prev) => [
       ...prev.slice(-(MAX_FLOATERS - 1)),
-      { id, text, isCrit: result.isCritical, x: localX, y: localY, reducedMotion },
+      { id, text, resource: result.resource, isCrit: result.isCritical, x: localX, y: localY, reducedMotion },
     ]);
 
     const timer = setTimeout(() => {
@@ -268,7 +270,8 @@ const AnimatedFloater = memo(function AnimatedFloater({ floater }: { floater: Fl
     >
       <View style={[styles.floaterPill, floater.isCrit && styles.floaterPillCrit]}>
         <Text style={[styles.floaterText, floater.isCrit && styles.floaterCritText]}>
-          {floater.text}
+          <ResourceValue kind={floater.resource}>{floater.text}</ResourceValue>
+          {floater.isCrit ? ` ${t('workspace.crit')}` : null}
         </Text>
       </View>
     </Animated.View>

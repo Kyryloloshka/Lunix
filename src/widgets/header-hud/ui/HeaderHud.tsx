@@ -5,7 +5,7 @@ import {
   getStressPenaltyPercent,
   useCurrencyStore,
 } from '@entities/currency';
-import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
+import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
 import { DevGlyph } from '@shared/ui';
 import { colors, getRankTheme, radii, resources, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
@@ -92,8 +92,8 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
               {t('resources.cognitive').toUpperCase()}
             </Text>
           </View>
-          <Text style={styles.value}>{formatCognitive(cognitive)}</Text>
-          {rates.cognitivePerSec.gt(0) ? <Text style={styles.rate}>{t('status.ratePerSec', { amount: formatCognitive(rates.cognitivePerSec) })}</Text> : null}
+          <Text style={styles.value}>{formatDecimal(cognitive)}</Text>
+          {rates.cognitivePerSec.gt(0) ? <Text style={styles.rate}>{t('status.ratePerSec', { amount: formatDecimal(rates.cognitivePerSec) })}</Text> : null}
         </View>
 
         <View style={styles.statBox}>
@@ -103,8 +103,8 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
               {t('resources.influence').toUpperCase()}
             </Text>
           </View>
-          <Text style={styles.value}>{formatInfluence(influence)}</Text>
-          {rates.influencePerSec.gt(0) ? <Text style={styles.rate}>{t('status.ratePerSec', { amount: formatInfluence(rates.influencePerSec) })}</Text> : null}
+          <Text style={styles.value}>{formatDecimal(influence)}</Text>
+          {rates.influencePerSec.gt(0) ? <Text style={styles.rate}>{t('status.ratePerSec', { amount: formatDecimal(rates.influencePerSec) })}</Text> : null}
         </View>
       </View>
 

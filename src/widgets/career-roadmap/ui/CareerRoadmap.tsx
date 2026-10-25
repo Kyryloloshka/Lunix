@@ -6,10 +6,10 @@ import {
   type RankResource,
   type RequirementProgress,
 } from '@entities/career-rank';
-import { Badge, DevGlyph, Panel, ProgressBar, type GlyphName } from '@shared/ui';
+import { Badge, DevGlyph, Panel, ProgressBar, ResourceValue, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import type { Decimal } from '@shared/lib/decimal';
-import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
+import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
 import { t, useLocale } from '@shared/i18n';
 import { useSkillStore } from '@features/purchase-skill';
 
@@ -33,9 +33,9 @@ const RANK_GLYPHS: Record<number, GlyphName> = {
 };
 
 const FORMAT: Record<RankResource, (value: Decimal) => string> = {
-  cognitive: formatCognitive,
-  capital: formatCurrency,
-  influence: formatInfluence,
+  cognitive: (value) => formatDecimal(value),
+  capital: (value) => formatCurrency(value),
+  influence: (value) => formatDecimal(value),
 };
 
 function requirementLabel({ requirement }: RequirementProgress): string {
@@ -172,7 +172,13 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
                       <View key={itemIndex} style={itemIndex > 0 ? styles.reqMargin : undefined}>
                         <View style={styles.reqRow}>
                           <Text style={styles.reqLabel}>{requirementLabel(item)}</Text>
-                          <Text style={styles.reqValue}>{requirementValue(item)}</Text>
+                          {item.requirement.type === 'skillLevel' ? (
+                            <Text style={styles.reqValue}>{requirementValue(item)}</Text>
+                          ) : (
+                            <ResourceValue kind={item.requirement.resource} style={styles.reqValue}>
+                              {requirementValue(item)}
+                            </ResourceValue>
+                          )}
                         </View>
                         <ProgressBar
                           value={requirementPercent(item)}

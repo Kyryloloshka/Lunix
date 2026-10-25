@@ -93,14 +93,11 @@ export function formatDecimal(
   return `${prefix}${value.mantissa.toFixed(precision)}e${value.exponent}${suffix}`;
 }
 
+/**
+ * Capital keeps `$` as its text unit. Other resources are formatted with plain `formatDecimal`;
+ * their identity (glyph + color) is drawn by the UI next to the number (`ResourceValue`), never as
+ * emoji inside the string.
+ */
 export function formatCurrency(value: Decimal, options?: FormatOptions): string {
   return formatDecimal(value, { ...options, prefix: '$' });
-}
-
-export function formatCognitive(value: Decimal, options?: FormatOptions): string {
-  return formatDecimal(value, { ...options, suffix: ' 🧠' });
-}
-
-export function formatInfluence(value: Decimal, options?: FormatOptions): string {
-  return formatDecimal(value, { ...options, suffix: ' ⚡' });
 }

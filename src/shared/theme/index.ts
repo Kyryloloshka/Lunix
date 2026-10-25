@@ -7,6 +7,8 @@ export {
   typography,
   shadows,
   MIN_READABLE_FONT_SIZE,
+  BRAND_MONO_FAMILY,
+  BRAND_MONO_WEIGHTS,
 } from './tokens';
 export type { ResourceKind, ResourceToken, TypographyRole } from './tokens';
 export { baseTheme, theme, applyAccentOverlay, createRankTheme } from './theme';
