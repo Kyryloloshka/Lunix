@@ -4,7 +4,7 @@ title: Компонентні тести ключових флоу і досту
 type: quality
 priority: P2
 size: M
-status: todo
+status: done
 epic: E8 (dev-tools) / якість
 hook: —
 metric: кількість UI-регресій, що дійшли до збірки
@@ -28,9 +28,16 @@ needs-approval: так — `@testing-library/react-native` (dev-залежніс
 5. Без снепшотів як єдиного покриття.
 
 ## Критерії готовності
-- [ ] ≥ 6 компонентних тестів, усі в `__tests__/` відповідних слайсів.
-- [ ] Тест a11y падає, якщо додати кнопку без лейбла.
-- [ ] `npm test` у межах розумного часу (< 60 с локально).
+- [x] ≥ 6 компонентних тестів, усі в `__tests__/` відповідних слайсів.
+- [x] Тест a11y падає, якщо додати кнопку без лейбла.
+- [x] `npm test` у межах розумного часу (< 60 с локально).
 
 ## Де в коді
 `widgets/*/__tests__`, `pages/game-screen/__tests__`, `jest.config.js`.
+
+## Прогрес
+- Додано dev-залежність `@testing-library/react-native` 14.1.0 (через `npx expo install`; peer `test-renderer` встановився автоматично).
+- `jest.setup.js`: офіційні моки AsyncStorage і gesture-handler, мок `expo-haptics`; у заглушку Reanimated додано `withSequence`, `withRepeat`, `isSharedValue`.
+- Тестові утиліти: `src/shared/lib/testing/` (`renderWithProviders`, `a11yAudit` + власні тести, що перевіряють: аудит падає на кнопці без лейбла/ролі і на табі без `selected`).
+- Тести: `pages/game-screen` (вкладки, перемикання мови на кожній вкладці, a11y-аудит усіх вкладок на старті й на ранзі 6), `widgets/workspace-clicker` (тап), `widgets/skills-catalog` (купівля, disabled), `widgets/career-roadmap` (промоушн), `widgets/bottom-dock`.
+- Продакшн-код не змінено.
