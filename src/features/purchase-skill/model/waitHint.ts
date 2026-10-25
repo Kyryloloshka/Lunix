@@ -19,8 +19,8 @@ export type WaitHint =
 export function getWaitIncome(resource: SkillResource, income: ResourceAmounts, rates: ResourceRates): Decimal {
   const real = income[resource];
   const passive = resource === 'cognitive' ? rates.cognitivePerSec : resource === 'capital' ? rates.capitalPerSec : rates.influencePerSec;
-  // The 5 s window lags right after a purchase or a pause and would promise minutes for a few seconds
-  // of passive income, so the passive rate is a floor for the estimate.
+  // Real income lags a second behind a purchase and drops between taps, which would promise minutes
+  // for a moment, so the passive rate is a floor for the estimate.
   return real.gt(passive) ? real : passive;
 }
 

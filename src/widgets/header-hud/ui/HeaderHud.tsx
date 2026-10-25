@@ -110,7 +110,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
               <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
                 {HUD_FORMAT[resource](balances[resource])}
               </Text>
-              {/* T-017: the big number is what really came in over ~5 s (taps included); passive sits under it. */}
+              {/* T-017: the big number is what really came in during the last second (taps included); passive sits under it. */}
               {income[resource].gt(0) || perSec[resource].gt(0) ? (
                 <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
                   {t('status.ratePerSec', { amount: HUD_FORMAT[resource](income[resource].gt(0) ? income[resource] : perSec[resource]) })}

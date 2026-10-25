@@ -19,7 +19,7 @@ export {
 export {
   EMPTY_INCOME_WINDOW,
   INCOME_GAP_RESET_MS,
-  INCOME_WINDOW_MS,
+  INCOME_BUCKET_MS,
   getIncomePerSec,
   recordIncome,
 } from './model/income';

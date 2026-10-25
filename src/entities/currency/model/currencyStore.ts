@@ -67,7 +67,7 @@ export function getStressPenaltyPercent(stress: number): number {
 export interface CurrencyStore extends ResourceState {
   flow: FlowState;
   rates: ResourceRates;
-  /** Real earnings per second over the last ~5 s (taps, passive, Flow, stress). Runtime only, never saved. */
+  /** Real earnings per second in the last completed second (taps, passive, Flow, stress). Runtime only, never saved. */
   income: ResourceAmounts;
   incomeWindow: IncomeWindow;
   lastSavedAt: number;
