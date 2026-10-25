@@ -1,5 +1,6 @@
 import { getLocale, setLocale, t, type Locale } from '@shared/i18n';
-import { FILLED_TONES, glyphSymbols } from '@shared/ui';
+import { FILLED_TONES } from '../../ui/GameButton';
+import { glyphSymbols } from '../../ui/DevGlyph';
 import {
   baseTheme,
   colors,
