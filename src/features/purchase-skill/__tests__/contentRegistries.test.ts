@@ -1,4 +1,13 @@
-import { BRANCH_RESOURCE, SKILLS, UPGRADES, skillById, type SkillResource } from '@entities/skill';
+import {
+  BRANCH_RESOURCE,
+  SKILLS,
+  TECH_UPGRADES,
+  UPGRADES,
+  skillById,
+  type ProducerSkill,
+  type SkillBranch,
+  type SkillResource,
+} from '@entities/skill';
 import { CAREER_RANKS, RESOURCE_UNLOCK_RANK, isResourceUnlocked } from '@entities/career-rank';
 import en from '@shared/i18n/locales/en.json';
 import uk from '@shared/i18n/locales/uk.json';
@@ -88,10 +97,51 @@ describe('content registries (docs/economy/phases.md)', () => {
     });
   });
 
+  const producers = SKILLS.filter((skill): skill is ProducerSkill => skill.kind === 'producer');
+
+  it('fills Middle → Tech Lead with new rungs in every open branch (phases.md §5.5)', () => {
+    // One new skill per branch per rank left 2–5 minute pauses without a purchase; stage 4 adds fillers.
+    [5, 6, 7].forEach((rank) => {
+      (['knowledge', 'work', 'influence'] as SkillBranch[]).forEach((branch) => {
+        const fresh = producers.filter((skill) => skill.branch === branch && skill.unlockRank === rank);
+        expect([rank, branch, fresh.length >= 2]).toEqual([rank, branch, true]);
+      });
+    });
+  });
+
+  it('keeps every branch a ladder without huge price jumps on ranks 5–7', () => {
+    (['knowledge', 'work', 'influence'] as SkillBranch[]).forEach((branch) => {
+      const ladder = producers
+        .filter((skill) => skill.branch === branch && skill.unlockRank >= 5 && skill.unlockRank <= 7)
+        .map((skill) => skill.baseCost)
+        .sort((a, b) => a.compareTo(b));
+      ladder.slice(1).forEach((cost, index) => {
+        expect(cost.divide(ladder[index]).toNumber()).toBeLessThanOrEqual(6);
+      });
+    });
+  });
+
+  it('prices tech upgrades from real knowledge, also for work skills gated by work skills', () => {
+    const knowledgeBases = producers.filter((skill) => skill.branch === 'knowledge').map((skill) => skill.baseCost);
+    TECH_UPGRADES.filter((upgrade) => upgrade.costResource === 'cognitive').forEach((upgrade) => {
+      // Tier 1 costs 25 × the base of the knowledge skill behind the upgraded skill.
+      if (upgrade.tier !== 1) return;
+      const pricedFromKnowledge = knowledgeBases.some((base) => base.multiplyScalar(25).eq(upgrade.cost));
+      expect([upgrade.id, pricedFromKnowledge]).toEqual([upgrade.id, true]);
+    });
+    const legacy = TECH_UPGRADES.find((upgrade) => upgrade.id === 'legacy-php-opt-1');
+    const petProjectBasis = skillById('algorithms')!.baseCost.multiplyScalar(25);
+    expect(legacy?.cost.eq(petProjectBasis)).toBe(true);
+  });
+
   it('has player-facing names for all content in every locale', () => {
     const keys = [
       ...SKILLS.flatMap((skill) => [`skills.items.${skill.id}.name`, `skills.items.${skill.id}.desc`]),
       ...UPGRADES.filter((upgrade) => upgrade.kind === 'leadership').map((upgrade) => `skills.leadership.${upgrade.id}.name`),
+      ...TECH_UPGRADES.map((upgrade) => {
+        const target = upgrade.effect.type === 'skillMultiplier' ? skillById(upgrade.effect.skillId) : undefined;
+        return `skills.upgradeTiers.${target?.branch}.${upgrade.tier}`;
+      }),
       ...CAREER_RANKS.flatMap((rank) => [`career.ranks.${rank.id}.title`, `career.ranks.${rank.id}.desc`]),
       ...Object.keys(BRANCH_RESOURCE).map((branch) => `skills.branches.${branch}`),
       ...['Cognitive', 'Capital', 'Influence'].map((resource) => `workspace.hint${resource}`),

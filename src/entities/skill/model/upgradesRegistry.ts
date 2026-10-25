@@ -19,13 +19,17 @@ const INFLUENCE_TIERS = [
 const producers = SKILLS.filter((skill): skill is ProducerSkill => skill.kind === 'producer');
 
 /** The knowledge skill whose base cost prices a skill's tech upgrades (own base for knowledge skills). */
-function knowledgeBasis(skill: ProducerSkill): ProducerSkill {
+function knowledgeBasis(skill: ProducerSkill, depth = 0): ProducerSkill {
   if (skill.branch === 'knowledge') return skill;
-  const knowledgeRequirement = skill.prerequisites
-    ?.map((requirement) => producers.find((candidate) => candidate.id === requirement.skillId))
-    .find((candidate) => candidate?.branch === 'knowledge');
-  // Skills gated only by another work skill (own-cloud) price from the last knowledge skill.
-  return knowledgeRequirement ?? producers.filter((candidate) => candidate.branch === 'knowledge').at(-1)!;
+  const required = (skill.prerequisites ?? [])
+    .map((requirement) => producers.find((candidate) => candidate.id === requirement.skillId))
+    .filter((candidate): candidate is ProducerSkill => candidate !== undefined);
+  const knowledgeRequirement = required.find((candidate) => candidate.branch === 'knowledge');
+  if (knowledgeRequirement) return knowledgeRequirement;
+  // A work skill gated by another work skill prices from that skill's knowledge (own-cloud → ai-startup → ml).
+  const workRequirement = required.find((candidate) => candidate.branch === 'work');
+  if (workRequirement && depth < producers.length) return knowledgeBasis(workRequirement, depth + 1);
+  return producers.filter((candidate) => candidate.branch === 'knowledge').at(-1)!;
 }
 
 function buildTechUpgrades(): Upgrade[] {

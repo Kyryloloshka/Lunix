@@ -54,8 +54,6 @@ const SKILL_GLYPHS: Record<string, GlyphName> = {
   'mech-keyboard': 'terminal',
 };
 
-const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
-
 function skillName(id: string): string {
   return t(`skills.items.${id}.name`);
 }
@@ -63,7 +61,8 @@ function skillName(id: string): string {
 function upgradeName(upgrade: Upgrade): string {
   if (upgrade.kind === 'leadership') return t(`skills.leadership.${upgrade.id}.name`);
   const target = upgrade.effect.type === 'skillMultiplier' ? upgrade.effect.skillId : '';
-  return t('skills.upgradeTier', { skill: skillName(target), tier: ROMAN[(upgrade.tier ?? 1) - 1] ?? String(upgrade.tier) });
+  const branch = skillById(target)?.branch ?? 'knowledge';
+  return t('skills.upgradeTier', { skill: skillName(target), tier: t(`skills.upgradeTiers.${branch}.${upgrade.tier ?? 1}`) });
 }
 
 function upgradeEffectText(upgrade: Upgrade): string {
