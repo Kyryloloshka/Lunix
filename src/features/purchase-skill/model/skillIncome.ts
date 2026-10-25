@@ -1,6 +1,7 @@
 import { Decimal } from '@shared/lib/decimal';
 import {
   SKILLS,
+  calculateProducerOutputs,
   calculateSkillEffects,
   getTapStressMultiplier,
   skillById,
@@ -59,6 +60,12 @@ function diffRates(after: ResourceRates, before: ResourceRates): RateChange {
   return { perSec, perTap, stressPerTapReduction };
 }
 
+function producerChange(resource: SkillResource, perSecGain: Decimal): RateChange {
+  const perSec = { capital: Decimal.ZERO, cognitive: Decimal.ZERO, influence: Decimal.ZERO };
+  perSec[resource] = perSecGain.isPositive() ? perSecGain : Decimal.ZERO;
+  return { perSec, perTap: { capital: Decimal.ZERO, cognitive: Decimal.ZERO, influence: Decimal.ZERO }, stressPerTapReduction: 0 };
+}
+
 function ratesOf(state: SkillIncomeState): ResourceRates {
   return calculateRates(state.levels, state.purchasedUpgrades);
 }
@@ -77,6 +84,13 @@ function clampLevels(skillId: string, current: number, levels: number): number {
 export function previewSkillGain(state: SkillIncomeState, skillId: string, levels: number): RateChange {
   const current = state.levels[skillId] ?? 0;
   const bought = clampLevels(skillId, current, levels);
+  const skill = skillById(skillId);
+  if (skill?.kind === 'producer') {
+    // A producer changes only its own output; skip the full rate recalculation (catalog renders often).
+    const before = calculateProducerOutputs(state.levels, state.purchasedUpgrades, [skillId])[skillId];
+    const after = calculateProducerOutputs({ ...state.levels, [skillId]: current + bought }, state.purchasedUpgrades, [skillId])[skillId];
+    return producerChange(skill.produces, after.subtract(before));
+  }
   const after = calculateRates({ ...state.levels, [skillId]: current + bought }, state.purchasedUpgrades);
   return diffRates(after, ratesOf(state));
 }
@@ -100,14 +114,17 @@ export function decimalShare(part: Decimal, total: Decimal): number {
 export function getSkillContribution(state: SkillIncomeState, skillId: string): SkillContribution {
   const skill = skillById(skillId);
   const now = ratesOf(state);
+  if (skill?.kind === 'producer') {
+    // Producers are independent: what one adds is exactly its own output.
+    const output = calculateProducerOutputs(state.levels, state.purchasedUpgrades, [skillId])[skillId];
+    return {
+      ...producerChange(skill.produces, output),
+      resource: skill.produces,
+      share: decimalShare(output, now[PER_SEC[skill.produces]]),
+    };
+  }
   const without = calculateRates({ ...state.levels, [skillId]: 0 }, state.purchasedUpgrades);
-  const change = diffRates(now, without);
-  if (!skill || skill.kind !== 'producer') return { ...change, resource: null, share: null };
-  return {
-    ...change,
-    resource: skill.produces,
-    share: decimalShare(change.perSec[skill.produces], now[PER_SEC[skill.produces]]),
-  };
+  return { ...diffRates(now, without), resource: null, share: null };
 }
 
 export interface UpgradePreview {
@@ -120,18 +137,9 @@ export interface UpgradePreview {
   skillId: string | null;
 }
 
-/** Output of the given producers per second: each skill's own share, summed. */
-function outputOf(
-  levels: Record<string, number>,
-  upgrades: string[],
-  skillIds: readonly string[],
-  resource: SkillResource,
-): Decimal {
-  const total = calculateRates(levels, upgrades)[PER_SEC[resource]];
-  return skillIds.reduce((sum, id) => {
-    const rest = calculateRates({ ...levels, [id]: 0 }, upgrades)[PER_SEC[resource]];
-    return sum.add(total.subtract(rest));
-  }, Decimal.ZERO);
+/** Output of the given producers per second, from one pass over the skills (producers are independent). */
+function outputOf(outputs: Record<string, Decimal>, skillIds: readonly string[]): Decimal {
+  return skillIds.reduce((sum, id) => sum.add(outputs[id] ?? Decimal.ZERO), Decimal.ZERO);
 }
 
 function branchProducers(branch: SkillBranch, resource: SkillResource): string[] {
@@ -144,16 +152,21 @@ export function previewUpgrade(state: SkillIncomeState, upgradeId: string): Upgr
   const upgrade = upgradeById(upgradeId);
   if (!upgrade) return null;
   const without = state.purchasedUpgrades.filter((id) => id !== upgradeId);
-  const withUpgrade = [...without, upgradeId];
   const { effect } = upgrade;
+  // Only the producers this upgrade touches are recomputed: the catalog previews ~150 upgrades at once.
+  const touched = effect.type === 'skillMultiplier'
+    ? [effect.skillId]
+    : SKILLS.filter((skill) => skill.branch === effect.branch).map((skill) => skill.id);
+  const outputsBefore = calculateProducerOutputs(state.levels, without, touched);
+  const outputsAfter = calculateProducerOutputs(state.levels, [...without, upgradeId], touched);
   if (effect.type === 'skillMultiplier') {
     const skill = skillById(effect.skillId);
     if (!skill || skill.kind !== 'producer') return null;
     const ids = [skill.id];
     return {
       resource: skill.produces,
-      before: outputOf(state.levels, without, ids, skill.produces),
-      after: outputOf(state.levels, withUpgrade, ids, skill.produces),
+      before: outputOf(outputsBefore, ids),
+      after: outputOf(outputsAfter, ids),
       skillId: skill.id,
     };
   }
@@ -163,8 +176,8 @@ export function previewUpgrade(state: SkillIncomeState, upgradeId: string): Upgr
     return {
       resource,
       ids,
-      before: outputOf(state.levels, without, ids, resource),
-      after: outputOf(state.levels, withUpgrade, ids, resource),
+      before: outputOf(outputsBefore, ids),
+      after: outputOf(outputsAfter, ids),
     };
   }).filter((entry) => entry.ids.length > 0);
   const main = candidates.reduce((best, entry) => (entry.after.gt(best.after) ? entry : best), candidates[0]);

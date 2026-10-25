@@ -72,4 +72,6 @@ export const SKILLS: SkillDefinition[] = [
   { id: 'mech-keyboard', kind: 'perk', branch: 'work', unlockRank: 3, costResource: 'capital', baseCost: D(200), costGrowth: 1.7, maxLevel: 10, effect: { type: 'tapPower', resources: ['capital'], perLevel: 1 } },
 ];
 
-export const skillById = (id: string): SkillDefinition | undefined => SKILLS.find((skill) => skill.id === id);
+// Rates are recomputed many times per frame in the catalog; a map keeps lookups O(1).
+const SKILLS_BY_ID = new Map(SKILLS.map((skill) => [skill.id, skill]));
+export const skillById = (id: string): SkillDefinition | undefined => SKILLS_BY_ID.get(id);

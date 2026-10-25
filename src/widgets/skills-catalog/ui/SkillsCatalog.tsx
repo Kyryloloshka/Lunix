@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   BRANCH_RESOURCE,
@@ -193,6 +193,107 @@ function requirementText(skill: SkillDefinition): string {
     .join(' · ');
 }
 
+interface UpgradeCardProps {
+  upgrade: Upgrade;
+  isOwned: boolean;
+  meetsLevel: boolean;
+  targetLevel: number;
+  affordable: boolean;
+  preview: UpgradePreview | null;
+  wait: WaitLabel | null;
+  /** Purchase pulse, only on the card that was just bought. */
+  overlay: ReactNode;
+  onBuy: (upgrade: Upgrade) => void;
+}
+
+/**
+ * One upgrade card. Memoized: the Upgrades tab can hold ~150 cards and the catalog re-renders on
+ * every game tick, so only cards whose props changed (affordability, wait hint) render again.
+ */
+const UpgradeCard = memo(function UpgradeCard({
+  upgrade, isOwned, meetsLevel, targetLevel, affordable, preview, wait, overlay, onBuy,
+}: UpgradeCardProps) {
+  useLocale();
+  const required = upgrade.requiredSkill;
+  const glyphName = upgrade.effect.type === 'branchMultiplier'
+    ? BRANCH_GLYPHS[upgrade.effect.branch]
+    : SKILL_GLYPHS[upgrade.effect.skillId] ?? BRANCH_GLYPHS[skillById(upgrade.effect.skillId)?.branch ?? 'knowledge'];
+  const name = upgradeName(upgrade);
+    return (
+      <View style={styles.cardWrapper}>
+        {overlay}
+        <View style={[styles.card, isOwned && styles.cardOwned]}>
+          <View style={styles.cardIcon}>
+            <DevGlyph name={glyphName} size={15} color={colors.accent.amber} />
+          </View>
+          <View style={styles.cardBody}>
+            <View style={styles.cardTitleRow}>
+              <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
+            </View>
+            <Text style={[styles.level, styles.upgradeEffect]}>{upgradeEffectText(upgrade)}</Text>
+            {preview && meetsLevel && (preview.before.gt(0) || preview.after.gt(0)) ? (
+              <Text style={styles.bonus} numberOfLines={1}>
+                {preview.skillId ? `${skillName(preview.skillId)}: ` : `${t(`skills.branches.${upgrade.effect.type === 'branchMultiplier' ? upgrade.effect.branch : 'knowledge'}`)}: `}
+                <ResourceValue kind={preview.resource}>
+                  {t('skills.upgradeFromTo', {
+                    from: FORMAT[preview.resource](preview.before),
+                    to: FORMAT[preview.resource](preview.after),
+                  })}
+                </ResourceValue>
+              </Text>
+            ) : null}
+            <Text style={[styles.bonus, !meetsLevel && { color: colors.accent.rustBright }]}>
+              {required
+                ? (meetsLevel
+                  ? t('skills.targetLevel', { skill: skillName(required.skillId), level: targetLevel })
+                  : t('skills.reqLevel', { skill: skillName(required.skillId), level: required.level }))
+                : t('skills.leadershipHint')}
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={wait ? `${t('skills.buy')} ${name}. ${wait.a11y}` : `${t('skills.buy')} ${name}`}
+            accessibilityState={{ disabled: !affordable || isOwned }}
+            disabled={!affordable || isOwned}
+            onPress={() => onBuy(upgrade)}
+            style={[
+              styles.buyButton,
+              (!affordable || isOwned) && styles.buyDisabled,
+              isOwned && styles.buyOwned,
+            ]}
+          >
+            <Text
+              style={[styles.buyText, isOwned && { color: colors.text.muted }]}
+              numberOfLines={1}
+              maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
+            >
+              {isOwned ? t('skills.purchased') : (
+                <ResourceValue kind={upgrade.costResource}>
+                  {FORMAT[upgrade.costResource](upgrade.cost)}
+                </ResourceValue>
+              )}
+            </Text>
+            <Text style={[styles.buyLabel, wait && styles.buyWait]} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
+              {isOwned ? t('skills.active') : (wait?.text ?? t('skills.buy'))}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+}, (prev, next) => (
+  // The wait label is rebuilt every tick; compare its text, not its identity.
+  prev.upgrade === next.upgrade
+  && prev.isOwned === next.isOwned
+  && prev.meetsLevel === next.meetsLevel
+  && prev.targetLevel === next.targetLevel
+  && prev.affordable === next.affordable
+  && prev.preview === next.preview
+  && prev.wait?.text === next.wait?.text
+  && prev.wait?.a11y === next.wait?.a11y
+  && prev.overlay === next.overlay
+  && prev.onBuy === next.onBuy
+));
+
 export function SkillsCatalog() {
   useLocale();
   const [category, setCategory] = useState<CatalogTab>('knowledge');
@@ -250,6 +351,17 @@ export function SkillsCatalog() {
     }
     return map;
   }, [visibleSkills, levels, purchasedUpgrades]);
+  // Gains only change with levels and upgrades, but the catalog renders on every tick: cache them.
+  const gainCache = useMemo(() => new Map<string, RateChange>(), [levels, purchasedUpgrades]);
+  const gainFor = (skillId: string, count: number): RateChange => {
+    const key = `${skillId}:${count}`;
+    let gain = gainCache.get(key);
+    if (!gain) {
+      gain = previewSkillGain({ levels, purchasedUpgrades }, skillId, count);
+      gainCache.set(key, gain);
+    }
+    return gain;
+  };
   const upgradePreviews = useMemo(() => {
     const map = new Map<string, UpgradePreview | null>();
     for (const upgrade of visibleUpgrades) map.set(upgrade.id, previewUpgrade({ levels, purchasedUpgrades }, upgrade.id));
@@ -287,6 +399,11 @@ export function SkillsCatalog() {
     if (buyUpgrade(upgrade.id)) pulse(upgrade.id);
   };
 
+  // Latest handler behind a stable callback, so memoized cards keep equal props between ticks.
+  const buyUpgradeRef = useRef(handleBuyUpgrade);
+  buyUpgradeRef.current = handleBuyUpgrade;
+  const onBuyUpgrade = useCallback((upgrade: Upgrade) => buyUpgradeRef.current(upgrade), []);
+
   const pulseOverlay = (id: string) => (upgradedSkillId === id ? (
     <Animated.View
       pointerEvents="none"
@@ -306,78 +423,25 @@ export function SkillsCatalog() {
     const targetLevel = required ? levels[required.skillId] ?? 0 : 0;
     const meetsLevel = !required || targetLevel >= required.level;
     const affordable = !isOwned && meetsLevel && balances[upgrade.costResource].gte(upgrade.cost);
-    const glyphName = upgrade.effect.type === 'branchMultiplier'
-      ? BRANCH_GLYPHS[upgrade.effect.branch]
-      : SKILL_GLYPHS[upgrade.effect.skillId] ?? BRANCH_GLYPHS[skillById(upgrade.effect.skillId)?.branch ?? 'knowledge'];
-    const name = upgradeName(upgrade);
-    const preview = upgradePreviews.get(upgrade.id) ?? null;
     const wait = !isOwned && meetsLevel && !affordable
       ? waitLabel(
         getWaitHint(upgrade.cost, balances[upgrade.costResource], getWaitIncome(upgrade.costResource, income, rates)),
         upgrade.costResource,
       )
       : null;
-
     return (
-      <View key={upgrade.id} style={styles.cardWrapper}>
-        {pulseOverlay(upgrade.id)}
-        <View style={[styles.card, isOwned && styles.cardOwned]}>
-          <View style={styles.cardIcon}>
-            <DevGlyph name={glyphName} size={15} color={colors.accent.amber} />
-          </View>
-          <View style={styles.cardBody}>
-            <View style={styles.cardTitleRow}>
-              <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
-            </View>
-            <Text style={[styles.level, styles.upgradeEffect]}>{upgradeEffectText(upgrade)}</Text>
-            {preview && meetsLevel && (preview.before.gt(0) || preview.after.gt(0)) ? (
-              <Text style={styles.bonus} numberOfLines={1}>
-                {preview.skillId ? `${skillName(preview.skillId)}: ` : `${t(`skills.branches.${upgrade.effect.type === 'branchMultiplier' ? upgrade.effect.branch : 'knowledge'}`)}: `}
-                <ResourceValue kind={preview.resource}>
-                  {t('skills.upgradeFromTo', {
-                    from: FORMAT[preview.resource](preview.before),
-                    to: FORMAT[preview.resource](preview.after),
-                  })}
-                </ResourceValue>
-              </Text>
-            ) : null}
-            <Text style={[styles.bonus, !meetsLevel && { color: colors.accent.rustBright }]}>
-              {required
-                ? (meetsLevel
-                  ? t('skills.targetLevel', { skill: skillName(required.skillId), level: targetLevel })
-                  : t('skills.reqLevel', { skill: skillName(required.skillId), level: required.level }))
-                : t('skills.leadershipHint')}
-            </Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={wait ? `${t('skills.buy')} ${name}. ${wait.a11y}` : `${t('skills.buy')} ${name}`}
-            accessibilityState={{ disabled: !affordable || isOwned }}
-            disabled={!affordable || isOwned}
-            onPress={() => handleBuyUpgrade(upgrade)}
-            style={[
-              styles.buyButton,
-              (!affordable || isOwned) && styles.buyDisabled,
-              isOwned && styles.buyOwned,
-            ]}
-          >
-            <Text
-              style={[styles.buyText, isOwned && { color: colors.text.muted }]}
-              numberOfLines={1}
-              maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
-            >
-              {isOwned ? t('skills.purchased') : (
-                <ResourceValue kind={upgrade.costResource}>
-                  {FORMAT[upgrade.costResource](upgrade.cost)}
-                </ResourceValue>
-              )}
-            </Text>
-            <Text style={[styles.buyLabel, wait && styles.buyWait]} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
-              {isOwned ? t('skills.active') : (wait?.text ?? t('skills.buy'))}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+      <UpgradeCard
+        key={upgrade.id}
+        upgrade={upgrade}
+        isOwned={isOwned}
+        meetsLevel={meetsLevel}
+        targetLevel={targetLevel}
+        affordable={affordable}
+        preview={upgradePreviews.get(upgrade.id) ?? null}
+        wait={wait}
+        overlay={pulseOverlay(upgrade.id)}
+        onBuy={onBuyUpgrade}
+      />
     );
   };
 
@@ -422,7 +486,7 @@ export function SkillsCatalog() {
             <Text style={styles.bonus}>
               <GainText
                 skill={skill}
-                gain={previewSkillGain({ levels, purchasedUpgrades }, skill.id, effectiveGain)}
+                gain={gainFor(skill.id, effectiveGain)}
                 rank={currentRank}
               />
             </Text>

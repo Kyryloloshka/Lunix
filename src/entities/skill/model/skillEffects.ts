@@ -1,6 +1,6 @@
 import { Decimal } from '@shared/lib/decimal';
-import { SKILLS } from './skillRegistry';
-import { UPGRADES } from './upgradesRegistry';
+import { SKILLS, skillById } from './skillRegistry';
+import { upgradeById } from './upgradesRegistry';
 import type { SkillResource } from './types';
 
 export interface SkillEffects {
@@ -101,23 +101,60 @@ export function getMilestoneMultiplier(level: number): number {
   return 2 ** MILESTONE_LEVELS.filter((milestone) => level >= milestone).length;
 }
 
+interface UpgradeMultipliers {
+  skill: Record<string, number>;
+  branch: Record<string, number>;
+}
+
+function getUpgradeMultipliers(purchasedUpgrades: readonly string[]): UpgradeMultipliers {
+  const skill: Record<string, number> = {};
+  const branch: Record<string, number> = {};
+  for (const id of purchasedUpgrades) {
+    const upgrade = upgradeById(id);
+    if (!upgrade) continue;
+    const { effect } = upgrade;
+    if (effect.type === 'skillMultiplier') {
+      skill[effect.skillId] = (skill[effect.skillId] ?? 1) * effect.multiplier;
+    } else {
+      branch[effect.branch] = (branch[effect.branch] ?? 1) * effect.multiplier;
+    }
+  }
+  return { skill, branch };
+}
+
+function producerOutput(skill: (typeof SKILLS)[number], level: number, multipliers: UpgradeMultipliers): Decimal {
+  if (skill.kind !== 'producer' || level <= 0) return Decimal.ZERO;
+  const multiplier = getMilestoneMultiplier(level)
+    * (multipliers.skill[skill.id] ?? 1)
+    * (multipliers.branch[skill.branch] ?? 1);
+  return skill.perLevel.multiplyScalar(level * multiplier);
+}
+
+/**
+ * Passive output per second of each producer, in one pass. Producers are independent, so a skill's
+ * share of income is exactly its own output; previews use this instead of recomputing all rates.
+ */
+export function calculateProducerOutputs(
+  levels: Record<string, number>,
+  purchasedUpgrades: readonly string[] = [],
+  /** Only these producers (e.g. the ones an upgrade touches); all of them when omitted. */
+  onlySkillIds?: readonly string[],
+): Record<string, Decimal> {
+  const multipliers = getUpgradeMultipliers(purchasedUpgrades);
+  const outputs: Record<string, Decimal> = {};
+  const skills = onlySkillIds ? onlySkillIds.map(skillById) : SKILLS;
+  for (const skill of skills) {
+    if (skill?.kind === 'producer') outputs[skill.id] = producerOutput(skill, levels[skill.id] ?? 0, multipliers);
+  }
+  return outputs;
+}
+
 /** Derived state: recomputed from levels and purchases after every change, never saved. */
 export function calculateSkillEffects(
   levels: Record<string, number>,
   purchasedUpgrades: string[] = [],
 ): SkillEffects {
-  const skillMultipliers: Record<string, number> = {};
-  const branchMultipliers: Record<string, number> = {};
-  for (const id of purchasedUpgrades) {
-    const upgrade = UPGRADES.find((item) => item.id === id);
-    if (!upgrade) continue;
-    const { effect } = upgrade;
-    if (effect.type === 'skillMultiplier') {
-      skillMultipliers[effect.skillId] = (skillMultipliers[effect.skillId] ?? 1) * effect.multiplier;
-    } else {
-      branchMultipliers[effect.branch] = (branchMultipliers[effect.branch] ?? 1) * effect.multiplier;
-    }
-  }
+  const multipliers = getUpgradeMultipliers(purchasedUpgrades);
 
   const perSec: Record<SkillResource, Decimal> = {
     capital: Decimal.ZERO,
@@ -132,10 +169,7 @@ export function calculateSkillEffects(
     if (level <= 0) continue;
 
     if (skill.kind === 'producer') {
-      const multiplier = getMilestoneMultiplier(level)
-        * (skillMultipliers[skill.id] ?? 1)
-        * (branchMultipliers[skill.branch] ?? 1);
-      perSec[skill.produces] = perSec[skill.produces].add(skill.perLevel.multiplyScalar(level * multiplier));
+      perSec[skill.produces] = perSec[skill.produces].add(producerOutput(skill, level, multipliers));
     } else if (skill.effect.type === 'tapPower') {
       // Levels of one perk add up; different perks multiply ("base × perks", phases.md §4). The approved
       // pacing (§8) assumes this: additive stacking left Work taps ~5× weaker and Senior 30 min late.

@@ -76,4 +76,6 @@ export const TECH_UPGRADES: Upgrade[] = buildTechUpgrades();
 
 export const UPGRADES: Upgrade[] = [...TECH_UPGRADES, ...LEADERSHIP_PERKS];
 
-export const upgradeById = (id: string): Upgrade | undefined => UPGRADES.find((upgrade) => upgrade.id === id);
+// Looked up for every purchased upgrade on each rate recalculation; a map keeps that O(1).
+const UPGRADES_BY_ID = new Map(UPGRADES.map((upgrade) => [upgrade.id, upgrade]));
+export const upgradeById = (id: string): Upgrade | undefined => UPGRADES_BY_ID.get(id);

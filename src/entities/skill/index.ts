@@ -4,6 +4,7 @@ export {
   INITIAL_SKILL_LEVELS,
   MILESTONE_LEVELS,
   calculateBulkPurchase,
+  calculateProducerOutputs,
   calculateSkillEffects,
   getBulkSkillCost,
   getMaxAffordableLevel,
