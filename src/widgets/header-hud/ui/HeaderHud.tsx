@@ -42,7 +42,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
         <View style={styles.rankBadge}>
           <DevGlyph name="rank" size={12} color={rankTheme.accentBright} />
           <Text style={styles.rankText} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
-            [{rankIndex + 1}] {rankTitle}
+            {rankTitle}
           </Text>
         </View>
 

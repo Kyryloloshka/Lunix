@@ -1,25 +1,32 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCurrencyStore } from '@entities/currency';
 import {
-  CAREER_RANKS,
+  getFirstUnmetRequirement,
   getRankProgress,
+  getRequirementRatio,
+  getRequirementShortfall,
+  getVisibleLadder,
+  type LadderStep,
   type RankResource,
   type RequirementProgress,
 } from '@entities/career-rank';
 import {
   Badge,
   DevGlyph,
+  FadeSlideIn,
   MIN_TOUCH_TARGET,
   Panel,
   PanelHeader,
   ProgressBar,
   type GlyphName,
 } from '@shared/ui';
-import { colors, radii, spacing, typography } from '@shared/theme';
+import { colors, radii, resources, spacing, typography } from '@shared/theme';
 import type { Decimal } from '@shared/lib/decimal';
 import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
 import { t, useLocale } from '@shared/i18n';
 import { useSkillStore } from '@features/purchase-skill';
+import { PromotionCelebration } from './PromotionCelebration';
 
 interface CareerRoadmapProps {
   currentRankId: number;
@@ -46,6 +53,8 @@ const FORMAT: Record<RankResource, (value: Decimal) => string> = {
   influence: formatInfluence,
 };
 
+const NODE_SIZE = 36;
+
 function requirementLabel({ requirement }: RequirementProgress): string {
   switch (requirement.type) {
     case 'earned':
@@ -63,10 +72,30 @@ function requirementValue({ requirement, current, target }: RequirementProgress)
   return `${format(current)} / ${format(target)}`;
 }
 
-/** 0–100 for a progress bar. Divides as Decimals: toNumber() on the raw values breaks past 1e308. */
-function requirementPercent({ current, target, met }: RequirementProgress): number {
-  if (met || target.isZero()) return 100;
-  return Math.min(100, Math.round(current.divide(target).toNumber() * 100));
+function requirementColor({ requirement, met }: RequirementProgress): string {
+  if (met) return colors.feedback.success;
+  if (requirement.type === 'skillLevel') return colors.accent.amber;
+  return resources[requirement.resource].color;
+}
+
+/** Why the promote button is disabled, in words (state is never conveyed by color alone). */
+function blockerText(blocker: RequirementProgress): string {
+  const { requirement } = blocker;
+  if (requirement.type === 'skillLevel') {
+    return t('career.missingSkill', {
+      skill: t(`skills.items.${requirement.skillId}.name`),
+      level: requirement.level,
+    });
+  }
+  return t('career.missingResource', {
+    amount: FORMAT[requirement.resource](getRequirementShortfall(blocker)),
+    resource: t(`resources.${requirement.resource}`),
+  });
+}
+
+/** Ladder steps top-to-bottom for rendering: silhouette, next, current, then passed ranks. */
+function topDown(steps: LadderStep[]): LadderStep[] {
+  return [...steps].reverse();
 }
 
 export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) {
@@ -78,139 +107,168 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
   const influence = useCurrencyStore((state) => state.influence);
   const levels = useSkillStore((state) => state.levels);
   const promote = useSkillStore((state) => state.promote);
+  const [celebratedRank, setCelebratedRank] = useState<number | null>(null);
   const progressContext = {
     earned: { cognitive: totalCognitiveEarned, capital: totalCapitalEarned },
     balance: { cognitive, capital, influence },
     levels,
   };
 
+  const steps = topDown(getVisibleLadder(currentRankId));
+
+  const renderRank = (rankId: number, state: 'past' | 'current' | 'next') => {
+    const title = t(`career.ranks.${rankId}.title`);
+    const isNext = state === 'next';
+    const progress = isNext ? getRankProgress(rankId, progressContext) : [];
+    const blocker = getFirstUnmetRequirement(progress);
+    const canPromoteNow = isNext && blocker === null;
+    const reason = blocker ? blockerText(blocker) : t('career.readyToPromote');
+
+    return (
+      <View
+        style={[
+          styles.stepCard,
+          state === 'current' && styles.stepCardCurrent,
+          isNext && styles.stepCardNext,
+        ]}
+      >
+        <View style={styles.stepCardHeader}>
+          <Text style={[styles.stepTitle, state === 'past' && styles.textSecondary]}>{title}</Text>
+          {state === 'current' ? (
+            <Badge tone="success" compact>{t('career.active')}</Badge>
+          ) : isNext ? (
+            <Badge tone="flow" compact>{t('career.nextGoal')}</Badge>
+          ) : (
+            <Badge tone="neutral" compact>{t('career.unlocked')}</Badge>
+          )}
+        </View>
+
+        <Text style={styles.stepSubtitle}>{t(`career.ranks.${rankId}.desc`)}</Text>
+
+        {isNext ? (
+          <View style={styles.requirementsBox}>
+            <Text style={styles.reqTitle}>{t('career.reqTitle')}</Text>
+            {progress.map((item, itemIndex) => (
+              <View key={itemIndex} style={itemIndex > 0 ? styles.reqMargin : undefined}>
+                <View style={styles.reqRow}>
+                  <Text style={styles.reqLabel}>
+                    {item.met ? '✓ ' : ''}
+                    {requirementLabel(item)}
+                  </Text>
+                  <Text style={styles.reqValue}>{requirementValue(item)}</Text>
+                </View>
+                <ProgressBar
+                  value={Math.round(getRequirementRatio(item) * 100)}
+                  color={requirementColor(item)}
+                  trackColor={colors.bg.inset}
+                  style={styles.progressBar}
+                />
+              </View>
+            ))}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !canPromoteNow }}
+              accessibilityLabel={
+                canPromoteNow
+                  ? t('career.promoteA11y', { rank: title })
+                  : t('career.promoteBlockedA11y', { rank: title, reason })
+              }
+              disabled={!canPromoteNow}
+              onPress={() => {
+                if (!promote()) return;
+                setCelebratedRank(rankId);
+                onPromote?.(rankId);
+              }}
+              style={({ pressed }) => [
+                styles.promoteButton,
+                !canPromoteNow && styles.promoteButtonDisabled,
+                pressed && canPromoteNow && styles.promoteButtonPressed,
+              ]}
+            >
+              <Text style={[styles.promoteText, !canPromoteNow && styles.promoteTextDisabled]}>
+                {t('career.promote')}
+              </Text>
+            </Pressable>
+            <Text style={[styles.reason, canPromoteNow && styles.reasonReady]}>{reason}</Text>
+          </View>
+        ) : null}
+      </View>
+    );
+  };
+
   return (
     <Panel tone="subtle" style={styles.container}>
       <View style={styles.header}>
-        <PanelHeader
-          eyebrow={t('career.heading')}
-          title={t('career.subheading')}
-          trailing={(
-            <Badge tone="flow">
-              {t('career.progressBadge', {
-                current: currentRankId + 1,
-                total: CAREER_RANKS.length,
-              })}
-            </Badge>
-          )}
-        />
+        <PanelHeader eyebrow={t('career.heading')} title={t('career.subheading')} />
       </View>
 
       <View style={styles.list}>
-        {CAREER_RANKS.map((rank, index) => {
-          const isUnlocked = index <= currentRankId;
-          const isCurrent = index === currentRankId;
-          const isNext = index === currentRankId + 1;
+        {steps.map((step, index) => {
+          const isLast = index === steps.length - 1;
+          const reached = step.kind === 'rank' && step.state !== 'next';
+          const key = step.kind === 'silhouette' ? 'silhouette' : `rank-${step.rankId}`;
 
-          const title = t(`career.ranks.${rank.id}.title`);
-          const desc = t(`career.ranks.${rank.id}.desc`);
-          const glyphName = RANK_GLYPHS[rank.id] || 'code';
-
-          const progress = isNext ? getRankProgress(rank.id, progressContext) : [];
-          const canPromoteNow = progress.length > 0 && progress.every((item) => item.met);
-
-          return (
-            <View key={rank.id} style={styles.stepRow}>
-              {index < CAREER_RANKS.length - 1 ? (
-                <View
-                  style={[
-                    styles.connectorLine,
-                    isUnlocked && styles.connectorLineActive,
-                  ]}
-                />
-              ) : null}
-
-              <View
-                style={[
-                  styles.nodeBadge,
-                  isUnlocked && styles.nodeUnlocked,
-                  isCurrent && styles.nodeCurrent,
-                ]}
-              >
-                <DevGlyph
-                  name={glyphName}
-                  size={15}
-                  color={
-                    isCurrent
-                      ? colors.accent.amberBright
-                      : isUnlocked
-                      ? colors.accent.phosphorBright
-                      : colors.text.muted
-                  }
-                />
-              </View>
-
-              <View
-                style={[
-                  styles.stepCard,
-                  isCurrent && styles.stepCardCurrent,
-                  !isUnlocked && !isNext && styles.stepCardLocked,
-                ]}
-              >
-                <View style={styles.stepCardHeader}>
-                  <Text style={[styles.stepTitle, !isUnlocked && styles.textMuted]}>
-                    {title}
-                  </Text>
-                  {isCurrent ? (
-                    <Badge tone="success" compact>
-                      {t('career.active')}
-                    </Badge>
-                  ) : isUnlocked ? (
-                    <Badge tone="neutral" compact>
-                      {t('career.unlocked')}
-                    </Badge>
-                  ) : (
-                    <Badge tone="danger" compact>
-                      {t('career.locked')}
-                    </Badge>
-                  )}
-                </View>
-
-                <Text style={styles.stepSubtitle}>
-                  {desc}
-                </Text>
-
-                {isNext ? (
-                  <View style={styles.requirementsBox}>
-                    <Text style={styles.reqTitle}>{t('career.reqTitle')}</Text>
-                    {progress.map((item, itemIndex) => (
-                      <View key={itemIndex} style={itemIndex > 0 ? styles.reqMargin : undefined}>
-                        <View style={styles.reqRow}>
-                          <Text style={styles.reqLabel}>{requirementLabel(item)}</Text>
-                          <Text style={styles.reqValue}>{requirementValue(item)}</Text>
-                        </View>
-                        <ProgressBar
-                          value={requirementPercent(item)}
-                          color={item.met ? colors.accent.phosphor : colors.accent.amber}
-                          trackColor={colors.bg.inset}
-                          style={styles.progressBar}
-                        />
-                      </View>
-                    ))}
-                    {canPromoteNow ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={t('career.promote')}
-                        onPress={() => {
-                          if (promote()) onPromote?.(rank.id);
-                        }}
-                        style={styles.promoteButton}
-                      >
-                        <Text style={styles.promoteText}>{t('career.promote')}</Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                ) : null}
-              </View>
+          const node = step.kind === 'silhouette' ? (
+            <View style={[styles.nodeBadge, styles.nodeSilhouette]}>
+              <Text style={styles.silhouetteGlyph}>?</Text>
             </View>
+          ) : (
+            <View
+              style={[
+                styles.nodeBadge,
+                step.state === 'past' && styles.nodePast,
+                step.state === 'current' && styles.nodeCurrent,
+                step.state === 'next' && styles.nodeNext,
+              ]}
+            >
+              <DevGlyph
+                name={RANK_GLYPHS[step.rankId] ?? 'code'}
+                size={15}
+                color={
+                  step.state === 'current'
+                    ? colors.accent.amberBright
+                    : step.state === 'past'
+                    ? colors.accent.phosphorBright
+                    : colors.accent.amber
+                }
+              />
+            </View>
+          );
+
+          const card = step.kind === 'silhouette' ? (
+            <View
+              style={[styles.stepCard, styles.stepCardSilhouette]}
+              accessible
+              accessibilityLabel={t('career.silhouetteA11y')}
+            >
+              <Text style={[styles.stepTitle, styles.textMuted]}>{t('career.silhouetteTitle')}</Text>
+              <Text style={[styles.stepSubtitle, styles.textMuted]}>{t('career.silhouetteDesc')}</Text>
+            </View>
+          ) : (
+            renderRank(step.rankId, step.state)
+          );
+
+          const row = (
+            <View style={styles.stepRow}>
+              {!isLast ? (
+                <View style={[styles.connectorLine, reached ? styles.connectorLineActive : null]} />
+              ) : null}
+              {node}
+              {card}
+            </View>
+          );
+
+          // Newly revealed steps (the next rank, the silhouette) "unmask" with an entrance; keyed by
+          // rank so a promotion replays it for the step that just came into view.
+          return step.kind === 'silhouette' || step.state === 'next' ? (
+            <FadeSlideIn key={key} from="top" duration="slow">{row}</FadeSlideIn>
+          ) : (
+            <View key={key}>{row}</View>
           );
         })}
       </View>
+
+      <PromotionCelebration rankId={celebratedRank} onDismiss={() => setCelebratedRank(null)} />
     </Panel>
   );
 }
@@ -235,9 +293,9 @@ const styles = StyleSheet.create({
   },
   connectorLine: {
     position: 'absolute',
-    left: 17,
-    top: 36,
-    bottom: -16,
+    left: NODE_SIZE / 2 - 1,
+    top: NODE_SIZE,
+    bottom: -spacing.lg,
     width: 2,
     backgroundColor: colors.border.subtle,
     zIndex: 1,
@@ -246,8 +304,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent.phosphor,
   },
   nodeBadge: {
-    width: 36,
-    height: 36,
+    width: NODE_SIZE,
+    height: NODE_SIZE,
     borderRadius: radii.sm,
     backgroundColor: colors.bg.inset,
     borderWidth: 1,
@@ -257,13 +315,26 @@ const styles = StyleSheet.create({
     zIndex: 2,
     marginRight: spacing.sm,
   },
-  nodeUnlocked: {
+  nodePast: {
     borderColor: colors.accent.phosphorDim,
     backgroundColor: colors.accent.phosphorBg,
   },
   nodeCurrent: {
+    borderColor: colors.accent.phosphor,
+    backgroundColor: colors.accent.phosphorBg,
+    borderWidth: 2,
+  },
+  nodeNext: {
     borderColor: colors.accent.amber,
     backgroundColor: colors.accent.amberBg,
+  },
+  nodeSilhouette: {
+    borderStyle: 'dashed',
+    borderColor: colors.border.active,
+  },
+  silhouetteGlyph: {
+    ...typography.roles.monoNum,
+    color: colors.text.muted,
   },
   stepCard: {
     flex: 1,
@@ -274,31 +345,40 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   stepCardCurrent: {
+    borderColor: colors.accent.phosphorDim,
+    backgroundColor: colors.bg.surface,
+  },
+  stepCardNext: {
     borderColor: colors.accent.amber,
     backgroundColor: colors.bg.surface,
   },
-  stepCardLocked: {
-    opacity: 0.5,
+  stepCardSilhouette: {
+    borderStyle: 'dashed',
+    borderColor: colors.border.default,
   },
   stepCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: spacing.xs,
-    marginBottom: 4,
+    marginBottom: spacing.xxs,
   },
   stepTitle: {
     flex: 1,
     minWidth: 0,
     fontFamily: typography.mono,
     fontSize: typography.sizes.sm,
-    fontWeight: '800',
+    fontWeight: typography.weights.black,
     color: colors.text.primary,
   },
   stepSubtitle: {
+    ...typography.roles.body,
     fontSize: typography.sizes.xs,
-    color: colors.text.secondary,
     lineHeight: 16,
+    color: colors.text.secondary,
+  },
+  textSecondary: {
+    color: colors.text.secondary,
   },
   textMuted: {
     color: colors.text.muted,
@@ -306,44 +386,38 @@ const styles = StyleSheet.create({
   requirementsBox: {
     marginTop: spacing.sm,
     padding: spacing.sm,
-    backgroundColor: colors.bg.surface,
+    backgroundColor: colors.bg.inset,
     borderRadius: radii.xs,
     borderWidth: 1,
     borderColor: colors.border.subtle,
   },
   reqTitle: {
-    fontFamily: typography.mono,
-    fontSize: 9,
-    fontWeight: '900',
+    ...typography.roles.label,
     color: colors.accent.amber,
-    letterSpacing: 0.8,
-    marginBottom: 4,
+    marginBottom: spacing.xxs,
   },
   reqRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
     columnGap: spacing.sm,
-    marginBottom: 3,
+    marginBottom: spacing.xxs,
   },
   reqMargin: {
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   reqLabel: {
+    ...typography.roles.label,
     flexShrink: 1,
-    fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
-    color: colors.text.muted,
-    fontWeight: '700',
+    color: colors.text.secondary,
   },
   reqValue: {
-    fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
+    ...typography.roles.label,
+    fontVariant: ['tabular-nums'],
     color: colors.text.primary,
-    fontWeight: '800',
   },
   progressBar: {
-    marginTop: 3,
+    marginTop: spacing.xxs,
   },
   promoteButton: {
     marginTop: spacing.sm,
@@ -355,10 +429,28 @@ const styles = StyleSheet.create({
     borderColor: colors.accent.amber,
     backgroundColor: colors.accent.amberBg,
   },
+  promoteButtonPressed: {
+    backgroundColor: colors.bg.elevated,
+  },
+  promoteButtonDisabled: {
+    borderStyle: 'dashed',
+    borderColor: colors.border.default,
+    backgroundColor: colors.bg.subtle,
+  },
   promoteText: {
+    ...typography.roles.label,
     color: colors.accent.amberBright,
-    fontFamily: typography.mono,
-    fontWeight: '900',
-    fontSize: typography.sizes.xxs,
+  },
+  promoteTextDisabled: {
+    color: colors.text.muted,
+  },
+  reason: {
+    ...typography.roles.label,
+    marginTop: spacing.xs,
+    textAlign: 'center',
+    color: colors.text.secondary,
+  },
+  reasonReady: {
+    color: colors.feedback.success,
   },
 });
