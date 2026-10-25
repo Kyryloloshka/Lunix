@@ -22,6 +22,6 @@ export function SectionHeader({ eyebrow, title, action }: SectionHeaderProps) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.md },
-  eyebrow: { color: colors.text.muted, fontSize: typography.sizes.xxs, fontWeight: '900', letterSpacing: 1.4, marginBottom: 3 },
-  title: { color: colors.text.primary, fontSize: typography.sizes.lg, fontWeight: '900' },
+  eyebrow: { ...typography.roles.label, color: colors.text.muted, letterSpacing: 1.4, marginBottom: 3 },
+  title: { ...typography.roles.title, color: colors.text.primary },
 });

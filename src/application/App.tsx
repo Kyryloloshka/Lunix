@@ -5,11 +5,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
 import { GameScreen } from '@pages/game-screen';
 import { useSettingsStore } from '@features/settings';
+import { MotionPreferenceProvider } from '@shared/lib/motion';
 import { colors } from '@shared/theme';
 import { useGamePersistence } from './persistence/useGamePersistence';
 
 export default function App() {
   const loadSettings = useSettingsStore((state) => state.load);
+  const reducedMotion = useSettingsStore((state) => state.reducedMotion);
   const isGameLoaded = useGamePersistence();
 
   useEffect(() => {
@@ -19,8 +21,10 @@ export default function App() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
-        <StatusBar style="light" />
-        {isGameLoaded ? <GameScreen /> : <View style={{ flex: 1, backgroundColor: colors.bg.app }} />}
+        <MotionPreferenceProvider reducedMotion={reducedMotion}>
+          <StatusBar style="light" />
+          {isGameLoaded ? <GameScreen /> : <View style={{ flex: 1, backgroundColor: colors.bg.app }} />}
+        </MotionPreferenceProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCurrencyStore } from '@entities/currency';
 import { Decimal } from '@shared/lib/decimal';
-import { Badge, DevGlyph, Panel, type GlyphName } from '@shared/ui';
+import { Badge, DevGlyph, Panel, PanelHeader, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { formatCurrency } from '@shared/lib/formatters';
 import { t, useLocale } from '@shared/i18n';
@@ -45,13 +45,11 @@ export function SimulatedLeaderboard() {
   return (
     <Panel tone="subtle" style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.eyebrow}>{t('leaderboard.heading')}</Text>
-          <Text style={styles.title}>{t('leaderboard.subheading')}</Text>
-        </View>
-        <Badge tone="flow">
-          {t('leaderboard.rankBadge', { rank: playerRankIndex })}
-        </Badge>
+        <PanelHeader
+          eyebrow={t('leaderboard.heading')}
+          title={t('leaderboard.subheading')}
+          trailing={<Badge tone="flow">{t('leaderboard.rankBadge', { rank: playerRankIndex })}</Badge>}
+        />
       </View>
 
       <Text style={styles.disclaimer}>{t('leaderboard.disclaimer')}</Text>
@@ -129,23 +127,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.surface,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 4,
-  },
-  eyebrow: {
-    fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
-    fontWeight: '900',
-    color: colors.text.muted,
-    letterSpacing: 1.2,
-  },
-  title: {
-    fontSize: typography.sizes.md,
-    fontWeight: '900',
-    color: colors.text.primary,
-    marginTop: 2,
   },
   disclaimer: {
     fontSize: typography.sizes.xxs,

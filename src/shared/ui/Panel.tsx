@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.default,
   },
-  default: { backgroundColor: colors.bg.surface },
-  subtle: { backgroundColor: colors.bg.subtle, borderColor: colors.border.subtle },
-  elevated: { backgroundColor: colors.bg.elevated, borderColor: colors.border.active },
+  default: { backgroundColor: colors.surface.raised },
+  subtle: { backgroundColor: colors.surface.sunken, borderColor: colors.border.subtle },
+  elevated: { backgroundColor: colors.surface.overlay, borderColor: colors.border.active },
 });

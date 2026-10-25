@@ -2,69 +2,177 @@
  * Design Tokens — Terminal Workbench
  * A restrained dark system built around developer tools: graphite, paper, phosphor.
  * No gradients, no emoji-driven UI, no generic neon dashboard treatment.
+ *
+ * Layers:
+ * - `palette`: raw hues. Components should not read it directly.
+ * - `colors`: semantic tokens (surface / text / border / feedback / focus / accent). Use these.
+ * - `resources`: visual identity of each game resource (color, background, glyph, label key).
+ * - `typography.roles`: text styles by role; every readable size is ≥ `MIN_READABLE_FONT_SIZE`.
  */
 
-export const colors = {
-  bg: {
-    app: '#0b0d0f',
-    surface: '#111416',
-    elevated: '#171b1e',
-    subtle: '#0e1113',
-    inset: '#080a0b',
+import type { TextStyle } from 'react-native';
+
+/** Raw palette. Prefer semantic tokens in `colors`; the palette exists so themes can remap it. */
+export const palette = {
+  graphite: {
+    950: '#080a0b',
+    900: '#0b0d0f',
+    850: '#0e1113',
+    800: '#111416',
+    750: '#171b1e',
   },
-  border: {
+  line: {
     subtle: '#1e2528',
     default: '#2a3337',
     active: '#455257',
     highlight: '#68777c',
   },
-  text: {
+  paper: {
     primary: '#e6e8e6',
     secondary: '#a5afad',
-    muted: '#697573',
-    inverse: '#0b0d0f',
+    muted: '#7d8987',
   },
-  accent: {
-    phosphor: '#b8e986',
-    phosphorBright: '#d8ffae',
-    phosphorDim: '#6f9254',
-    phosphorBg: 'rgba(184, 233, 134, 0.10)',
-    amber: '#d6a95d',
-    amberBright: '#f0c77b',
-    amberBg: 'rgba(214, 169, 93, 0.11)',
-    cyan: '#76b7b2',
-    cyanBright: '#a0d9d2',
-    cyanBg: 'rgba(118, 183, 178, 0.11)',
-    rust: '#c47c67',
-    rustBright: '#e19a83',
-    rustBg: 'rgba(196, 124, 103, 0.11)',
-    violet: '#9f91bc',
-    violetBright: '#c2b7d9',
-    violetBg: 'rgba(159, 145, 188, 0.11)',
-    red: '#d86f69',
-    redBg: 'rgba(216, 111, 105, 0.12)',
+  phosphor: '#b8e986',
+  phosphorBright: '#d8ffae',
+  phosphorDim: '#6f9254',
+  phosphorBg: 'rgba(184, 233, 134, 0.10)',
+  amber: '#d6a95d',
+  amberBright: '#f0c77b',
+  amberBg: 'rgba(214, 169, 93, 0.11)',
+  cyan: '#76b7b2',
+  cyanBright: '#a0d9d2',
+  cyanBg: 'rgba(118, 183, 178, 0.11)',
+  rust: '#c47c67',
+  rustBright: '#e19a83',
+  rustBg: 'rgba(196, 124, 103, 0.11)',
+  violet: '#9f91bc',
+  violetBright: '#c2b7d9',
+  violetBg: 'rgba(159, 145, 188, 0.11)',
+  red: '#d86f69',
+  redBright: '#e58b85',
+  redBg: 'rgba(216, 111, 105, 0.12)',
+} as const;
 
-    // Temporary semantic aliases retained while feature widgets migrate to the palette above.
-    green: '#b8e986',
-    greenLight: '#d8ffae',
-    greenMuted: '#6f9254',
-    greenBg: 'rgba(184, 233, 134, 0.10)',
-    indigo: '#9f91bc',
-    indigoLight: '#c2b7d9',
-    indigoMuted: '#49445a',
-    indigoBg: 'rgba(159, 145, 188, 0.11)',
-    rose: '#c47c67',
-    roseLight: '#e19a83',
-    roseMuted: '#654237',
-    roseBg: 'rgba(196, 124, 103, 0.11)',
-    gold: '#d6a95d',
-    goldLight: '#f0c77b',
-    goldMuted: '#625033',
-    goldBg: 'rgba(214, 169, 93, 0.11)',
-    amberLight: '#f0c77b',
-    redLight: '#e58b85',
+const surface = {
+  /** App background. */
+  base: palette.graphite[900],
+  /** Cards, panels. */
+  raised: palette.graphite[800],
+  /** Elevated controls on top of a panel. */
+  overlay: palette.graphite[750],
+  /** Quiet areas inside a panel (secondary rows). */
+  sunken: palette.graphite[850],
+  /** Wells: progress tracks, editor body, stat plates. */
+  inset: palette.graphite[950],
+} as const;
+
+const text = {
+  primary: palette.paper.primary,
+  secondary: palette.paper.secondary,
+  /** Still readable: ≥ 4.5:1 on every surface (see contrast test). */
+  muted: palette.paper.muted,
+  /** Text on filled accent/feedback backgrounds (buttons, badges). */
+  onAccent: palette.graphite[900],
+  /** @deprecated use `text.onAccent`. */
+  inverse: palette.graphite[900],
+} as const;
+
+export const colors = {
+  surface,
+  text,
+  border: {
+    subtle: palette.line.subtle,
+    default: palette.line.default,
+    active: palette.line.active,
+    highlight: palette.line.highlight,
+  },
+  feedback: {
+    success: palette.phosphor,
+    successBg: palette.phosphorBg,
+    warning: palette.amber,
+    warningBg: palette.amberBg,
+    danger: palette.red,
+    dangerBg: palette.redBg,
+  },
+  /** Focus ring for keyboard/switch navigation. */
+  focus: palette.cyanBright,
+  /**
+   * Accent hues. Prefer `theme.accent` (rank-aware) for "brand" accent, `feedback.*` for state and
+   * `resources.*` for resource identity; these raw hues remain for decorative use.
+   */
+  accent: {
+    phosphor: palette.phosphor,
+    phosphorBright: palette.phosphorBright,
+    phosphorDim: palette.phosphorDim,
+    phosphorBg: palette.phosphorBg,
+    amber: palette.amber,
+    amberBright: palette.amberBright,
+    amberBg: palette.amberBg,
+    cyan: palette.cyan,
+    cyanBright: palette.cyanBright,
+    cyanBg: palette.cyanBg,
+    rust: palette.rust,
+    rustBright: palette.rustBright,
+    rustBg: palette.rustBg,
+    violet: palette.violet,
+    violetBright: palette.violetBright,
+    violetBg: palette.violetBg,
+    red: palette.red,
+    redBright: palette.redBright,
+    redBg: palette.redBg,
+  },
+  /**
+   * @deprecated legacy surface names; use `colors.surface.*`
+   * (app → base, surface → raised, elevated → overlay, subtle → sunken, inset → inset).
+   */
+  bg: {
+    app: surface.base,
+    surface: surface.raised,
+    elevated: surface.overlay,
+    subtle: surface.sunken,
+    inset: surface.inset,
   },
 } as const;
+
+/**
+ * Resource identity: one color + one glyph per resource across the whole app.
+ * `glyph` is a `DevGlyph` name (validated in tests), `labelKey` an i18n key.
+ */
+export const resources = {
+  capital: {
+    color: palette.phosphor,
+    bg: palette.phosphorBg,
+    glyph: 'terminal',
+    labelKey: 'resources.capital',
+  },
+  cognitive: {
+    color: palette.cyanBright,
+    bg: palette.cyanBg,
+    glyph: 'brain',
+    labelKey: 'resources.cognitive',
+  },
+  influence: {
+    color: palette.rustBright,
+    bg: palette.rustBg,
+    glyph: 'trend',
+    labelKey: 'resources.influence',
+  },
+  stress: {
+    color: palette.red,
+    bg: palette.redBg,
+    glyph: 'flame',
+    labelKey: 'resources.stress',
+  },
+  flow: {
+    color: palette.amber,
+    bg: palette.amberBg,
+    glyph: 'bolt',
+    labelKey: 'status.flow',
+  },
+} as const;
+
+export type ResourceKind = keyof typeof resources;
+export type ResourceToken = (typeof resources)[ResourceKind];
 
 export const spacing = {
   xxs: 3,
@@ -86,27 +194,84 @@ export const radii = {
   full: 9999,
 } as const;
 
-export const typography = {
+/** Smallest font size allowed for any readable text (pt). */
+export const MIN_READABLE_FONT_SIZE = 11;
+
+const fontFamilies = {
   display: 'monospace',
   mono: 'monospace',
-  sizes: {
-    xxs: 9,
-    xs: 11,
-    sm: 13,
-    base: 15,
-    md: 17,
-    lg: 20,
-    xl: 24,
-    xxl: 30,
-    giant: 38,
+  // Stage 3 (needs approval) replaces these with a bundled open-licensed mono font.
+} as const;
+
+const sizes = {
+  /** @deprecated raised from 9 to the 11pt minimum; use `xs` or `typography.roles.label`. */
+  xxs: MIN_READABLE_FONT_SIZE,
+  xs: MIN_READABLE_FONT_SIZE,
+  sm: 13,
+  base: 15,
+  md: 17,
+  lg: 20,
+  xl: 24,
+  xxl: 30,
+  giant: 38,
+} as const;
+
+const weights = {
+  regular: '400',
+  medium: '500',
+  semibold: '600',
+  bold: '700',
+  black: '900',
+} as const;
+
+/** Text styles by role. Spread into `StyleSheet.create` entries. */
+const roles = {
+  /** Big counters and hero numbers. */
+  display: {
+    fontFamily: fontFamilies.display,
+    fontSize: sizes.xxl,
+    lineHeight: 36,
+    fontWeight: weights.black,
+    fontVariant: ['tabular-nums'],
   },
-  weights: {
-    regular: '400',
-    medium: '500',
-    semibold: '600',
-    bold: '700',
-    black: '900',
-  } as const,
+  /** Panel and section titles. */
+  title: {
+    fontFamily: fontFamilies.mono,
+    fontSize: sizes.lg,
+    lineHeight: 26,
+    fontWeight: weights.black,
+  },
+  /** Running text, descriptions. */
+  body: {
+    fontSize: sizes.sm,
+    lineHeight: 19,
+    fontWeight: weights.regular,
+  },
+  /** Small caps-like labels, captions, eyebrows, chips. */
+  label: {
+    fontFamily: fontFamilies.mono,
+    fontSize: sizes.xs,
+    lineHeight: 15,
+    fontWeight: weights.bold,
+    letterSpacing: 0.6,
+  },
+  /** Counters and prices: tabular digits so values don't jump while ticking. */
+  monoNum: {
+    fontFamily: fontFamilies.mono,
+    fontSize: sizes.sm,
+    lineHeight: 18,
+    fontWeight: weights.black,
+    fontVariant: ['tabular-nums'],
+  },
+} satisfies Record<string, TextStyle>;
+
+export type TypographyRole = keyof typeof roles;
+
+export const typography = {
+  ...fontFamilies,
+  sizes,
+  weights,
+  roles,
 } as const;
 
 export const shadows = {
@@ -125,13 +290,3 @@ export const shadows = {
     elevation: 5,
   },
 } as const;
-
-export const theme = {
-  colors,
-  spacing,
-  radii,
-  typography,
-  shadows,
-} as const;
-
-export type Theme = typeof theme;

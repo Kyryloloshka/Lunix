@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
-import { colors, radii, spacing, typography } from '@shared/theme';
+import { colors, radii, resources, spacing, typography } from '@shared/theme';
 
 type BadgeTone = 'neutral' | 'success' | 'cognitive' | 'influence' | 'warning' | 'danger' | 'flow';
 
@@ -32,12 +32,12 @@ const styles = StyleSheet.create({
   compact: { paddingHorizontal: 6, paddingVertical: 3 },
   icon: { fontSize: typography.sizes.xs, marginRight: 4 },
   label: { fontSize: typography.sizes.xs, fontWeight: '800', color: colors.text.primary },
-  compactLabel: { fontSize: typography.sizes.xxs },
-  neutral: { backgroundColor: colors.bg.elevated },
-  success: { backgroundColor: colors.accent.greenBg },
-  cognitive: { backgroundColor: colors.accent.indigoBg },
-  influence: { backgroundColor: colors.accent.roseBg },
-  warning: { backgroundColor: colors.accent.amberBg },
-  danger: { backgroundColor: colors.accent.redBg },
-  flow: { backgroundColor: colors.accent.goldBg },
+  compactLabel: { fontSize: typography.sizes.xs, lineHeight: typography.roles.label.lineHeight },
+  neutral: { backgroundColor: colors.surface.overlay },
+  success: { backgroundColor: colors.feedback.successBg },
+  cognitive: { backgroundColor: resources.cognitive.bg },
+  influence: { backgroundColor: resources.influence.bg },
+  warning: { backgroundColor: colors.feedback.warningBg },
+  danger: { backgroundColor: colors.feedback.dangerBg },
+  flow: { backgroundColor: resources.flow.bg },
 });
