@@ -9,7 +9,10 @@ import { useSkillStore } from '@features/purchase-skill';
 import { SkillsCatalog } from '../ui/SkillsCatalog';
 
 const SKILL_ID = 'html-tags';
-const BUY_LABEL = `${en.skills.buy} ${en.skills.items['html-tags'].name}`;
+// The label may carry a wait hint after the name ("BUY X. 5 more"), so match its start.
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const startsWith = (label: string) => new RegExp(`^${escapeRegExp(label)}(?:[.,]|$)`);
+const BUY_LABEL = startsWith(`${en.skills.buy} ${en.skills.items['html-tags'].name}`);
 
 const giveCognitive = (amount: number) => useCurrencyStore.getState().addResources({ cognitive: Decimal.from(amount) });
 const buyButton = () => screen.getByRole('button', { name: BUY_LABEL });

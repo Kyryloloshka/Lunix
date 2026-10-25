@@ -23,12 +23,16 @@ const HEADING: Record<Exclude<Tab, 'work'>, (strings: Strings) => string> = {
   settings: (strings) => strings.settings.heading,
 };
 
+// Dock tabs append a badge hint to their label ("Stack, purchases available"), so match the start.
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const startsWith = (label: string) => new RegExp(`^${escapeRegExp(label)}(?:[.,]|$)`);
+
 async function renderScreen() {
   return renderWithProviders(<GameScreen onResetProgress={async () => undefined} />);
 }
 
 async function openTab(tab: Tab, strings: Strings) {
-  await fireEvent.press(screen.getByRole('tab', { name: strings.nav[tab] }));
+  await fireEvent.press(screen.getByRole('tab', { name: startsWith(strings.nav[tab]) }));
 }
 
 describe('GameScreen', () => {
@@ -45,7 +49,7 @@ describe('GameScreen', () => {
   it('switches tabs: the dock marks exactly one tab selected and the content follows it', async () => {
     await renderScreen();
     const selectedTabs = () => TABS.filter((tab) => (
-      screen.getByRole('tab', { name: en.nav[tab] }).props.accessibilityState?.selected === true
+      screen.getByRole('tab', { name: startsWith(en.nav[tab]) }).props.accessibilityState?.selected === true
     ));
 
     expect(selectedTabs()).toEqual(['work']);
