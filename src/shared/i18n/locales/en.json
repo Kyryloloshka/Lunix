@@ -13,7 +13,10 @@
     "skills": "Stack",
     "career": "Career",
     "leaders": "Leaders",
-    "settings": "Settings"
+    "settings": "Settings",
+    "badgeSkills": "purchases available",
+    "badgeCareer": "promotion available",
+    "badgeHint": "Tab marker: something to do here"
   },
   "settings": {
     "heading": "SETTINGS",
@@ -77,6 +80,11 @@
     "upgradesTab": "UPGRADES",
     "lvl": "LVL {level}",
     "buy": "BUY",
+    "needMore": "{amount} more",
+    "waitSeconds": "~{seconds} s",
+    "waitMinutes": "~{minutes} min",
+    "needMoreA11y": "Missing {amount} {resource}",
+    "waitA11y": "About {time} until you can buy",
     "purchased": "OWNED",
     "multiplier": "x{mult} BOOST",
     "reqLevel": "Requires {skill} Lvl {level}",
@@ -474,6 +482,18 @@
         "use": "Promotions from Senior up spend Influence. Also leadership perks and Influence upgrades."
       }
     }
+  },
+  "nextGoal": {
+    "label": "NEXT GOAL",
+    "a11yLabel": "Next goal: {goal}",
+    "a11yHint": "Opens the {tab} tab",
+    "buySkill": "Buy {skill}, level {level}",
+    "buyUpgrade": "Buy an upgrade",
+    "earn": "Earn {resource} toward \"{rank}\"",
+    "spend": "Save up {resource} for \"{rank}\"",
+    "promote": "Promotion to \"{rank}\" is ready",
+    "ready": "READY",
+    "progress": "{current} / {target}"
   },
   "onboarding": {
     "intro": {

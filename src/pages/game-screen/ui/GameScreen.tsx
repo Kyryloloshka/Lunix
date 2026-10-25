@@ -10,6 +10,7 @@ import { TAP_MODE_SWITCH_HEIGHT, TapModeSwitch, shouldShowTapModeSwitch } from '
 import { ResourceUnlockCard } from '@widgets/resource-unlock';
 import { IntroSequence } from '@widgets/intro';
 import { DockHint, StressHint, TapGuide, useOnboardingSync } from '@widgets/onboarding-hints';
+import { NextGoalStrip, useDockBadges } from '@widgets/next-goal';
 import { CareerRoadmap } from '@widgets/career-roadmap';
 import { SimulatedLeaderboard } from '@widgets/simulated-leaderboard';
 import { BottomDock, type ActiveTab } from '@widgets/bottom-dock';
@@ -31,7 +32,9 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
   // Steps close by what the player does (tap, buy, rest); this keeps the onboarding store informed.
   useOnboardingSync(activeTab === 'work');
 
-  const storedRank = useSkillStore((state) => state.currentRank);
+  const badges = useDockBadges();
+
+  const storedRank =useSkillStore((state) => state.currentRank);
   const rank = CAREER_RANKS[Math.min(storedRank, CAREER_RANKS.length - 1)];
   const rankTheme = getRankTheme(rank.id);
 
@@ -94,6 +97,9 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
                 </>
               )}
             />
+            {/* Next goal (T-003): a row under the tap zone, so it never covers the editor. It hides
+                itself while the first-session guide (T-018) is talking. */}
+            <NextGoalStrip onOpenTab={setActiveTab} />
           </View>
         ) : (
           <ScrollView
@@ -106,7 +112,7 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
           </ScrollView>
         )}
         <DockHint onSkillsTab={activeTab === 'skills'} />
-        <BottomDock activeTab={activeTab} onChangeTab={setActiveTab} />
+        <BottomDock activeTab={activeTab} onChangeTab={setActiveTab} badges={badges} />
       </View>
       {/* Waits while the Career tab may show the promotion celebration, so two modals never stack. */}
       <ResourceUnlockCard enabled={activeTab !== 'career'} />
