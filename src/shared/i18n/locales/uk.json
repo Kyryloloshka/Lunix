@@ -64,7 +64,7 @@
     "reqLevel": "Потрібен {skill} Рів. {level}",
     "items": {
       "html-tags": {
-        "name": "HTML-теги з ютубу",
+        "name": "HTML-теги з TubeTube",
         "desc": "Перший <div> і багато <br>"
       },
       "css-centering": {
@@ -226,7 +226,7 @@
     "ranks": {
       "0": {
         "title": "Першокурсник",
-        "desc": "Ноутбук, Stack Overflow і велика мрія"
+        "desc": "Ноутбук, Stack Overflaw і велика мрія"
       },
       "1": {
         "title": "Студент-самоучка",
@@ -265,7 +265,7 @@
         "desc": "Технічне бачення продукту для мільйонів"
       },
       "10": {
-        "title": "CEO Google",
+        "title": "CEO Gooble",
         "desc": "Керування глобальною технологічною компанією"
       }
     },
@@ -282,21 +282,21 @@
     "playerName": "ВИ ({label})",
     "playerRole": "Junior → CEO",
     "entries": {
-      "sundar": {
-        "name": "Сундар Пічаї",
-        "role": "CEO Google"
+      "vibe-ceo": {
+        "name": "Влад Вайбкодер",
+        "role": "CEO Gooble"
       },
-      "satya": {
-        "name": "Сатья Наделла",
-        "role": "CEO Microsoft"
+      "monolith-ceo": {
+        "name": "Марта Моноліт",
+        "role": "CEO Macrosoft"
       },
-      "musk": {
-        "name": "Ілон Маск",
+      "meme-ceo": {
+        "name": "Макс Ракетпост",
         "role": "Головний мем-директор"
       },
       "alex-arch": {
         "name": "Саня Архітектор",
-        "role": "Колишній FAANG Principal"
+        "role": "Колишній MAANGO Principal"
       },
       "dima-lead": {
         "name": "Дмитро Тімлід",

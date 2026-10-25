@@ -64,7 +64,7 @@
     "reqLevel": "Requiere {skill} Nivel {level}",
     "items": {
       "html-tags": {
-        "name": "Etiquetas HTML de YouTube",
+        "name": "Etiquetas HTML de TubeTube",
         "desc": "Tu primer <div> y muchos <br>"
       },
       "css-centering": {
@@ -226,7 +226,7 @@
     "ranks": {
       "0": {
         "title": "Estudiante de primer año",
-        "desc": "Un portátil, Stack Overflow y un gran sueño"
+        "desc": "Un portátil, Stack Overflaw y un gran sueño"
       },
       "1": {
         "title": "Estudiante autodidacta",
@@ -265,7 +265,7 @@
         "desc": "Visión técnica para productos a escala masiva"
       },
       "10": {
-        "title": "CEO de Google",
+        "title": "CEO de Gooble",
         "desc": "Dirección de una multinacional tecnológica líder"
       }
     },
@@ -282,21 +282,21 @@
     "playerName": "TÚ ({label})",
     "playerRole": "Junior → CEO",
     "entries": {
-      "sundar": {
-        "name": "Sundar Pichai",
-        "role": "CEO de Google"
+      "vibe-ceo": {
+        "name": "Vlad el Vibe Coder",
+        "role": "CEO de Gooble"
       },
-      "satya": {
-        "name": "Satya Nadella",
-        "role": "CEO de Microsoft"
+      "monolith-ceo": {
+        "name": "Marta la Monolito",
+        "role": "CEO de Macrosoft"
       },
-      "musk": {
-        "name": "Elon Musk",
+      "meme-ceo": {
+        "name": "Max Rocketpost",
         "role": "Director General de Memes"
       },
       "alex-arch": {
         "name": "Alex el Arquitecto",
-        "role": "Ex-Principal en FAANG"
+        "role": "Ex-Principal en MAANGO"
       },
       "dima-lead": {
         "name": "Dima el Lead",

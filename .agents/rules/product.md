@@ -8,6 +8,12 @@ instead of silently deviating.
 - "Cookie Clicker that understands developers": every skill, upgrade, incident and rank is a
   recognizable dev technology or meme. Humor and recognizability are the differentiator. Content is
   parody: no real logos, no implied endorsement (e.g. parody names for Google/React/Docker-like brands).
+- Naming convention: no real people at all (NPCs are fictional archetypes). Brands, companies and
+  trademarked tech get a parody that still reads as the original (Reakt, Nodle, Dokker, Gooble,
+  Macrosoft, TubeTube, Stack Overflaw). Generic terms stay as is (HTML, CSS, JavaScript, Git, Rust,
+  SaaS, Event Loop). `src/application/__tests__/parodyContent.test.ts` enforces this for all
+  locales and registry ids. Add new real names to its `FORBIDDEN` list. A temporary exception goes
+  in `ALLOWLIST` with the id of the task that renames it.
 - Core audience: developers/QA/DevOps 20–35; also IT students and general idle fans.
 - North Star: daily actives who made ≥ 1 promotion or prestige that week. Targets 1.0: D1 45%,
   D7 20%, D30 12%, 6 sessions/day, 8 min/session.
