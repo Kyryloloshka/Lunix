@@ -65,10 +65,17 @@ function latestUnlockedResource(rank: number): SkillResource {
   return getUnlockedResources(rank).at(-1) ?? 'cognitive';
 }
 
+/** Skills whose rank gate is open at `rank`. Used as the "already seen" baseline for saves and new games. */
+export function getReachedSkillIds(rank: number): string[] {
+  return SKILLS.filter((skill) => skill.unlockRank <= rank).map((skill) => skill.id);
+}
+
 export interface SkillSnapshot {
   levels: Record<string, number>;
   purchasedUpgrades: string[];
   currentRank: number;
+  /** Skills the player has looked at or bought (T-013): reached skills not listed here show a NEW badge. */
+  seenSkillIds: string[];
 }
 
 interface SkillStore extends SkillSnapshot {
@@ -82,6 +89,8 @@ interface SkillStore extends SkillSnapshot {
   pendingResourceUnlocks: SkillResource[];
   buy: (id: string, mode?: PurchaseMode) => number;
   buyUpgrade: (id: string) => boolean;
+  /** Marks skills as seen (the NEW badge goes away). Unknown ids are ignored. */
+  markSkillsSeen: (ids: readonly string[]) => void;
   promote: () => boolean;
   setTapResource: (resource: SkillResource) => boolean;
   /** Removes the oldest pending unlock event (its card was shown) and returns it. */
@@ -103,13 +112,19 @@ function sanitizeSnapshot(snapshot: SkillSnapshot): SkillSnapshot {
   const purchasedUpgrades = Array.isArray(snapshot.purchasedUpgrades)
     ? [...new Set(snapshot.purchasedUpgrades.filter((id) => knownUpgrades.has(id)))]
     : [];
-  return { levels, purchasedUpgrades, currentRank: clampRank(snapshot.currentRank) };
+  const currentRank = clampRank(snapshot.currentRank);
+  const knownSkills = new Set(SKILLS.map((skill) => skill.id));
+  const seenSkillIds = Array.isArray(snapshot.seenSkillIds)
+    ? [...new Set(snapshot.seenSkillIds.filter((id) => typeof id === 'string' && knownSkills.has(id)))]
+    : getReachedSkillIds(currentRank);
+  return { levels, purchasedUpgrades, currentRank, seenSkillIds };
 }
 
 export const useSkillStore = create<SkillStore>((set, get) => ({
   levels: INITIAL_SKILL_LEVELS,
   purchasedUpgrades: [],
   currentRank: 0,
+  seenSkillIds: getReachedSkillIds(0),
   tapResource: 'cognitive',
   pendingResourceUnlocks: [],
   buy: (id, mode = 1) => {
@@ -130,7 +145,10 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
     const totalCost = getBulkSkillCost(skill.baseCost, skill.costGrowth, level, quantity);
     if (!useCurrencyStore.getState().spendResources({ [skill.costResource]: totalCost })) return 0;
 
-    set((state) => ({ levels: { ...state.levels, [id]: level + quantity } }));
+    set((state) => ({
+      levels: { ...state.levels, [id]: level + quantity },
+      seenSkillIds: state.seenSkillIds.includes(id) ? state.seenSkillIds : [...state.seenSkillIds, id],
+    }));
     syncRatesFromSkills(get().levels, get().purchasedUpgrades);
     return quantity;
   },
@@ -149,6 +167,13 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
     }));
     syncRatesFromSkills(get().levels, get().purchasedUpgrades);
     return true;
+  },
+  markSkillsSeen: (ids) => {
+    const known = new Set(SKILLS.map((skill) => skill.id));
+    const seen = new Set(get().seenSkillIds);
+    const added = ids.filter((id) => known.has(id) && !seen.has(id));
+    if (added.length === 0) return;
+    set({ seenSkillIds: [...get().seenSkillIds, ...new Set(added)] });
   },
   promote: () => {
     const nextRank = get().currentRank + 1;
@@ -193,7 +218,7 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
     syncRatesFromSkills(sanitized.levels, sanitized.purchasedUpgrades);
   },
   reset: () => {
-    set({ levels: INITIAL_SKILL_LEVELS, purchasedUpgrades: [], currentRank: 0, tapResource: 'cognitive', pendingResourceUnlocks: [] });
+    set({ levels: INITIAL_SKILL_LEVELS, purchasedUpgrades: [], currentRank: 0, seenSkillIds: getReachedSkillIds(0), tapResource: 'cognitive', pendingResourceUnlocks: [] });
     syncRatesFromSkills(INITIAL_SKILL_LEVELS, []);
   },
 }));
