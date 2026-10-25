@@ -110,15 +110,10 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
               <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
                 {HUD_FORMAT[resource](balances[resource])}
               </Text>
-              {/* T-017: the big number is what really came in during the last second (taps included); passive sits under it. */}
+              {/* T-017: the number is what really came in during the last second (taps included); when idle it equals passive. */}
               {income[resource].gt(0) || perSec[resource].gt(0) ? (
                 <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
                   {t('status.ratePerSec', { amount: HUD_FORMAT[resource](income[resource].gt(0) ? income[resource] : perSec[resource]) })}
-                </Text>
-              ) : null}
-              {perSec[resource].gt(0) ? (
-                <Text style={styles.passiveRate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
-                  {t('status.passivePerSec', { amount: HUD_FORMAT[resource](perSec[resource]) })}
                 </Text>
               ) : null}
             </View>
@@ -275,12 +270,6 @@ const styles = StyleSheet.create({
     ...typography.roles.label,
     color: colors.text.secondary,
     marginTop: 2,
-  },
-  passiveRate: {
-    color: colors.text.muted,
-    fontFamily: typography.mono,
-    fontSize: 9,
-    marginTop: 1,
   },
   stressRow: {
     marginTop: 2,
