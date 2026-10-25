@@ -3,8 +3,10 @@ import {
   COMBO_WINDOW_MS,
   FLOW_COMBO_THRESHOLD,
   getStressPenaltyPercent,
+  toCountdownSeconds,
   useCurrencyStore,
 } from '@entities/currency';
+import { FlowCooldownMeter, ResilienceTag } from './RhythmIndicators';
 import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
 import { DevGlyph } from '@shared/ui';
 import { colors, getRankTheme, radii, resources, spacing, typography } from '@shared/theme';
@@ -49,15 +51,15 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
                 {t('status.flow')} x{flow.multiplier} · {Math.ceil(flow.remainingMs / 1000)}s
               </Text>
             </View>
+          ) : flow.cooldownRemainingMs > 0 ? (
+            <FlowCooldownMeter />
           ) : (
             <View style={styles.comboProgress}>
               <Text style={styles.comboText}>
                 {t('status.combo', {
                   current: flow.comboCount,
                   target: FLOW_COMBO_THRESHOLD,
-                  seconds: flow.comboCount > 0
-                    ? Math.max(1, Math.ceil((COMBO_WINDOW_MS - (Date.now() - flow.windowStartedAt)) / 1000))
-                    : Math.ceil(COMBO_WINDOW_MS / 1000),
+                  seconds: toCountdownSeconds(flow.comboCount > 0 ? flow.comboRemainingMs : COMBO_WINDOW_MS),
                 })}
               </Text>
               <View style={styles.comboTrack}>
@@ -115,6 +117,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
             <Text style={styles.stressLabel}>
               {t('resources.stress')}: {Math.round(stress)}%
             </Text>
+            <ResilienceTag />
           </View>
           <Text style={[styles.stressHint, stress > 70 && styles.throttlingHint]}>
             {stress > 70

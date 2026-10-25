@@ -40,7 +40,10 @@
     "ratePerSec": "+{amount}/s",
     "throttling": "THROTTLING RISK",
     "output": "OUTPUT",
-    "optimal": "OPTIMAL"
+    "optimal": "OPTIMAL",
+    "cooldown": "Flow recharge · {seconds}s",
+    "resilience": "Resilience −{percent}%",
+    "resilienceA11y": "Resilience: taps cause {percent}% less workload"
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",

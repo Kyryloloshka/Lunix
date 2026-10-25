@@ -40,7 +40,10 @@
     "ratePerSec": "+{amount}/с",
     "throttling": "РИЗИК ПЕРЕВАНТАЖЕННЯ",
     "output": "ВИХІД",
-    "optimal": "ОПТИМАЛЬНО"
+    "optimal": "ОПТИМАЛЬНО",
+    "cooldown": "Перезарядка Flow · {seconds}с",
+    "resilience": "Стійкість −{percent}%",
+    "resilienceA11y": "Стійкість: тапи дають на {percent}% менше навантаження"
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",

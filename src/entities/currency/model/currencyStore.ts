@@ -1,16 +1,17 @@
 import { create } from 'zustand';
 import { Decimal } from '@shared/lib/decimal';
+import { RHYTHM_CONFIG, getResilienceMultiplier, getStressDecay } from './rhythm';
 import type { FlowState, ResourceRates, ResourceState, TapResource } from './types';
 
-const FLOW_DURATION_MS = 10_000;
-const FLOW_MULTIPLIER = 3;
-export const FLOW_COMBO_THRESHOLD = 12;
-export const COMBO_WINDOW_MS = 4_000;
-const MAX_STRESS = 100;
-const OVERLOAD_THRESHOLD = 70;
-const OVERLOAD_MIN_OUTPUT = 0.5;
-const BASE_STRESS_PER_TAP = 0.35;
-const STRESS_DECAY_PER_SEC = 0.25;
+const FLOW_DURATION_MS = RHYTHM_CONFIG.flow.durationMs;
+const FLOW_MULTIPLIER = RHYTHM_CONFIG.flow.multiplier;
+const FLOW_COOLDOWN_MS = RHYTHM_CONFIG.flow.cooldownMs;
+export const FLOW_COMBO_THRESHOLD = RHYTHM_CONFIG.flow.comboThreshold;
+export const COMBO_WINDOW_MS = RHYTHM_CONFIG.flow.comboWindowMs;
+const MAX_STRESS = RHYTHM_CONFIG.stress.max;
+const OVERLOAD_THRESHOLD = RHYTHM_CONFIG.stress.overloadThreshold;
+const OVERLOAD_MIN_OUTPUT = RHYTHM_CONFIG.stress.overloadMinOutput;
+const BASE_STRESS_PER_TAP = RHYTHM_CONFIG.stress.perTap;
 /** Live ticks never apply more than this; longer gaps go through offline earnings. */
 export const MAX_TICK_SECONDS = 5;
 /** Base value of one tap per mode, before perks (docs/economy/phases.md §4). */
@@ -133,6 +134,8 @@ const initialState = (): ResourceState & {
     comboCount: 0,
     lastTapAt: 0,
     windowStartedAt: 0,
+    comboRemainingMs: 0,
+    cooldownRemainingMs: 0,
   },
   rates: initialRates,
   lastSavedAt: Date.now(),
@@ -153,24 +156,30 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
 
     set((state) => {
       const now = Date.now();
-      const nextStress = clampStress(state.stress + BASE_STRESS_PER_TAP * state.rates.stressPerClickMultiplier);
-      const windowOpen = now - state.flow.windowStartedAt <= COMBO_WINDOW_MS;
-      const nextCombo = state.flow.isActive
-        ? state.flow.comboCount
-        : (windowOpen ? state.flow.comboCount + 1 : 1);
-      const flowIsActive = state.flow.isActive || nextCombo >= FLOW_COMBO_THRESHOLD;
+      const { flow: current } = state;
+      const nextStress = clampStress(state.stress + BASE_STRESS_PER_TAP * selectTapStressMultiplier(state));
+      // The combo neither grows during Flow nor while Flow recharges.
+      const comboLocked = current.isActive || current.cooldownRemainingMs > 0;
+      const windowOpen = current.comboCount > 0 && now - current.windowStartedAt <= COMBO_WINDOW_MS;
+      const nextCombo = comboLocked ? current.comboCount : (windowOpen ? current.comboCount + 1 : 1);
+      const windowStartedAt = comboLocked || windowOpen ? current.windowStartedAt : now;
+      const flowStarts = !comboLocked && nextCombo >= FLOW_COMBO_THRESHOLD;
+      const flowIsActive = current.isActive || flowStarts;
       return {
         [resource]: state[resource].add(amount),
         ...(resource === 'capital' ? { totalCapitalEarned: state.totalCapitalEarned.add(amount) } : {}),
         ...(resource === 'cognitive' ? { totalCognitiveEarned: state.totalCognitiveEarned.add(amount) } : {}),
         stress: nextStress,
         flow: {
-          ...state.flow,
+          ...current,
           comboCount: nextCombo,
           isActive: flowIsActive,
           lastTapAt: now,
-          windowStartedAt: windowOpen && !state.flow.isActive ? state.flow.windowStartedAt : now,
-          remainingMs: flowIsActive && !state.flow.isActive ? FLOW_DURATION_MS : state.flow.remainingMs,
+          windowStartedAt,
+          comboRemainingMs: !flowIsActive && nextCombo > 0
+            ? Math.max(0, COMBO_WINDOW_MS - (now - windowStartedAt))
+            : 0,
+          remainingMs: flowStarts ? FLOW_DURATION_MS : current.remainingMs,
         },
       };
     });
@@ -190,24 +199,38 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
     const flowDelta = deltaSeconds * 1000;
 
     set((state) => {
-      const remainingMs = Math.max(0, state.flow.remainingMs - flowDelta);
-      const flowEnded = state.flow.isActive && remainingMs === 0;
-      const comboExpired = Date.now() - state.flow.windowStartedAt > COMBO_WINDOW_MS;
+      const now = Date.now();
+      const { flow: current } = state;
+      let isActive = current.isActive;
+      let remainingMs = current.remainingMs;
+      let cooldownRemainingMs = current.cooldownRemainingMs;
+      let comboCount = current.comboCount;
+      if (current.isActive) {
+        remainingMs = Math.max(0, current.remainingMs - flowDelta);
+        if (remainingMs === 0) {
+          // Flow ended inside this tick: the rest of the tick already counts toward the cooldown.
+          isActive = false;
+          comboCount = 0;
+          cooldownRemainingMs = Math.max(0, FLOW_COOLDOWN_MS - (flowDelta - current.remainingMs));
+        }
+      } else {
+        remainingMs = 0;
+        cooldownRemainingMs = Math.max(0, current.cooldownRemainingMs - flowDelta);
+      }
+      const comboRemainingMs = !isActive && comboCount > 0
+        ? Math.max(0, COMBO_WINDOW_MS - (now - current.windowStartedAt))
+        : 0;
+      // Only drop the combo when flow ends or the combo window runs out,
+      // otherwise every tick would wipe the taps the player is building up.
+      if (!isActive && comboRemainingMs === 0) comboCount = 0;
       return {
         capital: state.capital.add(capital),
         cognitive: state.cognitive.add(cognitive),
         influence: state.influence.add(influence),
-        stress: clampStress(state.stress - deltaSeconds * STRESS_DECAY_PER_SEC),
+        stress: clampStress(state.stress - getStressDecay(deltaSeconds, now - current.lastTapAt)),
         totalCapitalEarned: state.totalCapitalEarned.add(capital),
         totalCognitiveEarned: state.totalCognitiveEarned.add(cognitive),
-        flow: {
-          ...state.flow,
-          remainingMs,
-          isActive: remainingMs > 0,
-          // Only drop the combo when flow ends or the combo window runs out,
-          // otherwise every tick would wipe the taps the player is building up.
-          comboCount: flowEnded || (!state.flow.isActive && comboExpired) ? 0 : state.flow.comboCount,
-        },
+        flow: { ...current, isActive, remainingMs, cooldownRemainingMs, comboCount, comboRemainingMs },
       };
     });
   },
@@ -278,13 +301,34 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
     if (seconds <= 0) return earnings;
     get().addResources(earnings);
     set((state) => ({
-      stress: clampStress(state.stress - seconds * STRESS_DECAY_PER_SEC),
-      flow: { ...state.flow, isActive: false, remainingMs: 0, comboCount: 0 },
+      // Time away is rest: stress cools at the rest rate.
+      stress: clampStress(state.stress - getStressDecay(seconds, Number.POSITIVE_INFINITY)),
+      flow: {
+        ...state.flow,
+        isActive: false,
+        remainingMs: 0,
+        comboCount: 0,
+        comboRemainingMs: 0,
+        cooldownRemainingMs: 0,
+      },
     }));
     return earnings;
   },
   reset: () => set(initialState()),
 }));
+
+/** Cognitive resilience alone (derived from lifetime Cognitive, never saved). */
+export const selectResilienceMultiplier = (state: Pick<CurrencyStore, 'totalCognitiveEarned'>): number =>
+  getResilienceMultiplier(state.totalCognitiveEarned);
+
+/** Effective tap-stress multiplier: soft-skill reduction × Cognitive resilience. */
+export const selectTapStressMultiplier = (
+  state: Pick<CurrencyStore, 'rates' | 'totalCognitiveEarned'>,
+): number => {
+  const skill = state.rates.stressPerClickMultiplier;
+  const safeSkill = Number.isFinite(skill) ? Math.min(1, Math.max(0, skill)) : 1;
+  return safeSkill * selectResilienceMultiplier(state);
+};
 
 export const selectResources = (state: CurrencyStore): ResourceState => ({
   capital: state.capital,

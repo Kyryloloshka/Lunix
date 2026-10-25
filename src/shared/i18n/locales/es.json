@@ -40,7 +40,10 @@
     "ratePerSec": "+{amount}/s",
     "throttling": "RIESGO DE ESTRANGULAMIENTO",
     "output": "RENDIMIENTO",
-    "optimal": "ÓPTIMO"
+    "optimal": "ÓPTIMO",
+    "cooldown": "Recarga de Flow · {seconds}s",
+    "resilience": "Resiliencia −{percent}%",
+    "resilienceA11y": "Resiliencia: los toques generan un {percent}% menos de carga"
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",

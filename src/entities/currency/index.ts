@@ -9,8 +9,17 @@ export {
   getStressOutputMultiplier,
   getStressPenaltyPercent,
   getTapValue,
+  selectResilienceMultiplier,
   selectResources,
+  selectTapStressMultiplier,
   useCurrencyStore,
 } from './model/currencyStore';
+export {
+  RHYTHM_CONFIG,
+  getResilienceMultiplier,
+  getStressDecay,
+  getStressReductionPercent,
+  toCountdownSeconds,
+} from './model/rhythm';
 export type { CurrencySnapshot, CurrencyStore, OfflineEarnings, TapResult } from './model/currencyStore';
 export type { FlowState, ResourceRates, ResourceState, TapResource } from './model/types';
