@@ -7,7 +7,7 @@ import {
 } from '@entities/currency';
 import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
 import { DevGlyph } from '@shared/ui';
-import { colors, getRankTheme, radii, spacing, typography } from '@shared/theme';
+import { colors, getRankTheme, radii, resources, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 
 interface HeaderHudProps {
@@ -44,7 +44,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
         <View style={styles.topRowActions}>
           {flow.isActive ? (
             <View style={styles.flowBadge}>
-              <DevGlyph name="bolt" size={12} color={colors.text.inverse} />
+              <DevGlyph name={resources.flow.glyph} size={12} color={colors.text.onAccent} />
               <Text style={styles.flowText}>
                 {t('status.flow')} x{flow.multiplier} · {Math.ceil(flow.remainingMs / 1000)}s
               </Text>
@@ -76,8 +76,8 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
       <View style={styles.resourcesGrid}>
         <View style={styles.statBox}>
           <View style={styles.statHeader}>
-            <DevGlyph name="terminal" size={11} color={colors.accent.phosphor} />
-            <Text style={[styles.label, { color: colors.accent.phosphor }]}>
+            <DevGlyph name={resources.capital.glyph} size={11} color={resources.capital.color} />
+            <Text style={[styles.label, { color: resources.capital.color }]}>
               {t('resources.capital').toUpperCase()}
             </Text>
           </View>
@@ -87,8 +87,8 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
 
         <View style={styles.statBox}>
           <View style={styles.statHeader}>
-            <DevGlyph name="brain" size={11} color={colors.accent.cyanBright} />
-            <Text style={[styles.label, { color: colors.accent.cyanBright }]}>
+            <DevGlyph name={resources.cognitive.glyph} size={11} color={resources.cognitive.color} />
+            <Text style={[styles.label, { color: resources.cognitive.color }]}>
               {t('resources.cognitive').toUpperCase()}
             </Text>
           </View>
@@ -98,8 +98,8 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
 
         <View style={styles.statBox}>
           <View style={styles.statHeader}>
-            <DevGlyph name="bolt" size={11} color={colors.accent.rustBright} />
-            <Text style={[styles.label, { color: colors.accent.rustBright }]}>
+            <DevGlyph name={resources.influence.glyph} size={11} color={resources.influence.color} />
+            <Text style={[styles.label, { color: resources.influence.color }]}>
               {t('resources.influence').toUpperCase()}
             </Text>
           </View>
@@ -111,7 +111,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
       <View style={styles.stressRow}>
         <View style={styles.stressHeader}>
           <View style={styles.stressLeft}>
-            <DevGlyph name="flame" size={11} color={stressColor} />
+            <DevGlyph name={resources.stress.glyph} size={11} color={stressColor} />
             <Text style={styles.stressLabel}>
               {t('resources.stress')}: {Math.round(stress)}%
             </Text>
@@ -172,14 +172,14 @@ const styles = StyleSheet.create({
   flowBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.accent.amber,
+    backgroundColor: resources.flow.color,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radii.xs,
     gap: 4,
   },
   flowText: {
-    color: colors.text.inverse,
+    color: colors.text.onAccent,
     fontFamily: typography.mono,
     fontWeight: '900',
     fontSize: 10,

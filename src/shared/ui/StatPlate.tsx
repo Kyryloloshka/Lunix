@@ -35,10 +35,10 @@ export function StatPlate({ label, value, detail, icon, tone = 'default' }: Stat
 }
 
 const styles = StyleSheet.create({
-  plate: { flex: 1, minWidth: 84, backgroundColor: colors.bg.inset, borderWidth: 1, borderColor: colors.border.subtle, borderRadius: radii.sm, padding: spacing.sm },
+  plate: { flex: 1, minWidth: 84, backgroundColor: colors.surface.inset, borderWidth: 1, borderColor: colors.border.subtle, borderRadius: radii.sm, padding: spacing.sm },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   icon: { width: 16, alignItems: 'center' },
-  label: { fontFamily: typography.mono, fontSize: 8, fontWeight: '900', letterSpacing: 0.6 },
-  value: { color: colors.text.primary, fontFamily: typography.mono, fontSize: typography.sizes.sm, fontWeight: '900', marginTop: 5 },
-  detail: { fontFamily: typography.mono, fontSize: 9, fontWeight: '700', marginTop: 3 },
+  label: { ...typography.roles.label },
+  value: { ...typography.roles.monoNum, color: colors.text.primary, marginTop: 5 },
+  detail: { ...typography.roles.label, fontWeight: typography.weights.regular, letterSpacing: 0, marginTop: 3 },
 });

@@ -1,6 +1,6 @@
 export { Badge } from './Badge';
-export { DevGlyph } from './DevGlyph';
-export { GameButton } from './GameButton';
+export { DevGlyph, glyphSymbols } from './DevGlyph';
+export { GameButton, FILLED_TONES } from './GameButton';
 export { Panel } from './Panel';
 export { ProgressBar } from './ProgressBar';
 export { ResourcePill } from './ResourcePill';

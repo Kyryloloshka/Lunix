@@ -1,5 +1,27 @@
-import { colors } from './tokens';
+import { colors, palette } from './tokens';
 
+/**
+ * Accent overlay applied on top of the base theme for a career rank.
+ * It only tints surfaces and swaps the accent; text, feedback and resource tokens stay the same.
+ */
+export interface RankAccentOverlay {
+  surface: {
+    /** Replaces `surface.base` (app background). */
+    base: string;
+    /** Replaces `surface.sunken` (hero area). */
+    sunken: string;
+    /** Replaces `surface.raised` (tinted panels). */
+    raised: string;
+  };
+  border: string;
+  accent: {
+    primary: string;
+    bright: string;
+    bg: string;
+  };
+}
+
+/** Flat legacy shape consumed by widgets. Derived from the overlay. */
 export interface RankTheme {
   appBackground: string;
   heroBackground: string;
@@ -10,91 +32,38 @@ export interface RankTheme {
   accentBackground: string;
 }
 
-const RANK_THEMES: readonly RankTheme[] = [
-  {
-    appBackground: '#0b0d0f',
-    heroBackground: '#0e1113',
-    surfaceTint: '#111416',
-    border: colors.border.active,
-    accent: colors.accent.phosphor,
-    accentBright: colors.accent.phosphorBright,
-    accentBackground: colors.accent.phosphorBg,
-  },
-  {
-    appBackground: '#0b100e',
-    heroBackground: '#0d1410',
-    surfaceTint: '#111815',
-    border: colors.accent.phosphorDim,
-    accent: colors.accent.phosphor,
-    accentBright: colors.accent.phosphorBright,
-    accentBackground: colors.accent.phosphorBg,
-  },
-  {
-    appBackground: '#0a1011',
-    heroBackground: '#0d1617',
-    surfaceTint: '#10191a',
-    border: colors.accent.cyan,
-    accent: colors.accent.cyan,
-    accentBright: colors.accent.cyanBright,
-    accentBackground: colors.accent.cyanBg,
-  },
-  {
-    appBackground: '#11100c',
-    heroBackground: '#18150e',
-    surfaceTint: '#1a1710',
-    border: colors.accent.amber,
-    accent: colors.accent.amber,
-    accentBright: colors.accent.amberBright,
-    accentBackground: colors.accent.amberBg,
-  },
-  {
-    appBackground: '#100f14',
-    heroBackground: '#15131b',
-    surfaceTint: '#181621',
-    border: colors.accent.violet,
-    accent: colors.accent.violet,
-    accentBright: colors.accent.violetBright,
-    accentBackground: colors.accent.violetBg,
-  },
-  {
-    appBackground: '#15100e',
-    heroBackground: '#1b1510',
-    surfaceTint: '#211712',
-    border: colors.accent.rust,
-    accent: colors.accent.rust,
-    accentBright: colors.accent.rustBright,
-    accentBackground: colors.accent.rustBg,
-  },
-  {
-    appBackground: '#0b110d',
-    heroBackground: '#101911',
-    surfaceTint: '#141d15',
-    border: colors.accent.phosphorBright,
-    accent: colors.accent.phosphor,
-    accentBright: colors.accent.phosphorBright,
-    accentBackground: colors.accent.phosphorBg,
-  },
-  {
-    appBackground: '#0a1113',
-    heroBackground: '#0e191c',
-    surfaceTint: '#111e21',
-    border: colors.accent.cyanBright,
-    accent: colors.accent.cyan,
-    accentBright: colors.accent.cyanBright,
-    accentBackground: colors.accent.cyanBg,
-  },
-  {
-    appBackground: '#15120b',
-    heroBackground: '#1e190d',
-    surfaceTint: '#241d0e',
-    border: colors.accent.amberBright,
-    accent: colors.accent.amber,
-    accentBright: colors.accent.amberBright,
-    accentBackground: colors.accent.amberBg,
-  },
+const PHOSPHOR = { primary: palette.phosphor, bright: palette.phosphorBright, bg: palette.phosphorBg };
+const CYAN = { primary: palette.cyan, bright: palette.cyanBright, bg: palette.cyanBg };
+const AMBER = { primary: palette.amber, bright: palette.amberBright, bg: palette.amberBg };
+const VIOLET = { primary: palette.violet, bright: palette.violetBright, bg: palette.violetBg };
+const RUST = { primary: palette.rust, bright: palette.rustBright, bg: palette.rustBg };
+
+export const RANK_ACCENT_OVERLAYS: readonly RankAccentOverlay[] = [
+  { surface: { base: '#0b0d0f', sunken: '#0e1113', raised: '#111416' }, border: colors.border.active, accent: PHOSPHOR },
+  { surface: { base: '#0b100e', sunken: '#0d1410', raised: '#111815' }, border: palette.phosphorDim, accent: PHOSPHOR },
+  { surface: { base: '#0a1011', sunken: '#0d1617', raised: '#10191a' }, border: palette.cyan, accent: CYAN },
+  { surface: { base: '#11100c', sunken: '#18150e', raised: '#1a1710' }, border: palette.amber, accent: AMBER },
+  { surface: { base: '#100f14', sunken: '#15131b', raised: '#181621' }, border: palette.violet, accent: VIOLET },
+  { surface: { base: '#15100e', sunken: '#1b1510', raised: '#211712' }, border: palette.rust, accent: RUST },
+  { surface: { base: '#0b110d', sunken: '#101911', raised: '#141d15' }, border: palette.phosphorBright, accent: PHOSPHOR },
+  { surface: { base: '#0a1113', sunken: '#0e191c', raised: '#111e21' }, border: palette.cyanBright, accent: CYAN },
+  { surface: { base: '#15120b', sunken: '#1e190d', raised: '#241d0e' }, border: palette.amberBright, accent: AMBER },
 ];
 
-export function getRankTheme(rank: number): RankTheme {
+export function getRankAccentOverlay(rank: number): RankAccentOverlay {
   const normalizedRank = Number.isFinite(rank) ? Math.floor(rank) : 0;
-  return RANK_THEMES[Math.min(RANK_THEMES.length - 1, Math.max(0, normalizedRank))];
+  return RANK_ACCENT_OVERLAYS[Math.min(RANK_ACCENT_OVERLAYS.length - 1, Math.max(0, normalizedRank))];
+}
+
+export function getRankTheme(rank: number): RankTheme {
+  const overlay = getRankAccentOverlay(rank);
+  return {
+    appBackground: overlay.surface.base,
+    heroBackground: overlay.surface.sunken,
+    surfaceTint: overlay.surface.raised,
+    border: overlay.border,
+    accent: overlay.accent.primary,
+    accentBright: overlay.accent.bright,
+    accentBackground: overlay.accent.bg,
+  };
 }

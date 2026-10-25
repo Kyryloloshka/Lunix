@@ -4,7 +4,7 @@ title: Дизайн-система «Terminal Workbench» v1
 type: design system / refactor
 priority: P1
 size: L
-status: todo
+status: in-progress
 epic: E9 (juice) + фундамент для E4, E7, E15 (косметика IDE-тем)
 hook: juice, колекціонування (теми), впізнаваність бренду
 metric: конверсія сторінки в сторі (скріншоти), швидкість додавання контенту, дохід з косметики
@@ -86,3 +86,30 @@ needs-approval: так — брендовий моноширинний шриф�
 ## Ризики і відкриті питання
 - Шрифт — нова залежність: погодити і ставити через `npx expo install expo-font`.
 - Великий дифф: робити поетапно, кожен етап — окремий PR зі скріншотами.
+
+## Прогрес
+
+**2026-10-25 — етап 1 (токени) зроблено**, гілка `task/T-004-stage1-tokens`.
+- `shared/theme/tokens.ts`: сира `palette` + семантичні `colors.surface.{base,raised,overlay,sunken,inset}`,
+  `colors.text.{primary,secondary,muted,onAccent}`, `colors.border.*`, `colors.feedback.{success,warning,danger}`
+  (+`*Bg`), `colors.focus`. `text.muted` піднято до `#7d8987` (було 3.6–4.1:1 на поверхнях, тепер ≥ 4.5:1).
+- `resources.{capital,cognitive,influence,stress,flow}` → `{ color, bg, glyph, labelKey }`. Influence тепер
+  має гліф `trend` (↗), Flow лишився `bolt` — HUD читає гліфи й кольори з токенів.
+- Аліаси `green/indigo/rose/gold` (і `amberLight/redLight`) видалено; споживачі (`Badge`, `GameButton`,
+  `ProgressBar`, `ResourcePill`) переведено на семантичні токени.
+- Типографіка: `MIN_READABLE_FONT_SIZE = 11`, ролі `typography.roles.{display,title,body,label,monoNum}`
+  (`monoNum`/`display` — `tabular-nums`). У `shared/ui` магічних 8/9 px більше немає.
+- Тема = об'єкт: `baseTheme`, `applyAccentOverlay`, `createRankTheme(rank)`; `getRankTheme` тепер похідна від
+  `RANK_ACCENT_OVERLAYS` (форма для віджетів не змінилась). Готово до `ThemeProvider` (E15).
+- `contrastRatio` (WCAG, чиста функція на hex) + тести: text/surface ≥ 4.5:1 (вкл. відтінки рангів),
+  `onAccent` на заливках, кольори ресурсів/feedback як текст.
+- `GameButton primary`: білий на фіолетовому (2.9:1) → `text.onAccent` (6.7:1) для всіх заливних тонів;
+  `sm` тепер теж 44 pt.
+
+**Тимчасово лишено (deprecated, приберемо в етапі 2 разом із перевіркою віджетів):**
+- `colors.bg.*` (= `surface.*`), `colors.text.inverse` (= `onAccent`), `theme` (= `baseTheme`) — щоб не
+  чіпати верстку віджетів, які паралельно переробляє T-002.
+- `typography.sizes.xxs` тепер = 11 (було 9): віджети, що його використовують, стали трохи більшими —
+  перевірити на 375×812 разом з T-002. Магічні 8/9/10 у віджетах лишились (етап 2 / grep-тест).
+
+**Далі:** етап 2 (компоненти), етап 3 (шрифт — потрібне погодження). Емодзі у `formatDecimal` — етап 3.
