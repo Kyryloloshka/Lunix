@@ -1,5 +1,5 @@
 export { canPurchaseSkill, getNextSkillCost } from './model/purchaseSkill';
-export { canPromote, getPromotionProgress, isSkillUnlocked, syncRatesFromSkills, useSkillStore } from './model/skillStore';
+export { canPromote, getPromotionProgress, getReachedSkillIds, isSkillUnlocked, syncRatesFromSkills, useSkillStore } from './model/skillStore';
 export type { SkillSnapshot } from './model/skillStore';
 export {
   calculateRates,

@@ -80,6 +80,8 @@
     "purchased": "ADQUIRIDO",
     "multiplier": "x{mult} IMPULSO",
     "reqLevel": "Requiere {skill} Nivel {level}",
+    "newBadge": "NUEVO",
+    "teaser": "??? · se desbloquea en el rango {rank}",
     "items": {
       "html-tags": {
         "name": "Etiquetas HTML de TubeTube",
