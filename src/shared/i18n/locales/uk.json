@@ -3,7 +3,6 @@
     "title": "DEV CLI: ШЛЯХ ДО CEO",
     "kicker": "KERNEL v5.19 // USERSPACE",
     "branch": "main*",
-    "commit": "8f3b2e1",
     "session": "СЕСІЯ / КАР'ЄРА_001"
   },
   "locale": {
@@ -45,6 +44,7 @@
   },
   "status": {
     "prod": "PROD: STABLE",
+    "zone": "IN THE ZONE ×{multiplier}",
     "flow": "FLOW OVERCLOCK",
     "combo": "Комбо {current}/{target} · {seconds}с",
     "ratePerSec": "+{amount}/с",
@@ -57,11 +57,7 @@
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",
-    "crit": "КРИТ!",
-    "fileHeader": "workspace.ts — змінено",
-    "line1": "const future = await build();",
-    "line2": "if (bugs) fix(bugs);",
-    "line3": "return profit;",
+    "crit": "КРИТ ×{multiplier}",
     "hintCognitive": "Тапай, щоб вчитися",
     "hintCapital": "Тапай, щоб працювати",
     "hintInfluence": "Тапай, щоб нетворкати"

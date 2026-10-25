@@ -12,6 +12,10 @@ const MAX_STRESS = RHYTHM_CONFIG.stress.max;
 const OVERLOAD_THRESHOLD = RHYTHM_CONFIG.stress.overloadThreshold;
 const OVERLOAD_MIN_OUTPUT = RHYTHM_CONFIG.stress.overloadMinOutput;
 const BASE_STRESS_PER_TAP = RHYTHM_CONFIG.stress.perTap;
+/** Chance that a tap outside Flow is a crit. */
+export const CRIT_CHANCE = 0.08;
+/** Output multiplier of a crit tap; the UI reads it from here so "CRIT ×N" matches the payout. */
+export const CRIT_MULTIPLIER = 2;
 /** Live ticks never apply more than this; longer gaps go through offline earnings. */
 export const MAX_TICK_SECONDS = 5;
 /** Base value of one tap per mode, before perks (docs/economy/phases.md §4). */
@@ -43,6 +47,8 @@ export interface TapResult {
   resource: TapResource;
   amount: Decimal;
   isCritical: boolean;
+  /** Flow/crit bonus applied to this tap (1 = none), before the stress penalty. */
+  multiplier: number;
 }
 
 export function getStressOutputMultiplier(stress: number): number {
@@ -149,8 +155,8 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
   tap: (resource = 'cognitive') => {
     const { rates, flow, stress } = get();
     // Flow already multiplies output, so crits only roll outside of it.
-    const isCritical = !flow.isActive && Math.random() < 0.08;
-    const bonusMultiplier = flow.isActive ? flow.multiplier : isCritical ? 2 : 1;
+    const isCritical = !flow.isActive && Math.random() < CRIT_CHANCE;
+    const bonusMultiplier = flow.isActive ? flow.multiplier : isCritical ? CRIT_MULTIPLIER : 1;
     const outputMultiplier = bonusMultiplier * getStressOutputMultiplier(stress);
     const amount = getTapValue(rates, resource).multiplyScalar(outputMultiplier);
 
@@ -184,7 +190,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
       };
     });
 
-    return { resource, amount, isCritical };
+    return { resource, amount, isCritical, multiplier: bonusMultiplier };
   },
 
   tick: (deltaSeconds) => {

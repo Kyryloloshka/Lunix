@@ -3,7 +3,6 @@
     "title": "DEV CLI: PATH TO CEO",
     "kicker": "KERNEL v5.19 // USERSPACE",
     "branch": "main*",
-    "commit": "8f3b2e1",
     "session": "SESSION / CAREER_001"
   },
   "locale": {
@@ -45,6 +44,7 @@
   },
   "status": {
     "prod": "PROD: STABLE",
+    "zone": "IN THE ZONE ×{multiplier}",
     "flow": "FLOW OVERCLOCK",
     "combo": "Combo {current}/{target} · {seconds}s",
     "ratePerSec": "+{amount}/s",
@@ -57,11 +57,7 @@
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",
-    "crit": "CRIT!",
-    "fileHeader": "workspace.ts — edited",
-    "line1": "const future = await build();",
-    "line2": "if (bugs) fix(bugs);",
-    "line3": "return profit;",
+    "crit": "CRIT ×{multiplier}",
     "hintCognitive": "Tap to study",
     "hintCapital": "Tap to work",
     "hintInfluence": "Tap to network"

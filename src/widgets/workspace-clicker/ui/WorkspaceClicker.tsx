@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
   Animated,
@@ -14,16 +14,17 @@ import {
   useManualGesture,
   type GestureTouchEvent,
 } from 'react-native-gesture-handler';
-import type { TapResource } from '@entities/currency';
+import { useCurrencyStore, type TapResource } from '@entities/currency';
 import type { Decimal } from '@shared/lib/decimal';
 import { useSkillStore } from '@features/purchase-skill';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
-import { DevGlyph, ResourceValue } from '@shared/ui';
+import { ResourceValue } from '@shared/ui';
 import { colors, getRankTheme, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useSettingsStore } from '@features/settings';
 import { useMotionPreference } from '@shared/lib/motion';
 import { toZonePoint, zoneCenter, type ZoneSize } from '../model/touchCoordinates';
+import { CodeEditor, type CodeEditorHandle } from './CodeEditor';
 
 const FLOATER_LIFETIME_MS = 1_050;
 const MAX_FLOATERS = 20;
@@ -32,10 +33,6 @@ const HAPTIC_THROTTLE_MS = 60;
 const FLOATER_ANCHOR_WIDTH = 240;
 // Non-zero so Android doesn't measure the floater text at height 0 and draw nothing
 const FLOATER_ANCHOR_HEIGHT = 48;
-// Adaptive editor: full width on phones (minus gutters), capped so it doesn't look stretched on tablets/web
-const EDITOR_MAX_WIDTH = 420;
-// The editor grows to fill the tab's free height, but not into a giant empty slab on tall screens
-const EDITOR_MAX_HEIGHT = 380;
 
 const TAP_HINT: Record<TapResource, string> = {
   cognitive: 'workspace.hintCognitive',
@@ -55,6 +52,8 @@ interface FloatingNumber {
   text: string;
   resource: TapResource;
   isCrit: boolean;
+  /** Real output multiplier of the crit (from the model), shown as "CRIT ×N". */
+  multiplier: number;
   x: number;
   y: number;
   reducedMotion: boolean;
@@ -85,14 +84,17 @@ export function WorkspaceClicker({ header, overlay }: WorkspaceClickerProps = {}
   const currentRank = useSkillStore((state) => state.currentRank);
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
   const { reducedMotion } = useMotionPreference();
-  const rankTheme = getRankTheme(currentRank);
+  const rankTheme = useMemo(() => getRankTheme(currentRank), [currentRank]);
+  // Boolean/number selectors: the zone only re-renders when Flow starts or ends, not on every tick
+  const flowActive = useCurrencyStore((state) => state.flow.isActive);
+  const flowMultiplier = useCurrencyStore((state) => state.flow.multiplier);
   const tap = useSkillStore((state) => state.tap);
   // Feedback must match the effect: the hint names what a tap produces right now.
   const tapResource = useSkillStore((state) => state.tapResource);
   const tapHint = t(TAP_HINT[tapResource]);
   const [pressed, setPressed] = useState(false);
   const [floaters, setFloaters] = useState<FloatingNumber[]>([]);
-  const scale = useRef(new Animated.Value(1)).current;
+  const editorRef = useRef<CodeEditorHandle>(null);
 
   // Size of the tap zone; the floaters layer covers it exactly, so touch coords need no offset
   const zoneSize = useRef<ZoneSize | null>(null);
@@ -129,11 +131,12 @@ export function WorkspaceClicker({ header, overlay }: WorkspaceClickerProps = {}
     const text = result.isCritical ? amount : `+${amount}`;
 
     triggerHaptic(result.isCritical);
+    editorRef.current?.onTap({ isCritical: result.isCritical, multiplier: result.multiplier });
 
     const point = toZonePoint({ x, y }, zoneSize.current);
     setFloaters((prev) => [
       ...prev.slice(-(MAX_FLOATERS - 1)),
-      { id, text, resource: result.resource, isCrit: result.isCritical, x: point.x, y: point.y, reducedMotion },
+      { id, text, resource: result.resource, isCrit: result.isCritical, multiplier: result.multiplier, x: point.x, y: point.y, reducedMotion },
     ]);
 
     const timer = setTimeout(() => {
@@ -183,19 +186,6 @@ export function WorkspaceClicker({ header, overlay }: WorkspaceClickerProps = {}
     onFinalize: handleGestureFinalize,
   });
 
-  useEffect(() => {
-    if (reducedMotion) {
-      scale.setValue(1);
-      return;
-    }
-    Animated.spring(scale, {
-      toValue: pressed ? 0.98 : 1,
-      speed: 36,
-      bounciness: 4,
-      useNativeDriver: true,
-    }).start();
-  }, [pressed, reducedMotion, scale]);
-
   return (
     <View style={styles.root}>
       <GestureDetector gesture={tapGesture}>
@@ -210,58 +200,16 @@ export function WorkspaceClicker({ header, overlay }: WorkspaceClickerProps = {}
           testID="workspace-tap-zone"
         >
           {header ? <View pointerEvents="none">{header}</View> : null}
-          <View pointerEvents="none" style={styles.statusRow}>
-            <View style={styles.statusPill}>
-              <View style={styles.statusDot} />
-              <Text style={styles.statusText}>{t('status.prod')}</Text>
-            </View>
-            <Text style={styles.sessionText}>{t('app.session')}</Text>
-          </View>
-
-          <View pointerEvents="none" style={styles.editorWrap}>
-            <View style={styles.touchSurface}>
-              {/* Animated visual surface */}
-              <Animated.View style={[styles.laptopButton, { borderColor: rankTheme.border, backgroundColor: rankTheme.surfaceTint, transform: [{ scale }] }]}>
-                <View pointerEvents="none" style={styles.editorHeader}>
-                  <View style={styles.fileTab}>
-                    <DevGlyph name="code" size={13} color={colors.accent.phosphor} />
-                    <Text style={styles.fileName}>{t('workspace.fileHeader')}</Text>
-                  </View>
-                  <Text style={styles.fileMeta}>UTF-8  LF</Text>
-                </View>
-
-                <View pointerEvents="none" style={styles.codeArea}>
-                  <View style={styles.lineNumbersColumn}>
-                    {['01', '02', '03'].map((line) => (
-                      <Text key={line} style={styles.lineNumber}>{line}</Text>
-                    ))}
-                  </View>
-                  <View style={styles.codeLinesColumn}>
-                    {[t('workspace.line1'), t('workspace.line2'), t('workspace.line3')].map((code) => (
-                      <Text key={code} style={styles.codeLine} numberOfLines={1}>{code}</Text>
-                    ))}
-                  </View>
-                </View>
-
-                <View pointerEvents="none" style={styles.editorFooter}>
-                  <View style={styles.branchRow}>
-                    <DevGlyph name="git-branch" size={14} color={colors.accent.amber} />
-                    <Text style={styles.branchText}>{t('app.branch')}</Text>
-                  </View>
-                  <Text style={styles.commitText}>{t('app.commit')}</Text>
-                </View>
-
-                <View pointerEvents="none" style={styles.keyboard}>
-                  {Array.from({ length: 15 }).map((_, index) => (
-                    <View key={index} style={[styles.key, index === 12 && styles.keyWide]} />
-                  ))}
-                </View>
-
-                <Text pointerEvents="none" style={styles.tapPrompt}>{t('workspace.prompt')}</Text>
-                <Text pointerEvents="none" style={styles.tapSub}>{tapHint}</Text>
-              </Animated.View>
-            </View>
-          </View>
+          <CodeEditor
+            ref={editorRef}
+            rank={currentRank}
+            tapResource={tapResource}
+            rankTheme={rankTheme}
+            flowActive={flowActive}
+            flowMultiplier={flowMultiplier}
+            pressed={pressed}
+            tapHint={tapHint}
+          />
 
           {/* Floaters cover the whole zone, so a tap anywhere shows its number at the touch point */}
           <View style={styles.floatersLayer} pointerEvents="none">
@@ -318,7 +266,7 @@ const AnimatedFloater = memo(function AnimatedFloater({ floater }: { floater: Fl
       <View style={[styles.floaterPill, floater.isCrit && styles.floaterPillCrit]}>
         <Text style={[styles.floaterText, floater.isCrit && styles.floaterCritText]}>
           <ResourceValue kind={floater.resource}>{floater.text}</ResourceValue>
-          {floater.isCrit ? ` ${t('workspace.crit')}` : null}
+          {floater.isCrit ? ` ${t('workspace.crit', { multiplier: floater.multiplier })}` : null}
         </Text>
       </View>
     </Animated.View>
@@ -329,69 +277,6 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.lg, paddingHorizontal: spacing.lg, overflow: 'hidden' },
   overlayLayer: { ...StyleSheet.absoluteFill, zIndex: 40 },
-  statusRow: { flexDirection: 'row', width: '100%', maxWidth: EDITOR_MAX_WIDTH, paddingHorizontal: spacing.xs, justifyContent: 'space-between', alignItems: 'center' },
-  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statusDot: { width: 6, height: 6, backgroundColor: colors.accent.phosphor, borderRadius: radii.full },
-  statusText: { color: colors.accent.phosphor, fontSize: typography.sizes.xxs, fontWeight: '900', letterSpacing: 1 },
-  sessionText: { color: colors.text.muted, fontSize: 9, fontWeight: '700', letterSpacing: 0.7 },
-  // Shrinks on short screens: the Console tab has no scroll, so the editor must fit between HUD and dock
-  editorWrap: { marginTop: spacing.md, width: '100%', maxWidth: EDITOR_MAX_WIDTH, flexGrow: 1, flexShrink: 1, minHeight: 0, maxHeight: EDITOR_MAX_HEIGHT },
-  touchSurface: { position: 'relative', width: '100%', flexGrow: 1 },
-  laptopButton: {
-    backgroundColor: colors.bg.surface,
-    borderWidth: 1,
-    borderColor: colors.border.active,
-    borderRadius: radii.lg,
-    flexGrow: 1,
-    padding: spacing.md,
-    alignItems: 'stretch',
-    shadowColor: '#000000',
-    shadowOpacity: 0.4,
-    shadowOffset: { width: 0, height: 12 },
-    shadowRadius: 20,
-    elevation: 7,
-  },
-  rank0: { borderColor: colors.border.active },
-  rank1: { borderColor: colors.accent.phosphorDim },
-  rank2: { borderColor: colors.accent.cyanBright },
-  rank3: { borderColor: colors.accent.amber },
-  rank4: { borderColor: colors.accent.violetBright },
-  rank5: { borderColor: colors.accent.rustBright },
-  rank6: { borderColor: colors.accent.phosphorBright },
-  rank7: { borderColor: colors.accent.cyanBright, shadowOpacity: 0.6 },
-  rank8: { borderColor: colors.accent.amberBright, shadowOpacity: 0.7 },
-  editorHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: colors.border.subtle, paddingBottom: spacing.sm },
-  fileTab: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  fileName: { color: colors.text.secondary, fontFamily: typography.mono, fontSize: 10 },
-  fileMeta: { color: colors.text.muted, fontFamily: typography.mono, fontSize: 9 },
-  codeArea: {
-    backgroundColor: colors.bg.inset,
-    flexGrow: 1,
-    minHeight: 104,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  lineNumbersColumn: {
-    width: 24,
-    alignItems: 'flex-end',
-  },
-  codeLinesColumn: {
-    flex: 1,
-    minWidth: 0,
-  },
-  lineNumber: { color: colors.text.muted, fontFamily: typography.mono, fontSize: 11, lineHeight: 22 },
-  codeLine: { color: colors.accent.phosphor, fontFamily: typography.mono, fontSize: 11, lineHeight: 22 },
-  editorFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.bg.inset, paddingHorizontal: spacing.xs, paddingBottom: spacing.sm },
-  branchRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  branchText: { color: colors.accent.amber, fontFamily: typography.mono, fontSize: 10 },
-  commitText: { color: colors.text.muted, fontFamily: typography.mono, fontSize: 10 },
-  keyboard: { marginTop: spacing.sm, flexDirection: 'row', flexWrap: 'wrap', gap: 4, justifyContent: 'center' },
-  key: { width: 17, height: 8, borderRadius: 2, backgroundColor: colors.border.active },
-  keyWide: { width: 48 },
-  tapPrompt: { color: colors.text.primary, fontFamily: typography.mono, fontWeight: '900', fontSize: typography.sizes.sm, letterSpacing: 1.2, marginTop: spacing.md },
-  tapSub: { color: colors.text.secondary, fontSize: typography.sizes.xs, marginTop: 4 },
   floatersLayer: { ...StyleSheet.absoluteFill, zIndex: 30 },
   floaterAnchor: {
     position: 'absolute',
