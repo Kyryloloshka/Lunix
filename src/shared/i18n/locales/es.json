@@ -13,7 +13,10 @@
     "skills": "Stack",
     "career": "Carrera",
     "leaders": "Líderes",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "badgeSkills": "hay compras disponibles",
+    "badgeCareer": "ascenso disponible",
+    "badgeHint": "Marca de la pestaña: hay algo que hacer"
   },
   "settings": {
     "heading": "AJUSTES",
@@ -77,6 +80,11 @@
     "upgradesTab": "MEJORAS",
     "lvl": "NIVEL {level}",
     "buy": "COMPRAR",
+    "needMore": "faltan {amount}",
+    "waitSeconds": "~{seconds} s",
+    "waitMinutes": "~{minutes} min",
+    "needMoreA11y": "Faltan {amount} {resource}",
+    "waitA11y": "Aproximadamente {time} para poder comprar",
     "purchased": "ADQUIRIDO",
     "multiplier": "x{mult} IMPULSO",
     "reqLevel": "Requiere {skill} Nivel {level}",
@@ -474,6 +482,18 @@
         "use": "Los ascensos desde Senior gastan Influencia. También las ventajas de liderazgo y sus mejoras."
       }
     }
+  },
+  "nextGoal": {
+    "label": "SIGUIENTE META",
+    "a11yLabel": "Siguiente meta: {goal}",
+    "a11yHint": "Abre la pestaña {tab}",
+    "buySkill": "Compra {skill}, nivel {level}",
+    "buyUpgrade": "Compra una mejora",
+    "earn": "Gana {resource} para «{rank}»",
+    "spend": "Ahorra {resource} para «{rank}»",
+    "promote": "El ascenso a «{rank}» está listo",
+    "ready": "LISTO",
+    "progress": "{current} / {target}"
   },
   "onboarding": {
     "intro": {

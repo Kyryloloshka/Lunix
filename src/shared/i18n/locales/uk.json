@@ -13,7 +13,10 @@
     "skills": "Стек",
     "career": "Грейди",
     "leaders": "Топ",
-    "settings": "Опції"
+    "settings": "Опції",
+    "badgeSkills": "є доступні покупки",
+    "badgeCareer": "можна підвищитись",
+    "badgeHint": "Позначка на вкладці: є що зробити"
   },
   "settings": {
     "heading": "НАЛАШТУВАННЯ",
@@ -77,6 +80,11 @@
     "upgradesTab": "АПГРЕЙДИ",
     "lvl": "РІВ. {level}",
     "buy": "КУПИТИ",
+    "needMore": "ще {amount}",
+    "waitSeconds": "~{seconds} с",
+    "waitMinutes": "~{minutes} хв",
+    "needMoreA11y": "Бракує {amount} {resource}",
+    "waitA11y": "Приблизно {time} до покупки",
     "purchased": "КУПЛЕНО",
     "multiplier": "x{mult} БУСТ",
     "reqLevel": "Потрібен {skill} Рів. {level}",
@@ -474,6 +482,18 @@
         "use": "Підвищення від Senior і вище списують Вплив. Ще — лідерські перки й апгрейди Впливу."
       }
     }
+  },
+  "nextGoal": {
+    "label": "НАСТУПНА ЦІЛЬ",
+    "a11yLabel": "Наступна ціль: {goal}",
+    "a11yHint": "Відкриває вкладку «{tab}»",
+    "buySkill": "Купи {skill}, рівень {level}",
+    "buyUpgrade": "Купи апгрейд",
+    "earn": "Заробити {resource} до «{rank}»",
+    "spend": "Накопичити {resource} на «{rank}»",
+    "promote": "Підвищення до «{rank}» готове",
+    "ready": "ГОТОВО",
+    "progress": "{current} / {target}"
   },
   "onboarding": {
     "intro": {

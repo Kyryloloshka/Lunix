@@ -8,4 +8,8 @@ export {
   previewSkillGain,
   previewUpgrade,
 } from './model/skillIncome';
+export { canPromoteNow, getNextLevelCost, hasAffordablePurchase, selectNextGoal } from './model/nextGoal';
+export type { NextGoal, NextGoalContent, NextGoalState, NextGoalTab } from './model/nextGoal';
+export { MAX_WAIT_SECONDS, getWaitHint, getWaitIncome } from './model/waitHint';
+export type { WaitHint } from './model/waitHint';
 export type { RateChange, SkillContribution, SkillIncomeState, UpgradePreview } from './model/skillIncome';

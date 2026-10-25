@@ -21,6 +21,8 @@ import { t, useLocale } from '@shared/i18n';
 import { useMotionPreference } from '@shared/lib/motion';
 import {
   getSkillContribution,
+  getWaitHint,
+  getWaitIncome,
   isSkillUnlocked,
   previewSkillGain,
   previewUpgrade,
@@ -28,6 +30,7 @@ import {
   type RateChange,
   type SkillContribution,
   type UpgradePreview,
+  type WaitHint,
 } from '@features/purchase-skill';
 import { getCatalogEntries, getCatalogTabs, getLockedTeaser, type CatalogTab } from '../model/catalogTabs';
 import { getNewSkillIds, sortUpgradesByStatus } from '../model/catalogOrder';
@@ -68,6 +71,27 @@ const SKILL_GLYPHS: Record<string, GlyphName> = {
   aeropress: 'coffee',
   'mech-keyboard': 'terminal',
 };
+
+interface WaitLabel {
+  text: string;
+  a11y: string;
+}
+
+/** Text for a disabled buy button: the time to afford it, or how much is missing (T-003). */
+function waitLabel(hint: WaitHint, resource: SkillResource): WaitLabel | null {
+  if (hint.kind === 'ready') return null;
+  if (hint.kind === 'seconds') {
+    const time = hint.seconds < 60
+      ? t('skills.waitSeconds', { seconds: hint.seconds })
+      : t('skills.waitMinutes', { minutes: Math.ceil(hint.seconds / 60) });
+    return { text: time, a11y: t('skills.waitA11y', { time }) };
+  }
+  const amount = FORMAT[resource](hint.amount);
+  return {
+    text: t('skills.needMore', { amount }),
+    a11y: t('skills.needMoreA11y', { amount, resource: t(`resources.${resource}`) }),
+  };
+}
 
 function skillName(id: string): string {
   return t(`skills.items.${id}.name`);
@@ -178,6 +202,8 @@ export function SkillsCatalog() {
   const capital = useCurrencyStore((state) => state.capital);
   const cognitive = useCurrencyStore((state) => state.cognitive);
   const influence = useCurrencyStore((state) => state.influence);
+  const income = useCurrencyStore((state) => state.income);
+  const rates = useCurrencyStore((state) => state.rates);
   const { reducedMotion } = useMotionPreference();
   const currentRank = useSkillStore((state) => state.currentRank);
   const buy = useSkillStore((state) => state.buy);
@@ -285,6 +311,12 @@ export function SkillsCatalog() {
       : SKILL_GLYPHS[upgrade.effect.skillId] ?? BRANCH_GLYPHS[skillById(upgrade.effect.skillId)?.branch ?? 'knowledge'];
     const name = upgradeName(upgrade);
     const preview = upgradePreviews.get(upgrade.id) ?? null;
+    const wait = !isOwned && meetsLevel && !affordable
+      ? waitLabel(
+        getWaitHint(upgrade.cost, balances[upgrade.costResource], getWaitIncome(upgrade.costResource, income, rates)),
+        upgrade.costResource,
+      )
+      : null;
 
     return (
       <View key={upgrade.id} style={styles.cardWrapper}>
@@ -319,7 +351,7 @@ export function SkillsCatalog() {
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`${t('skills.buy')} ${name}`}
+            accessibilityLabel={wait ? `${t('skills.buy')} ${name}. ${wait.a11y}` : `${t('skills.buy')} ${name}`}
             accessibilityState={{ disabled: !affordable || isOwned }}
             disabled={!affordable || isOwned}
             onPress={() => handleBuyUpgrade(upgrade)}
@@ -340,7 +372,9 @@ export function SkillsCatalog() {
                 </ResourceValue>
               )}
             </Text>
-            <Text style={styles.buyLabel}>{isOwned ? t('skills.active') : t('skills.buy')}</Text>
+            <Text style={[styles.buyLabel, wait && styles.buyWait]} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
+              {isOwned ? t('skills.active') : (wait?.text ?? t('skills.buy'))}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -361,6 +395,10 @@ export function SkillsCatalog() {
     const glyphName = SKILL_GLYPHS[skill.id] ?? BRANCH_GLYPHS[skill.branch];
     const name = skillName(skill.id);
     const contribution = contributions.get(skill.id) ?? null;
+    // Disabled but reachable: say how much is missing or how long it takes (T-017 income).
+    const wait = unlocked && !isMaxed && !affordable
+      ? waitLabel(getWaitHint(cost, budget, getWaitIncome(skill.costResource, income, rates)), skill.costResource)
+      : null;
 
     const isNew = newSkillIds.has(skill.id);
     const card = (
@@ -396,7 +434,7 @@ export function SkillsCatalog() {
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`${t('skills.buy')} ${name}`}
+            accessibilityLabel={wait ? `${t('skills.buy')} ${name}. ${wait.a11y}` : `${t('skills.buy')} ${name}`}
             accessibilityState={{ disabled: !affordable }}
             disabled={!affordable}
             onPress={() => handleBuy(skill.id)}
@@ -407,7 +445,9 @@ export function SkillsCatalog() {
                 <ResourceValue kind={skill.costResource}>{FORMAT[skill.costResource](cost)}</ResourceValue>
               )}
             </Text>
-            <Text style={styles.buyLabel}>{t('skills.buy')}</Text>
+            <Text style={[styles.buyLabel, wait && styles.buyWait]} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
+              {wait?.text ?? t('skills.buy')}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -695,6 +735,9 @@ const styles = StyleSheet.create({
     fontFamily: typography.mono,
     fontSize: typography.sizes.xxs,
     fontWeight: '900',
+  },
+  buyWait: {
+    color: colors.text.secondary,
   },
   buyLabel: {
     color: colors.text.muted,

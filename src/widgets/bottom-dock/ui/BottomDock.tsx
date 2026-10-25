@@ -8,6 +8,8 @@ export type ActiveTab = 'work' | 'skills' | 'career' | 'leaders' | 'settings';
 interface BottomDockProps {
   activeTab: ActiveTab;
   onChangeTab: (tab: ActiveTab) => void;
+  /** Tabs with something to do right now (T-003). Drawn as a dot and announced by screen readers. */
+  badges?: Partial<Record<ActiveTab, boolean>>;
 }
 
 interface TabItem {
@@ -24,24 +26,35 @@ const TABS: TabItem[] = [
   { id: 'settings', labelKey: 'nav.settings', icon: 'gear' },
 ];
 
-export function BottomDock({ activeTab, onChangeTab }: BottomDockProps) {
+/** i18n key of the spoken reason for a tab's badge. Tabs without a key never show a badge. */
+const BADGE_KEYS: Partial<Record<ActiveTab, string>> = {
+  skills: 'nav.badgeSkills',
+  career: 'nav.badgeCareer',
+};
+
+export function BottomDock({ activeTab, onChangeTab, badges }: BottomDockProps) {
   useLocale();
   return (
     <View style={styles.dockContainer}>
       <View style={styles.dock}>
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
+          const badgeKey = badges?.[tab.id] ? BADGE_KEYS[tab.id] : undefined;
           const color = isActive ? colors.accent.phosphorBright : colors.text.muted;
           return (
             <Pressable
               key={tab.id}
               accessibilityRole="tab"
-              accessibilityLabel={t(tab.labelKey)}
+              accessibilityLabel={badgeKey ? `${t(tab.labelKey)}, ${t(badgeKey)}` : t(tab.labelKey)}
+              accessibilityHint={badgeKey ? t('nav.badgeHint') : undefined}
               accessibilityState={{ selected: isActive }}
               onPress={() => onChangeTab(tab.id)}
               style={[styles.tabButton, isActive && styles.tabButtonActive]}
             >
-              <DevGlyph name={tab.icon} size={16} color={color} />
+              <View>
+                <DevGlyph name={tab.icon} size={16} color={color} />
+                {badgeKey ? <View style={styles.badge} testID={`dock-badge-${tab.id}`} /> : null}
+              </View>
               <Text
                 style={[styles.label, isActive && styles.labelActive]}
                 numberOfLines={1}
@@ -63,6 +76,8 @@ const styles = StyleSheet.create({
   // Icon above label: five tabs fit at 320pt without the labels running into each other.
   tabButton: { flex: 1, minWidth: 0, minHeight: MIN_TOUCH_TARGET + 4, alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.xs, paddingHorizontal: 2, borderRadius: radii.md, gap: 3 },
   tabButtonActive: { backgroundColor: colors.accent.phosphorBg, borderWidth: 1, borderColor: colors.accent.phosphorDim },
+  // A dot with a ring on the icon's corner: a shape the eye finds without relying on its hue alone.
+  badge: { position: 'absolute', top: -3, right: -6, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent.amberBright, borderWidth: 2, borderColor: colors.bg.surface },
   label: { fontFamily: typography.mono, fontSize: typography.sizes.xxs, fontWeight: '800', color: colors.text.muted },
   labelActive: { color: colors.accent.phosphorBright },
 });
