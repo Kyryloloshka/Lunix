@@ -7,6 +7,7 @@ import { colors, radii, spacing, typography } from '@shared/theme';
 import { GameButton, MIN_TOUCH_TARGET, Panel } from '@shared/ui';
 import { useSettingsStore } from '@features/settings';
 import { useSkillStore } from '@features/purchase-skill';
+import { useOnboardingStore } from '@features/onboarding';
 
 type ToggleRowProps = {
   label: string;
@@ -102,6 +103,7 @@ export function SettingsPanel({ onResetProgress }: SettingsPanelProps) {
   const setHapticsEnabled = useSettingsStore((state) => state.setHapticsEnabled);
   const setReducedMotionChoice = useSettingsStore((state) => state.setReducedMotionChoice);
   const setLocale = useSettingsStore((state) => state.setLocale);
+  const replayIntro = useOnboardingStore((state) => state.replayIntro);
   const notation = useSettingsStore((state) => state.notation);
   const setNotation = useSettingsStore((state) => state.setNotation);
   // Effective value: the player's explicit choice, or the OS setting while they haven't chosen.
@@ -157,6 +159,12 @@ export function SettingsPanel({ onResetProgress }: SettingsPanelProps) {
           </Pressable>
         ))}
       </View>
+      <View style={styles.introSection}>
+        <Text style={styles.resetHint}>{t('settings.replayIntroHint')}</Text>
+        <GameButton tone="secondary" size="sm" fullWidth onPress={replayIntro}>
+          {t('settings.replayIntro')}
+        </GameButton>
+      </View>
       <ResetProgressSection onResetProgress={onResetProgress} />
     </Panel>
   );
@@ -181,6 +189,7 @@ const styles = StyleSheet.create({
   selectOptionActive: { borderColor: colors.accent.phosphorDim, backgroundColor: colors.accent.phosphorBg },
   selectText: { color: colors.text.muted, fontFamily: typography.mono, fontSize: typography.sizes.xs, fontWeight: '900' },
   selectTextActive: { color: colors.accent.phosphorBright },
+  introSection: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border.subtle, paddingTop: spacing.sm },
   resetSection: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border.subtle },
   resetHint: { color: colors.text.secondary, fontSize: typography.sizes.xs, marginBottom: spacing.sm },
   resetConfirm: { gap: spacing.sm, padding: spacing.sm, borderRadius: radii.sm, borderWidth: 1, borderColor: colors.feedback.danger, backgroundColor: colors.feedback.dangerBg },
