@@ -13,8 +13,8 @@ interface ProgressBarProps {
 export function ProgressBar({
   value,
   max = 100,
-  color = colors.accent.green,
-  trackColor = colors.bg.subtle,
+  color = colors.feedback.success,
+  trackColor = colors.surface.inset,
   height = 6,
   style,
 }: ProgressBarProps) {
