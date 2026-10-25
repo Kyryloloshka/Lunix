@@ -309,6 +309,13 @@
     "you": "ВИ",
     "playerName": "ВИ ({label})",
     "playerRole": "Junior → CEO",
+    "playerDefaultName": "Ви",
+    "rivalEyebrow": "НАСТУПНА ЦІЛЬ",
+    "rivalTarget": "Обігнати: {name}",
+    "rivalGap": "ще {gap}",
+    "rivalTop": "Ви лідер симуляції",
+    "rivalTopHint": "Заробляйте далі: симульовані суперники теж ростуть.",
+    "rivalA11y": "Наступна ціль: обігнати {name}, ще {gap}, пройдено {percent}%",
     "entries": {
       "vibe-ceo": {
         "name": "Влад Вайбкодер",

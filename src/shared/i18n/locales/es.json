@@ -309,6 +309,13 @@
     "you": "TÚ",
     "playerName": "TÚ ({label})",
     "playerRole": "Junior → CEO",
+    "playerDefaultName": "Tú",
+    "rivalEyebrow": "PRÓXIMO OBJETIVO",
+    "rivalTarget": "Supera a {name}",
+    "rivalGap": "faltan {gap}",
+    "rivalTop": "Lideras la tabla simulada",
+    "rivalTopHint": "Sigue ganando: los rivales simulados también crecen.",
+    "rivalA11y": "Próximo objetivo: superar a {name}, faltan {gap}, {percent}% del camino",
     "entries": {
       "vibe-ceo": {
         "name": "Vlad el Vibe Coder",
