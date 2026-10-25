@@ -6,7 +6,15 @@ import {
   type RankResource,
   type RequirementProgress,
 } from '@entities/career-rank';
-import { Badge, DevGlyph, Panel, ProgressBar, type GlyphName } from '@shared/ui';
+import {
+  Badge,
+  DevGlyph,
+  MIN_TOUCH_TARGET,
+  Panel,
+  PanelHeader,
+  ProgressBar,
+  type GlyphName,
+} from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import type { Decimal } from '@shared/lib/decimal';
 import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
@@ -79,16 +87,18 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
   return (
     <Panel tone="subtle" style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.eyebrow}>{t('career.heading')}</Text>
-          <Text style={styles.title}>{t('career.subheading')}</Text>
-        </View>
-        <Badge tone="flow">
-          {t('career.progressBadge', {
-            current: currentRankId + 1,
-            total: CAREER_RANKS.length,
-          })}
-        </Badge>
+        <PanelHeader
+          eyebrow={t('career.heading')}
+          title={t('career.subheading')}
+          trailing={(
+            <Badge tone="flow">
+              {t('career.progressBadge', {
+                current: currentRankId + 1,
+                total: CAREER_RANKS.length,
+              })}
+            </Badge>
+          )}
+        />
       </View>
 
       <View style={styles.list}>
@@ -212,23 +222,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.surface,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: spacing.lg,
-  },
-  eyebrow: {
-    fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
-    fontWeight: '900',
-    color: colors.text.muted,
-    letterSpacing: 1.2,
-  },
-  title: {
-    fontSize: typography.sizes.md,
-    fontWeight: '900',
-    color: colors.text.primary,
-    marginTop: 2,
   },
   list: {
     paddingLeft: spacing.xs,
@@ -290,9 +284,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.xs,
     marginBottom: 4,
   },
   stepTitle: {
+    flex: 1,
+    minWidth: 0,
     fontFamily: typography.mono,
     fontSize: typography.sizes.sm,
     fontWeight: '800',
@@ -325,12 +322,15 @@ const styles = StyleSheet.create({
   reqRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    columnGap: spacing.sm,
     marginBottom: 3,
   },
   reqMargin: {
     marginTop: 4,
   },
   reqLabel: {
+    flexShrink: 1,
     fontFamily: typography.mono,
     fontSize: typography.sizes.xxs,
     color: colors.text.muted,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   },
   promoteButton: {
     marginTop: spacing.sm,
-    minHeight: 36,
+    minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radii.sm,
