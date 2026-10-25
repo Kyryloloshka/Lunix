@@ -1,7 +1,10 @@
 // Pacing prototype for the T-016 phase design (docs/economy/phases.md). Plain JS numbers, no game code.
 // Stage 6 of T-016 replaces it with a Jest balance test on the real engine.
-// Usage: node docs/economy/phasesim.js [tapsPerSec]
-const TAPS = Number(process.argv[2] ?? 4);
+// Usage: node docs/economy/phasesim.js [tapsPerSec] [--gaps]
+//   --gaps prints every pause over 60 s with the state at its end.
+// As a module: require('./phasesim').simulate(taps) returns { byRank, rankMinutes, ... } without printing.
+let TAPS = 4;
+let VERBOSE = false;
 const TAP_PASSIVE_SHARE = 0.05; // each tap also gives 5% of that resource's passive /s
 const MILESTONES = [25, 50, 100, 200];
 
@@ -36,6 +39,25 @@ const SKILLS = [
   { id: 'i4', res: 'I', cur: 'W', base: 1e8, r: 1.18, per: 170, rank: 7, req: ['i3', 5] },
   { id: 'i5', res: 'I', cur: 'W', base: 2e9, r: 1.19, per: 1400, rank: 8, req: ['i4', 5] },
   { id: 'i6', res: 'I', cur: 'W', base: 5e10, r: 1.2, per: 1.2e4, rank: 9, req: ['i5', 5] },
+  // Stage 4 fillers for ranks 5–7 (Middle → Tech Lead), phases.md §5.5. Each sits between two existing
+  // rungs of its branch (base cost at 1/3 and 2/3 of the gap in log space; Knowledge and Influence also
+  // pay back 40% faster than the interpolated rung) so there is always an affordable next step.
+  // Comments give the registry ids.
+  { id: 'k6a', res: 'K', cur: 'K', base: 1.1e6, r: 1.17, per: 5.6e3, rank: 5, req: ['k6', 3] }, // typescrypt
+  { id: 'k6b', res: 'K', cur: 'K', base: 2.6e6, r: 1.17, per: 1.1e4, rank: 5, req: ['k6', 3] }, // sql-indexes
+  { id: 'k7a', res: 'K', cur: 'K', base: 1.4e7, r: 1.18, per: 3.7e4, rank: 6, req: ['k7', 3] }, // design-patterns
+  { id: 'k7b', res: 'K', cur: 'K', base: 3.4e7, r: 1.18, per: 7.1e4, rank: 6, req: ['k7', 3] }, // message-queues
+  { id: 'k8a', res: 'K', cur: 'K', base: 2e8, r: 1.18, per: 2.6e5, rank: 7, req: ['k8', 3] }, // kubernoodles
+  { id: 'k8b', res: 'K', cur: 'K', base: 4.9e8, r: 1.18, per: 5.1e5, rank: 7, req: ['k8', 3] }, // rust-rewrite
+  { id: 'w4a', res: 'W', cur: 'W', base: 3.1e4, r: 1.16, per: 300, rank: 5, req: ['w4', 3] }, // support-chatbot
+  { id: 'w4b', res: 'W', cur: 'W', base: 7.2e4, r: 1.16, per: 580, rank: 5, req: ['w4', 3] }, // legacy-php
+  { id: 'w5a', res: 'W', cur: 'W', base: 3.7e5, r: 1.17, per: 2.1e3, rank: 6, req: ['w5', 3] }, // payment-gateway
+  { id: 'w5b', res: 'W', cur: 'W', base: 8.7e5, r: 1.17, per: 4.2e3, rank: 6, req: ['w5', 3] }, // fluttr-app
+  { id: 'w6a', res: 'W', cur: 'W', base: 4.9e6, r: 1.17, per: 1.6e4, rank: 7, req: ['w6', 3] }, // data-lake
+  { id: 'w6b', res: 'W', cur: 'W', base: 1.2e7, r: 1.17, per: 3.4e4, rank: 7, req: ['w6', 3] }, // marketplace
+  { id: 'i1a', res: 'I', cur: 'W', base: 1.1e5, r: 1.16, per: 1.8, rank: 5, req: ['i1', 3] }, // stack-overflaw
+  { id: 'i2a', res: 'I', cur: 'W', base: 1.5e6, r: 1.17, per: 14, rank: 6, req: ['i2', 3] }, // tube-tutorials
+  { id: 'i3a', res: 'I', cur: 'W', base: 2.4e7, r: 1.17, per: 100, rank: 7, req: ['i3', 3] }, // tech-book
 ];
 
 // Perks: one effect each.
@@ -47,10 +69,14 @@ const PERKS = [
 
 // Tech upgrades: four tiers per Knowledge/Work skill, paid in Cognitive and priced from the
 // knowledge skill behind it (its own base, or the knowledge skill it requires; k10 for w10).
-const TECH = [];
+let TECH = [];
+function buildTech() {
+TECH = [];
 for (const s of SKILLS.filter((x) => x.res !== 'I')) {
-  const knowledgeId = s.res === 'K' ? s.id : (s.req[0].startsWith('k') ? s.req[0] : 'k10');
-  const kEquivalent = SKILLS.find((k) => k.id === knowledgeId).base;
+  // A work skill gated by another work skill prices from that skill's knowledge (w10 → w9 → k10).
+  let basis = s;
+  while (basis.res !== 'K') basis = SKILLS.find((k) => k.id === basis.req[0]);
+  const kEquivalent = basis.base;
   TECH.push({ id: `${s.id}-t1`, skill: s.id, lvl: 10, mult: 2, cost: kEquivalent * 25 });
   TECH.push({ id: `${s.id}-t2`, skill: s.id, lvl: 25, mult: 1.5, cost: kEquivalent * 120 });
   TECH.push({ id: `${s.id}-t3`, skill: s.id, lvl: 40, mult: 2, cost: kEquivalent * 400 });
@@ -60,6 +86,7 @@ for (const s of SKILLS.filter((x) => x.res !== 'I')) {
 for (const s of SKILLS.filter((x) => x.res === 'I')) {
   TECH.push({ id: `${s.id}-t1`, skill: s.id, lvl: 10, mult: 2, cost: s.per * 400, cur: 'I' });
   TECH.push({ id: `${s.id}-t2`, skill: s.id, lvl: 25, mult: 2, cost: s.per * 3000, cur: 'I' });
+}
 }
 
 // Leadership perks: one-off, paid in Influence.
@@ -87,6 +114,10 @@ const RANKS = [
   { name: 'Gooble CEO', earnedW: 1.5e13, spendI: 2e8 },
 ];
 
+function simulate(taps = 4, verbose = false) {
+TAPS = taps;
+VERBOSE = verbose;
+buildTech();
 const st = { K: 0, W: 0, I: 0, eK: 0, eW: 0, lv: {}, perk: {}, tech: new Set(), lead: new Set(), rank: 0, t: 0 };
 const modesOpen = () => ['K', ...(st.rank >= 3 ? ['W'] : []), ...(st.rank >= 5 ? ['I'] : [])];
 const lvl = (id) => st.lv[id] ?? 0;
@@ -168,6 +199,7 @@ function buyBest() {
 }
 
 const log = [];
+const rankMinutes = [];
 let firstBuy = null; let lastEvent = 0; const gaps = [];
 const DT = 1;
 while (st.rank < RANKS.length - 1 && st.t < 6 * 3600) {
@@ -180,20 +212,36 @@ while (st.rank < RANKS.length - 1 && st.t < 6 * 3600) {
   buyBest();
   const after = Object.values(st.lv).reduce((a, b) => a + b, 0) + st.tech.size + st.lead.size + Object.values(st.perk).reduce((a, b) => a + b, 0);
   if (firstBuy === null && after > before) firstBuy = st.t + DT;
-  if (after > before) { gaps.push([st.t - lastEvent, st.rank]); lastEvent = st.t; }
+  if (after > before) {
+    if (VERBOSE && st.t - lastEvent > 60) {
+      const rr = rates();
+      console.log(`gap ${st.t - lastEvent}s rank ${st.rank} at ${(st.t / 60).toFixed(1)} min | K=${st.K.toExponential(1)} W=${st.W.toExponential(1)} I=${st.I.toExponential(1)} | /s K=${rr.K.toExponential(1)} W=${rr.W.toExponential(1)} I=${rr.I.toExponential(1)} | ${JSON.stringify(st.lv)}`);
+    }
+    gaps.push([st.t - lastEvent, st.rank]); lastEvent = st.t;
+  }
   const next = RANKS[st.rank + 1];
   if (gateMet(next)) {
     if (next.spendI) st.I -= next.spendI; gaps.push([st.t - lastEvent, st.rank]); lastEvent = st.t;
     st.rank += 1;
+    rankMinutes[st.rank] = st.t / 60;
     const rr = rates();
     log.push(`${(st.t / 60).toFixed(1).padStart(6)} хв  ${next.name.padEnd(34)} K/s=${rr.K.toExponential(1)} $/s=${rr.W.toExponential(1)} I/s=${rr.I.toExponential(1)}`);
   }
   st.t += DT;
 }
-console.log(`taps/s=${TAPS}  first purchase at ${firstBuy}s`);
-console.log(log.join('\n'));
 const byRank = {};
 for (const [g, r] of gaps) byRank[r] = Math.max(byRank[r] ?? 0, g);
-console.log('max gap without any purchase, by rank (s):', JSON.stringify(byRank));
-console.log('leadership perks:', [...st.lead].join(','), '| tech upgrades:', st.tech.size, '| perks:', JSON.stringify(st.perk));
-if (st.rank < RANKS.length - 1) console.log(`STUCK at rank ${st.rank} after ${(st.t / 60).toFixed(0)} min`, { K: st.K, W: st.W, I: st.I, eW: st.eW });
+return { taps, firstBuy, log, rankMinutes, byRank, st, stuck: st.rank < RANKS.length - 1 };
+}
+
+module.exports = { SKILLS, simulate };
+
+if (require.main === module) {
+  const res = simulate(Number(process.argv[2] ?? 4), process.argv.includes('--gaps'));
+  const { st } = res;
+  console.log(`taps/s=${res.taps}  first purchase at ${res.firstBuy}s`);
+  console.log(res.log.join('\n'));
+  console.log('max gap without any purchase, by rank (s):', JSON.stringify(res.byRank));
+  console.log('skills:', SKILLS.length, '| leadership perks:', [...st.lead].join(','), '| tech upgrades:', st.tech.size, '| perks:', JSON.stringify(st.perk));
+  if (res.stuck) console.log(`STUCK at rank ${st.rank} after ${(st.t / 60).toFixed(0)} min`, { K: st.K, W: st.W, I: st.I, eW: st.eW });
+}

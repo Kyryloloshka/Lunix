@@ -100,13 +100,37 @@
         "name": "Reakt Framework",
         "desc": "useEffect runs twice and that's a feature"
       },
+      "typescrypt": {
+        "name": "TypeScrypt",
+        "desc": "`any` is also a type, technically"
+      },
+      "sql-indexes": {
+        "name": "SQL Indexes",
+        "desc": "EXPLAIN ANALYZE as a love language"
+      },
       "nodle": {
         "name": "Backend on Nodle",
         "desc": "node_modules heavier than a black hole"
       },
+      "design-patterns": {
+        "name": "Design Patterns",
+        "desc": "AbstractSingletonProxyFactoryBean"
+      },
+      "message-queues": {
+        "name": "Message Queues",
+        "desc": "At-least-once delivery, at-most-once sanity"
+      },
       "dokker": {
         "name": "Dokker Containers",
         "desc": "Works on my machine, so we ship the machine"
+      },
+      "kubernoodles": {
+        "name": "Kubernoodles",
+        "desc": "YAML all the way down"
+      },
+      "rust-rewrite": {
+        "name": "Rewrite It in Rust",
+        "desc": "The borrow checker borrowed your weekend"
       },
       "distributed-systems": {
         "name": "Distributed Systems",
@@ -132,13 +156,37 @@
         "name": "Pet Project with Subscriptions",
         "desc": "Three paying users, one of them is your mom"
       },
+      "support-chatbot": {
+        "name": "Support Chatbot",
+        "desc": "Escalates everything to a human"
+      },
+      "legacy-php": {
+        "name": "Legacy PHP Support",
+        "desc": "A 2009 codebase that pays the bills"
+      },
       "internal-crm": {
         "name": "Internal CRM Nobody Likes",
         "desc": "Seventeen required fields per form"
       },
+      "payment-gateway": {
+        "name": "Payment Gateway Integration",
+        "desc": "Idempotency keys and cold sweat"
+      },
+      "fluttr-app": {
+        "name": "Cross-Platform App on Fluttr",
+        "desc": "One codebase, two stores, three kinds of bugs"
+      },
       "bank-microservices": {
         "name": "Microservices for a Bank",
         "desc": "Forty services, one shared database"
+      },
+      "data-lake": {
+        "name": "Data Lake",
+        "desc": "Mostly a data swamp"
+      },
+      "marketplace": {
+        "name": "Marketplace for Everything",
+        "desc": "Selling shovels to gold miners"
       },
       "rps-platform": {
         "name": "100K RPS Platform",
@@ -160,13 +208,25 @@
         "name": "Code Review for Juniors",
         "desc": "'nit:' as a leadership style"
       },
+      "stack-overflaw": {
+        "name": "Answers on Stack Overflaw",
+        "desc": "Closed as duplicate, still upvoted"
+      },
       "tech-blog": {
         "name": "Tech Blog",
         "desc": "Post-mortems people actually read"
       },
+      "tube-tutorials": {
+        "name": "TubeTube Tutorials",
+        "desc": "Hey folks, smash that subscribe button"
+      },
       "meetup-talk": {
         "name": "Meetup Talk",
         "desc": "Live demo, what could go wrong"
+      },
+      "tech-book": {
+        "name": "Writing a Tech Book",
+        "desc": "Chapter 3 is outdated before print"
       },
       "open-source": {
         "name": "Open Source with Stars",
@@ -218,7 +278,25 @@
       "work": "WORK",
       "influence": "INFLUENCE"
     },
-    "upgradeTier": "{skill} · tuning {tier}",
+    "upgradeTier": "{skill} · {tier}",
+    "upgradeTiers": {
+      "knowledge": {
+        "1": "Read the Docs",
+        "2": "Built a Side Project",
+        "3": "Gave a Talk on It",
+        "4": "Wrote the Docs"
+      },
+      "work": {
+        "1": "Unit Tests",
+        "2": "CI Pipeline",
+        "3": "Autoscaling",
+        "4": "Five Nines"
+      },
+      "influence": {
+        "1": "Ghostwriter",
+        "2": "Personal Brand"
+      }
+    },
     "branchBoost": "{branch} ×{mult}",
     "perkTapAll": "+{pct}% tap power",
     "perkTapWork": "+{pct}% Work tap",

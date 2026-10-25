@@ -100,13 +100,37 @@
         "name": "Framework Reakt",
         "desc": "useEffect se ejecuta dos veces y es una feature"
       },
+      "typescrypt": {
+        "name": "TypeScrypt",
+        "desc": "`any` también es un tipo, técnicamente"
+      },
+      "sql-indexes": {
+        "name": "Índices SQL",
+        "desc": "EXPLAIN ANALYZE como lenguaje del amor"
+      },
       "nodle": {
         "name": "Backend en Nodle",
         "desc": "node_modules más pesado que un agujero negro"
       },
+      "design-patterns": {
+        "name": "Patrones de diseño",
+        "desc": "AbstractSingletonProxyFactoryBean"
+      },
+      "message-queues": {
+        "name": "Colas de mensajes",
+        "desc": "Entrega al menos una vez, cordura ninguna"
+      },
       "dokker": {
         "name": "Contenedores Dokker",
         "desc": "En mi máquina funciona: enviemos la máquina"
+      },
+      "kubernoodles": {
+        "name": "Kubernoodles",
+        "desc": "YAML hasta el fondo"
+      },
+      "rust-rewrite": {
+        "name": "Reescribirlo en Rust",
+        "desc": "El borrow checker te pidió prestado el finde"
       },
       "distributed-systems": {
         "name": "Sistemas distribuidos",
@@ -132,13 +156,37 @@
         "name": "Proyecto personal con suscripción",
         "desc": "Tres usuarios de pago, uno es tu madre"
       },
+      "support-chatbot": {
+        "name": "Chatbot de soporte",
+        "desc": "Todo lo escala a un humano"
+      },
+      "legacy-php": {
+        "name": "Soporte de PHP legado",
+        "desc": "Código de 2009 que paga el alquiler"
+      },
       "internal-crm": {
         "name": "CRM interno que nadie quiere",
         "desc": "Diecisiete campos obligatorios por formulario"
       },
+      "payment-gateway": {
+        "name": "Integración de pasarela de pago",
+        "desc": "Claves de idempotencia y sudor frío"
+      },
+      "fluttr-app": {
+        "name": "App multiplataforma en Fluttr",
+        "desc": "Un código, dos tiendas, tres tipos de bugs"
+      },
       "bank-microservices": {
         "name": "Microservicios para un banco",
         "desc": "Cuarenta servicios, una base de datos compartida"
+      },
+      "data-lake": {
+        "name": "Data lake",
+        "desc": "Más bien un pantano de datos"
+      },
+      "marketplace": {
+        "name": "Marketplace de todo",
+        "desc": "Vender palas a los buscadores de oro"
       },
       "rps-platform": {
         "name": "Plataforma de 100K RPS",
@@ -160,13 +208,25 @@
         "name": "Code review a juniors",
         "desc": "«nit:» como estilo de liderazgo"
       },
+      "stack-overflaw": {
+        "name": "Respuestas en Stack Overflaw",
+        "desc": "Cerrada por duplicada, pero con votos"
+      },
       "tech-blog": {
         "name": "Blog técnico",
         "desc": "Post-mortems que alguien lee"
       },
+      "tube-tutorials": {
+        "name": "Tutoriales en TubeTube",
+        "desc": "Suscríbete y dale a la campanita"
+      },
       "meetup-talk": {
         "name": "Charla en un meetup",
         "desc": "Demo en vivo, qué puede salir mal"
+      },
+      "tech-book": {
+        "name": "Escribir un libro técnico",
+        "desc": "El capítulo 3 caduca antes de imprimirse"
       },
       "open-source": {
         "name": "Open source con estrellas",
@@ -218,7 +278,25 @@
       "work": "TRABAJO",
       "influence": "INFLUENCIA"
     },
-    "upgradeTier": "{skill} · optimización {tier}",
+    "upgradeTier": "{skill} · {tier}",
+    "upgradeTiers": {
+      "knowledge": {
+        "1": "Leí la documentación",
+        "2": "Proyecto personal",
+        "3": "Di una charla",
+        "4": "Escribí la documentación"
+      },
+      "work": {
+        "1": "Tests unitarios",
+        "2": "Pipeline de CI",
+        "3": "Autoescalado",
+        "4": "Cinco nueves"
+      },
+      "influence": {
+        "1": "Escritor fantasma",
+        "2": "Marca personal"
+      }
+    },
     "branchBoost": "{branch} ×{mult}",
     "perkTapAll": "+{pct}% de fuerza de toque",
     "perkTapWork": "+{pct}% al toque de Trabajo",
