@@ -7,3 +7,6 @@ export { ResourcePill } from './ResourcePill';
 export { SectionHeader } from './SectionHeader';
 export { StatPlate } from './StatPlate';
 export type { GlyphName } from './DevGlyph';
+export { CountUpText } from './CountUpText';
+export { FadeSlideIn } from './FadeSlideIn';
+export type { SlideFrom } from './FadeSlideIn';
