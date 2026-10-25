@@ -37,6 +37,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
   const stress = useCurrencyStore((state) => state.stress);
   const flow = useCurrencyStore((state) => state.flow);
   const rates = useCurrencyStore((state) => state.rates);
+  const income = useCurrencyStore((state) => state.income);
 
   const shownOnMount = useRef(new Set(getUnlockedResources(rankIndex)));
   const balances: Record<RankResource, Decimal> = { capital, cognitive, influence };
@@ -109,9 +110,15 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
               <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
                 {HUD_FORMAT[resource](balances[resource])}
               </Text>
-              {perSec[resource].gt(0) ? (
+              {/* T-017: the big number is what really came in over ~5 s (taps included); passive sits under it. */}
+              {income[resource].gt(0) || perSec[resource].gt(0) ? (
                 <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
-                  {t('status.ratePerSec', { amount: HUD_FORMAT[resource](perSec[resource]) })}
+                  {t('status.ratePerSec', { amount: HUD_FORMAT[resource](income[resource].gt(0) ? income[resource] : perSec[resource]) })}
+                </Text>
+              ) : null}
+              {perSec[resource].gt(0) ? (
+                <Text style={styles.passiveRate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
+                  {t('status.passivePerSec', { amount: HUD_FORMAT[resource](perSec[resource]) })}
                 </Text>
               ) : null}
             </View>
@@ -265,8 +272,14 @@ const styles = StyleSheet.create({
   },
   rate: {
     ...typography.roles.label,
-    color: colors.text.muted,
+    color: colors.text.secondary,
     marginTop: 2,
+  },
+  passiveRate: {
+    color: colors.text.muted,
+    fontFamily: typography.mono,
+    fontSize: 9,
+    marginTop: 1,
   },
   stressRow: {
     marginTop: 2,

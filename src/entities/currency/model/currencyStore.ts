@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Decimal } from '@shared/lib/decimal';
 import { RHYTHM_CONFIG, getResilienceMultiplier, getStressDecay } from './rhythm';
+import { EMPTY_INCOME_WINDOW, ZERO_AMOUNTS, getIncomePerSec, recordIncome, type IncomeWindow, type ResourceAmounts } from './income';
 import type { FlowState, ResourceRates, ResourceState, TapResource } from './types';
 
 const FLOW_DURATION_MS = RHYTHM_CONFIG.flow.durationMs;
@@ -66,6 +67,9 @@ export function getStressPenaltyPercent(stress: number): number {
 export interface CurrencyStore extends ResourceState {
   flow: FlowState;
   rates: ResourceRates;
+  /** Real earnings per second over the last ~5 s (taps, passive, Flow, stress). Runtime only, never saved. */
+  income: ResourceAmounts;
+  incomeWindow: IncomeWindow;
   lastSavedAt: number;
   totalCapitalEarned: Decimal;
   totalCognitiveEarned: Decimal;
@@ -124,6 +128,8 @@ const initialRates: ResourceRates = {
 const initialState = (): ResourceState & {
   flow: FlowState;
   rates: ResourceRates;
+  income: ResourceAmounts;
+  incomeWindow: IncomeWindow;
   lastSavedAt: number;
   totalCapitalEarned: Decimal;
   totalCognitiveEarned: Decimal;
@@ -144,6 +150,8 @@ const initialState = (): ResourceState & {
     cooldownRemainingMs: 0,
   },
   rates: initialRates,
+  income: ZERO_AMOUNTS,
+  incomeWindow: EMPTY_INCOME_WINDOW,
   lastSavedAt: Date.now(),
   totalCapitalEarned: Decimal.ZERO,
   totalCognitiveEarned: Decimal.ZERO,
@@ -176,6 +184,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
         ...(resource === 'capital' ? { totalCapitalEarned: state.totalCapitalEarned.add(amount) } : {}),
         ...(resource === 'cognitive' ? { totalCognitiveEarned: state.totalCognitiveEarned.add(amount) } : {}),
         stress: nextStress,
+        incomeWindow: recordIncome(state.incomeWindow, now, { [resource]: amount }),
         flow: {
           ...current,
           comboCount: nextCombo,
@@ -229,7 +238,10 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
       // Only drop the combo when flow ends or the combo window runs out,
       // otherwise every tick would wipe the taps the player is building up.
       if (!isActive && comboRemainingMs === 0) comboCount = 0;
+      const incomeWindow = recordIncome(state.incomeWindow, now, { capital, cognitive, influence }, flowDelta);
       return {
+        incomeWindow,
+        income: getIncomePerSec(incomeWindow, now),
         capital: state.capital.add(capital),
         cognitive: state.cognitive.add(cognitive),
         influence: state.influence.add(influence),
@@ -307,6 +319,9 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
     if (seconds <= 0) return earnings;
     get().addResources(earnings);
     set((state) => ({
+      // Offline earnings are not live income: the window starts over after a return.
+      incomeWindow: EMPTY_INCOME_WINDOW,
+      income: ZERO_AMOUNTS,
       // Time away is rest: stress cools at the rest rate.
       stress: clampStress(state.stress - getStressDecay(seconds, Number.POSITIVE_INFINITY)),
       flow: {

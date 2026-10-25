@@ -11,6 +11,7 @@ import {
   type SkillResource,
   type Upgrade,
 } from '@entities/skill';
+import { getUnlockedResources } from '@entities/career-rank';
 import { useCurrencyStore } from '@entities/currency';
 import type { Decimal } from '@shared/lib/decimal';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
@@ -18,7 +19,16 @@ import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, MIN_TOUCH_TARGET, ResourceValue, t
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useMotionPreference } from '@shared/lib/motion';
-import { isSkillUnlocked, useSkillStore } from '@features/purchase-skill';
+import {
+  getSkillContribution,
+  isSkillUnlocked,
+  previewSkillGain,
+  previewUpgrade,
+  useSkillStore,
+  type RateChange,
+  type SkillContribution,
+  type UpgradePreview,
+} from '@features/purchase-skill';
 import { getCatalogEntries, getCatalogTabs, type CatalogTab } from '../model/catalogTabs';
 
 function isBranchTab(tab: CatalogTab): tab is SkillBranch {
@@ -77,16 +87,79 @@ function upgradeEffectText(upgrade: Upgrade): string {
   return t('skills.multiplier', { mult: effect.multiplier });
 }
 
-/** One line that says what one more level (or the chosen bulk) gives. Full numbers with multipliers are T-017. */
-function skillEffectText(skill: SkillDefinition, gain: number): string {
+function formatPercent(share: number): string {
+  const pct = Math.round(share * 100);
+  return pct < 1 && share > 0 ? t('skills.lessThanPct') : String(pct);
+}
+
+/** Resources of a tap perk the player can actually earn at this rank, with a positive change. */
+function tapPerkResources(skill: SkillDefinition, rank: number, perTap: RateChange['perTap']): SkillResource[] {
+  if (skill.kind !== 'perk' || skill.effect.type !== 'tapPower') return [];
+  const unlocked = getUnlockedResources(rank);
+  return skill.effect.resources.filter((resource) => unlocked.includes(resource) && perTap[resource].isPositive());
+}
+
+/**
+ * What buying the chosen amount gives. Numbers come from the model (same function as the real
+ * rates), so upgrades, milestones and perks are already in them.
+ */
+function GainText({ skill, gain, rank }: { skill: SkillDefinition; gain: RateChange; rank: number }) {
   if (skill.kind === 'producer') {
-    return `+${FORMAT[skill.produces](skill.perLevel.multiplyScalar(gain))}/s`;
+    return (
+      <ResourceValue kind={skill.produces}>{t('skills.rateLabel', { amount: FORMAT[skill.produces](gain.perSec[skill.produces]) })}</ResourceValue>
+    );
   }
   if (skill.effect.type === 'tapPower') {
-    const key = skill.effect.resources.length > 1 ? 'skills.perkTapAll' : 'skills.perkTapWork';
-    return t(key, { pct: Math.round(skill.effect.perLevel * 100 * gain) });
+    const shown = tapPerkResources(skill, rank, gain.perTap);
+    if (shown.length === 0) return <Text>{t('skills.perkTapAll', { pct: 0 })}</Text>;
+    return (
+      <Text>
+        {shown.map((resource, index) => (
+          <Text key={resource}>
+            {index > 0 ? ' · ' : ''}
+            <ResourceValue kind={resource}>
+              {t('skills.perkTapGain', { amount: FORMAT[resource](gain.perTap[resource]) })}
+            </ResourceValue>
+          </Text>
+        ))}
+      </Text>
+    );
   }
-  return t('skills.perkStress', { pct: Math.round(skill.effect.perLevel * gain) });
+  return <Text>{t('skills.perkStress', { pct: Math.round(gain.stressPerTapReduction * 100) })}</Text>;
+}
+
+/** "Gives now" line for an owned skill; null when it gives nothing yet. */
+function ContributionText({ skill, contribution, rank }: { skill: SkillDefinition; contribution: SkillContribution; rank: number }) {
+  if (skill.kind === 'producer' && contribution.resource !== null && contribution.share !== null) {
+    return (
+      <ResourceValue kind={contribution.resource}>
+        {t('skills.contribution', {
+          amount: FORMAT[contribution.resource](contribution.perSec[contribution.resource]),
+          pct: formatPercent(contribution.share),
+        })}
+      </ResourceValue>
+    );
+  }
+  if (skill.kind === 'perk' && skill.effect.type === 'tapPower') {
+    const shown = tapPerkResources(skill, rank, contribution.perTap);
+    if (shown.length === 0) return null;
+    return (
+      <Text>
+        {shown.map((resource, index) => (
+          <Text key={resource}>
+            {index > 0 ? ' · ' : ''}
+            <ResourceValue kind={resource}>
+              {t('skills.perkNowTap', { amount: FORMAT[resource](contribution.perTap[resource]) })}
+            </ResourceValue>
+          </Text>
+        ))}
+      </Text>
+    );
+  }
+  if (skill.kind === 'perk') {
+    return <Text>{t('skills.perkNowStress', { pct: Math.round(contribution.stressPerTapReduction * 100) })}</Text>;
+  }
+  return null;
 }
 
 function requirementText(skill: SkillDefinition): string {
@@ -121,6 +194,20 @@ export function SkillsCatalog() {
     () => getCatalogEntries(activeTab, currentRank, (skillId) => isSkillUnlocked(skillId, levels, currentRank)),
     [activeTab, currentRank, levels],
   );
+
+  // Contributions and upgrade previews depend only on levels and upgrades, not on balances.
+  const contributions = useMemo(() => {
+    const map = new Map<string, SkillContribution>();
+    for (const skill of visibleSkills) {
+      if ((levels[skill.id] ?? 0) > 0) map.set(skill.id, getSkillContribution({ levels, purchasedUpgrades }, skill.id));
+    }
+    return map;
+  }, [visibleSkills, levels, purchasedUpgrades]);
+  const upgradePreviews = useMemo(() => {
+    const map = new Map<string, UpgradePreview | null>();
+    for (const upgrade of visibleUpgrades) map.set(upgrade.id, previewUpgrade({ levels, purchasedUpgrades }, upgrade.id));
+    return map;
+  }, [visibleUpgrades, levels, purchasedUpgrades]);
 
   const effects = useMemo(
     () => calculateSkillEffects(levels, purchasedUpgrades),
@@ -176,6 +263,7 @@ export function SkillsCatalog() {
       ? BRANCH_GLYPHS[upgrade.effect.branch]
       : SKILL_GLYPHS[upgrade.effect.skillId] ?? BRANCH_GLYPHS[skillById(upgrade.effect.skillId)?.branch ?? 'knowledge'];
     const name = upgradeName(upgrade);
+    const preview = upgradePreviews.get(upgrade.id) ?? null;
 
     return (
       <View key={upgrade.id} style={styles.cardWrapper}>
@@ -189,6 +277,17 @@ export function SkillsCatalog() {
               <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
             </View>
             <Text style={[styles.level, styles.upgradeEffect]}>{upgradeEffectText(upgrade)}</Text>
+            {preview && meetsLevel && (preview.before.gt(0) || preview.after.gt(0)) ? (
+              <Text style={styles.bonus} numberOfLines={1}>
+                {preview.skillId ? `${skillName(preview.skillId)}: ` : `${t(`skills.branches.${upgrade.effect.type === 'branchMultiplier' ? upgrade.effect.branch : 'knowledge'}`)}: `}
+                <ResourceValue kind={preview.resource}>
+                  {t('skills.upgradeFromTo', {
+                    from: FORMAT[preview.resource](preview.before),
+                    to: FORMAT[preview.resource](preview.after),
+                  })}
+                </ResourceValue>
+              </Text>
+            ) : null}
             <Text style={[styles.bonus, !meetsLevel && { color: colors.accent.rustBright }]}>
               {required
                 ? (meetsLevel
@@ -240,6 +339,7 @@ export function SkillsCatalog() {
     const effectiveGain = purchaseMode === 'max' && purchase.levels === 0 ? 1 : purchase.levels;
     const glyphName = SKILL_GLYPHS[skill.id] ?? BRANCH_GLYPHS[skill.branch];
     const name = skillName(skill.id);
+    const contribution = contributions.get(skill.id) ?? null;
 
     return (
       <View key={skill.id} style={styles.cardWrapper}>
@@ -257,10 +357,17 @@ export function SkillsCatalog() {
               {unlocked ? t(`skills.items.${skill.id}.desc`) : requirementText(skill)}
             </Text>
             <Text style={styles.bonus}>
-              {skill.kind === 'producer' ? (
-                <ResourceValue kind={skill.produces}>{skillEffectText(skill, effectiveGain)}</ResourceValue>
-              ) : skillEffectText(skill, effectiveGain)}
+              <GainText
+                skill={skill}
+                gain={previewSkillGain({ levels, purchasedUpgrades }, skill.id, effectiveGain)}
+                rank={currentRank}
+              />
             </Text>
+            {contribution ? (
+              <Text style={styles.contribution} numberOfLines={1}>
+                <ContributionText skill={skill} contribution={contribution} rank={currentRank} />
+              </Text>
+            ) : null}
           </View>
           <Pressable
             accessibilityRole="button"
@@ -480,6 +587,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   upgradeEffect: { marginLeft: 0, marginTop: 2, color: colors.accent.phosphorBright },
+  contribution: {
+    color: colors.text.muted,
+    fontFamily: typography.mono,
+    fontSize: 9,
+    marginTop: 1,
+  },
   bonus: {
     color: colors.accent.phosphor,
     fontFamily: typography.mono,

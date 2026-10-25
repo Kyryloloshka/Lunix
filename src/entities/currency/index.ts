@@ -17,6 +17,14 @@ export {
   useCurrencyStore,
 } from './model/currencyStore';
 export {
+  EMPTY_INCOME_WINDOW,
+  INCOME_GAP_RESET_MS,
+  INCOME_WINDOW_MS,
+  getIncomePerSec,
+  recordIncome,
+} from './model/income';
+export type { IncomeWindow, ResourceAmounts } from './model/income';
+export {
   RHYTHM_CONFIG,
   getResilienceMultiplier,
   getStressDecay,
