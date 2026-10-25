@@ -299,7 +299,8 @@
     "perkStress": "−{pct}% stress per tap",
     "targetLevel": "{skill} · LVL {level}",
     "leadershipHint": "Boosts a whole branch",
-    "active": "ACTIVE"
+    "active": "ACTIVE",
+    "perksTab": "PERKS"
   },
   "career": {
     "heading": "CAREER ROADMAP",
@@ -426,6 +427,40 @@
       "olex-trainee": {
         "name": "Olex the Trainee",
         "role": "First résumé"
+      }
+    }
+  },
+  "tapMode": {
+    "label": "Tap mode",
+    "modes": {
+      "cognitive": "Study",
+      "capital": "Work",
+      "influence": "Network"
+    },
+    "modeA11y": "{mode}: a tap earns {resource}"
+  },
+  "resourceUnlock": {
+    "eyebrow": "NEW RESOURCE",
+    "sourceLabel": "Where it comes from",
+    "useLabel": "What it is for",
+    "modeHint": "Taps earn it in {mode} mode. The mode switch sits above the editor.",
+    "continue": "GOT IT",
+    "a11y": "New resource: {resource}. Tap to continue.",
+    "items": {
+      "cognitive": {
+        "title": "New: Cognition — what you know",
+        "source": "Taps in Study mode and skills in the Knowledge branch.",
+        "use": "New Knowledge skills, perks and tech upgrades. The more you know, the calmer you handle stress."
+      },
+      "capital": {
+        "title": "New: Capital — your first salary",
+        "source": "Taps in Work mode and projects in the Work branch. Pocket change at first.",
+        "use": "Work projects, Influence skills and the mechanical keyboard. Knowledge is still bought with Cognition."
+      },
+      "influence": {
+        "title": "New: Influence — political capital",
+        "source": "Taps in Network mode and Influence skills: reviews, a blog, talks.",
+        "use": "Promotions from Senior up spend Influence. Also leadership perks and Influence upgrades."
       }
     }
   }

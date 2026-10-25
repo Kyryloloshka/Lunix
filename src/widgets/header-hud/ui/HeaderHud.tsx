@@ -1,4 +1,7 @@
+import { useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { getUnlockedResources, type RankResource } from '@entities/career-rank';
+import type { Decimal } from '@shared/lib/decimal';
 import {
   COMBO_WINDOW_MS,
   FLOW_COMBO_THRESHOLD,
@@ -8,12 +11,18 @@ import {
 } from '@entities/currency';
 import { FlowCooldownMeter, ResilienceTag } from './RhythmIndicators';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
-import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph } from '@shared/ui';
+import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, FadeSlideIn } from '@shared/ui';
 import { colors, getRankTheme, radii, resources, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 
 // HUD numbers sit in a fixed 3-column grid: cap system font scaling so large fonts don't break it
 const HUD_FONT_SCALE = DENSE_TEXT_MAX_FONT_SCALE;
+
+const HUD_FORMAT: Record<RankResource, (value: Decimal) => string> = {
+  capital: (value) => formatCurrency(value),
+  cognitive: (value) => formatDecimal(value),
+  influence: (value) => formatDecimal(value),
+};
 
 interface HeaderHudProps {
   rankTitle: string;
@@ -28,6 +37,14 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
   const stress = useCurrencyStore((state) => state.stress);
   const flow = useCurrencyStore((state) => state.flow);
   const rates = useCurrencyStore((state) => state.rates);
+
+  const shownOnMount = useRef(new Set(getUnlockedResources(rankIndex)));
+  const balances: Record<RankResource, Decimal> = { capital, cognitive, influence };
+  const perSec: Record<RankResource, Decimal> = {
+    capital: rates.capitalPerSec,
+    cognitive: rates.cognitivePerSec,
+    influence: rates.influencePerSec,
+  };
 
   const rankTheme = getRankTheme(rankIndex);
   const stressColor = stress > 75
@@ -78,39 +95,34 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
         </View>
       </View>
 
+      {/* Progressive reveal (T-016 stage 5): a resource has no box until its rank unlocks it. */}
       <View style={styles.resourcesGrid}>
-        <View style={styles.statBox}>
-          <View style={styles.statHeader}>
-            <DevGlyph name={resources.capital.glyph} size={11} color={resources.capital.color} />
-            <Text style={[styles.label, { color: resources.capital.color }]} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
-              {t('resources.capital').toUpperCase()}
-            </Text>
-          </View>
-          <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{formatCurrency(capital)}</Text>
-          {rates.capitalPerSec.gt(0) ? <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{t('status.ratePerSec', { amount: formatCurrency(rates.capitalPerSec) })}</Text> : null}
-        </View>
-
-        <View style={styles.statBox}>
-          <View style={styles.statHeader}>
-            <DevGlyph name={resources.cognitive.glyph} size={11} color={resources.cognitive.color} />
-            <Text style={[styles.label, { color: resources.cognitive.color }]} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
-              {t('resources.cognitive').toUpperCase()}
-            </Text>
-          </View>
-          <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{formatDecimal(cognitive)}</Text>
-          {rates.cognitivePerSec.gt(0) ? <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{t('status.ratePerSec', { amount: formatDecimal(rates.cognitivePerSec) })}</Text> : null}
-        </View>
-
-        <View style={styles.statBox}>
-          <View style={styles.statHeader}>
-            <DevGlyph name={resources.influence.glyph} size={11} color={resources.influence.color} />
-            <Text style={[styles.label, { color: resources.influence.color }]} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
-              {t('resources.influence').toUpperCase()}
-            </Text>
-          </View>
-          <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{formatDecimal(influence)}</Text>
-          {rates.influencePerSec.gt(0) ? <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{t('status.ratePerSec', { amount: formatDecimal(rates.influencePerSec) })}</Text> : null}
-        </View>
+        {getUnlockedResources(rankIndex).map((resource) => {
+          const box = (
+            <View style={styles.statBox}>
+              <View style={styles.statHeader}>
+                <DevGlyph name={resources[resource].glyph} size={11} color={resources[resource].color} />
+                <Text style={[styles.label, { color: resources[resource].color }]} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
+                  {t(resources[resource].labelKey).toUpperCase()}
+                </Text>
+              </View>
+              <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
+                {HUD_FORMAT[resource](balances[resource])}
+              </Text>
+              {perSec[resource].gt(0) ? (
+                <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
+                  {t('status.ratePerSec', { amount: HUD_FORMAT[resource](perSec[resource]) })}
+                </Text>
+              ) : null}
+            </View>
+          );
+          // Only a resource that appears during this session slides in; on load the HUD is just there.
+          return shownOnMount.current.has(resource) ? (
+            <View key={resource} style={styles.statSlot}>{box}</View>
+          ) : (
+            <FadeSlideIn key={resource} from="top" duration="slow" style={styles.statSlot}>{box}</FadeSlideIn>
+          );
+        })}
       </View>
 
       <View style={styles.stressRow}>
@@ -221,9 +233,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     gap: 4,
   },
-  statBox: {
+  statSlot: {
     flex: 1,
     minWidth: 0,
+  },
+  statBox: {
+    flex: 1,
     backgroundColor: colors.bg.inset,
     padding: 7,
     borderRadius: radii.sm,
@@ -238,11 +253,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   label: {
+    ...typography.roles.label,
     flexShrink: 1,
-    fontFamily: typography.mono,
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 0.6,
   },
   value: {
     color: colors.text.primary,
@@ -252,10 +264,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   rate: {
+    ...typography.roles.label,
     color: colors.text.muted,
-    fontFamily: typography.mono,
-    fontSize: 8,
-    fontWeight: '700',
     marginTop: 2,
   },
   stressRow: {

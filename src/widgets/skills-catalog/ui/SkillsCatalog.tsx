@@ -2,8 +2,6 @@ import { useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   BRANCH_RESOURCE,
-  SKILLS,
-  UPGRADES,
   calculateBulkPurchase,
   calculateSkillEffects,
   skillById,
@@ -13,7 +11,6 @@ import {
   type SkillResource,
   type Upgrade,
 } from '@entities/skill';
-import { isResourceUnlocked } from '@entities/career-rank';
 import { useCurrencyStore } from '@entities/currency';
 import type { Decimal } from '@shared/lib/decimal';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
@@ -22,10 +19,17 @@ import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useMotionPreference } from '@shared/lib/motion';
 import { isSkillUnlocked, useSkillStore } from '@features/purchase-skill';
+import { getCatalogEntries, getCatalogTabs, type CatalogTab } from '../model/catalogTabs';
 
-type CatalogTab = SkillBranch | 'upgrades';
+function isBranchTab(tab: CatalogTab): tab is SkillBranch {
+  return tab !== 'perks' && tab !== 'upgrades';
+}
 
-const BRANCH_TABS: SkillBranch[] = ['knowledge', 'work', 'influence'];
+function tabLabel(tab: CatalogTab): string {
+  if (tab === 'upgrades') return t('skills.upgradesTab');
+  if (tab === 'perks') return t('skills.perksTab');
+  return t(`skills.branches.${tab}`);
+}
 
 const FORMAT: Record<SkillResource, (value: Decimal) => string> = {
   cognitive: (value) => formatDecimal(value),
@@ -109,34 +113,25 @@ export function SkillsCatalog() {
 
   const balances: Record<SkillResource, Decimal> = { capital, cognitive, influence };
 
-  const tabs = useMemo<CatalogTab[]>(
-    () => [...BRANCH_TABS.filter((branch) => isResourceUnlocked(BRANCH_RESOURCE[branch], currentRank)), 'upgrades'],
-    [currentRank],
-  );
+  const tabs = useMemo(() => getCatalogTabs(currentRank), [currentRank]);
   const activeTab = tabs.includes(category) ? category : 'knowledge';
+  const branchTab = isBranchTab(activeTab) ? activeTab : null;
 
-  const visibleSkills = useMemo(() => {
-    if (activeTab === 'upgrades') return [];
-    return SKILLS.filter((skill) => skill.branch === activeTab && skill.unlockRank <= currentRank);
-  }, [activeTab, currentRank]);
-
-  const visibleUpgrades = useMemo(() => UPGRADES.filter((upgrade) => {
-    if (upgrade.unlockRank > currentRank) return false;
-    if (upgrade.kind === 'leadership') return true;
-    const target = upgrade.requiredSkill?.skillId;
-    return target ? isSkillUnlocked(target, levels, currentRank) : false;
-  }), [currentRank, levels]);
+  const { skills: visibleSkills, upgrades: visibleUpgrades } = useMemo(
+    () => getCatalogEntries(activeTab, currentRank, (skillId) => isSkillUnlocked(skillId, levels, currentRank)),
+    [activeTab, currentRank, levels],
+  );
 
   const effects = useMemo(
     () => calculateSkillEffects(levels, purchasedUpgrades),
     [levels, purchasedUpgrades],
   );
-  const headingRate = activeTab === 'upgrades'
+  const headingRate = branchTab === null
     ? null
-    : FORMAT[BRANCH_RESOURCE[activeTab]](
-      BRANCH_RESOURCE[activeTab] === 'capital'
+    : FORMAT[BRANCH_RESOURCE[branchTab]](
+      BRANCH_RESOURCE[branchTab] === 'capital'
         ? effects.capitalPerSec
-        : BRANCH_RESOURCE[activeTab] === 'cognitive' ? effects.cognitivePerSec : effects.influencePerSec,
+        : BRANCH_RESOURCE[branchTab] === 'cognitive' ? effects.cognitivePerSec : effects.influencePerSec,
     );
 
   const pulse = (id: string) => {
@@ -171,21 +166,135 @@ export function SkillsCatalog() {
     />
   ) : null);
 
+  const renderUpgrade = (upgrade: Upgrade) => {
+    const isOwned = purchasedUpgrades.includes(upgrade.id);
+    const required = upgrade.requiredSkill;
+    const targetLevel = required ? levels[required.skillId] ?? 0 : 0;
+    const meetsLevel = !required || targetLevel >= required.level;
+    const affordable = !isOwned && meetsLevel && balances[upgrade.costResource].gte(upgrade.cost);
+    const glyphName = upgrade.effect.type === 'branchMultiplier'
+      ? BRANCH_GLYPHS[upgrade.effect.branch]
+      : SKILL_GLYPHS[upgrade.effect.skillId] ?? BRANCH_GLYPHS[skillById(upgrade.effect.skillId)?.branch ?? 'knowledge'];
+    const name = upgradeName(upgrade);
+
+    return (
+      <View key={upgrade.id} style={styles.cardWrapper}>
+        {pulseOverlay(upgrade.id)}
+        <View style={[styles.card, isOwned && styles.cardOwned]}>
+          <View style={styles.cardIcon}>
+            <DevGlyph name={glyphName} size={15} color={colors.accent.amber} />
+          </View>
+          <View style={styles.cardBody}>
+            <View style={styles.cardTitleRow}>
+              <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
+            </View>
+            <Text style={[styles.level, styles.upgradeEffect]}>{upgradeEffectText(upgrade)}</Text>
+            <Text style={[styles.bonus, !meetsLevel && { color: colors.accent.rustBright }]}>
+              {required
+                ? (meetsLevel
+                  ? t('skills.targetLevel', { skill: skillName(required.skillId), level: targetLevel })
+                  : t('skills.reqLevel', { skill: skillName(required.skillId), level: required.level }))
+                : t('skills.leadershipHint')}
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${t('skills.buy')} ${name}`}
+            accessibilityState={{ disabled: !affordable || isOwned }}
+            disabled={!affordable || isOwned}
+            onPress={() => handleBuyUpgrade(upgrade)}
+            style={[
+              styles.buyButton,
+              (!affordable || isOwned) && styles.buyDisabled,
+              isOwned && styles.buyOwned,
+            ]}
+          >
+            <Text
+              style={[styles.buyText, isOwned && { color: colors.text.muted }]}
+              numberOfLines={1}
+              maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
+            >
+              {isOwned ? t('skills.purchased') : (
+                <ResourceValue kind={upgrade.costResource}>
+                  {FORMAT[upgrade.costResource](upgrade.cost)}
+                </ResourceValue>
+              )}
+            </Text>
+            <Text style={styles.buyLabel}>{isOwned ? t('skills.active') : t('skills.buy')}</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
+
+  const renderSkill = (skill: SkillDefinition) => {
+    const level = levels[skill.id] ?? 0;
+    const unlocked = isSkillUnlocked(skill.id, levels, currentRank);
+    const isMaxed = skill.maxLevel !== undefined && level >= skill.maxLevel;
+    const budget = balances[skill.costResource];
+    const purchase = calculateBulkPurchase(skill.baseCost, skill.costGrowth, level, budget, purchaseMode);
+    const cost = purchaseMode === 'max' && purchase.levels === 0
+      ? calculateBulkPurchase(skill.baseCost, skill.costGrowth, level, budget, 1).totalCost
+      : purchase.totalCost;
+    const affordable = unlocked && !isMaxed && (purchaseMode === 'max' ? purchase.levels > 0 : budget.gte(cost));
+    const effectiveGain = purchaseMode === 'max' && purchase.levels === 0 ? 1 : purchase.levels;
+    const glyphName = SKILL_GLYPHS[skill.id] ?? BRANCH_GLYPHS[skill.branch];
+    const name = skillName(skill.id);
+
+    return (
+      <View key={skill.id} style={styles.cardWrapper}>
+        {pulseOverlay(skill.id)}
+        <View style={styles.card}>
+          <View style={styles.cardIcon}>
+            <DevGlyph name={glyphName} size={15} color={colors.accent.phosphorBright} />
+          </View>
+          <View style={styles.cardBody}>
+            <View style={styles.cardTitleRow}>
+              <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
+              <Text style={styles.level}>{t('skills.lvl', { level })}</Text>
+            </View>
+            <Text style={styles.description} numberOfLines={1}>
+              {unlocked ? t(`skills.items.${skill.id}.desc`) : requirementText(skill)}
+            </Text>
+            <Text style={styles.bonus}>
+              {skill.kind === 'producer' ? (
+                <ResourceValue kind={skill.produces}>{skillEffectText(skill, effectiveGain)}</ResourceValue>
+              ) : skillEffectText(skill, effectiveGain)}
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${t('skills.buy')} ${name}`}
+            accessibilityState={{ disabled: !affordable }}
+            disabled={!affordable}
+            onPress={() => handleBuy(skill.id)}
+            style={[styles.buyButton, !affordable && styles.buyDisabled]}
+          >
+            <Text style={styles.buyText} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
+              {isMaxed ? 'MAX' : (
+                <ResourceValue kind={skill.costResource}>{FORMAT[skill.costResource](cost)}</ResourceValue>
+              )}
+            </Text>
+            <Text style={styles.buyLabel}>{t('skills.buy')}</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.headingRow}>
         <Text style={styles.heading} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>{t('skills.heading')}</Text>
-        {headingRate ? (
+        {headingRate && branchTab ? (
           <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
-            {activeTab !== 'upgrades' ? (
-              <ResourceValue kind={BRANCH_RESOURCE[activeTab]}>
-                {t('skills.rateLabel', { amount: headingRate })}
-              </ResourceValue>
-            ) : null}
+            <ResourceValue kind={BRANCH_RESOURCE[branchTab]}>
+              {t('skills.rateLabel', { amount: headingRate })}
+            </ResourceValue>
           </Text>
         ) : null}
       </View>
-      {activeTab !== 'upgrades' ? (
+      {visibleSkills.length > 0 ? (
         <View style={styles.purchaseModes}>
           {([1, 10, 100, 'max'] as PurchaseMode[]).map((mode) => (
             <Pressable
@@ -219,130 +328,15 @@ export function SkillsCatalog() {
               numberOfLines={1}
               maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
             >
-              {tab === 'upgrades' ? t('skills.upgradesTab') : t(`skills.branches.${tab}`)}
+              {tabLabel(tab)}
             </Text>
           </Pressable>
         ))}
       </View>
       {/* Plain list: the page ScrollView is the only vertical scroll on this tab (no nested scroll). */}
       <View style={styles.listContent}>
-        {activeTab === 'upgrades' ? (
-          visibleUpgrades.map((upgrade) => {
-            const isOwned = purchasedUpgrades.includes(upgrade.id);
-            const required = upgrade.requiredSkill;
-            const targetLevel = required ? levels[required.skillId] ?? 0 : 0;
-            const meetsLevel = !required || targetLevel >= required.level;
-            const affordable = !isOwned && meetsLevel && balances[upgrade.costResource].gte(upgrade.cost);
-            const glyphName = upgrade.effect.type === 'branchMultiplier'
-              ? BRANCH_GLYPHS[upgrade.effect.branch]
-              : SKILL_GLYPHS[upgrade.effect.skillId] ?? BRANCH_GLYPHS[skillById(upgrade.effect.skillId)?.branch ?? 'knowledge'];
-            const name = upgradeName(upgrade);
-
-            return (
-              <View key={upgrade.id} style={styles.cardWrapper}>
-                {pulseOverlay(upgrade.id)}
-                <View style={[styles.card, isOwned && styles.cardOwned]}>
-                  <View style={styles.cardIcon}>
-                    <DevGlyph name={glyphName} size={15} color={colors.accent.amber} />
-                  </View>
-                  <View style={styles.cardBody}>
-                    <View style={styles.cardTitleRow}>
-                      <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
-                    </View>
-                    <Text style={[styles.level, styles.upgradeEffect]}>{upgradeEffectText(upgrade)}</Text>
-                    <Text style={[styles.bonus, !meetsLevel && { color: colors.accent.rustBright }]}>
-                      {required
-                        ? (meetsLevel
-                          ? t('skills.targetLevel', { skill: skillName(required.skillId), level: targetLevel })
-                          : t('skills.reqLevel', { skill: skillName(required.skillId), level: required.level }))
-                        : t('skills.leadershipHint')}
-                    </Text>
-                  </View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t('skills.buy')} ${name}`}
-                    accessibilityState={{ disabled: !affordable || isOwned }}
-                    disabled={!affordable || isOwned}
-                    onPress={() => handleBuyUpgrade(upgrade)}
-                    style={[
-                      styles.buyButton,
-                      (!affordable || isOwned) && styles.buyDisabled,
-                      isOwned && styles.buyOwned,
-                    ]}
-                  >
-                    <Text
-                      style={[styles.buyText, isOwned && { color: colors.text.muted }]}
-                      numberOfLines={1}
-                      maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
-                    >
-                      {isOwned ? t('skills.purchased') : (
-                        <ResourceValue kind={upgrade.costResource}>
-                          {FORMAT[upgrade.costResource](upgrade.cost)}
-                        </ResourceValue>
-                      )}
-                    </Text>
-                    <Text style={styles.buyLabel}>{isOwned ? t('skills.active') : t('skills.buy')}</Text>
-                  </Pressable>
-                </View>
-              </View>
-            );
-          })
-        ) : (
-          visibleSkills.map((skill) => {
-            const level = levels[skill.id] ?? 0;
-            const unlocked = isSkillUnlocked(skill.id, levels, currentRank);
-            const isMaxed = skill.maxLevel !== undefined && level >= skill.maxLevel;
-            const budget = balances[skill.costResource];
-            const purchase = calculateBulkPurchase(skill.baseCost, skill.costGrowth, level, budget, purchaseMode);
-            const cost = purchaseMode === 'max' && purchase.levels === 0
-              ? calculateBulkPurchase(skill.baseCost, skill.costGrowth, level, budget, 1).totalCost
-              : purchase.totalCost;
-            const affordable = unlocked && !isMaxed && (purchaseMode === 'max' ? purchase.levels > 0 : budget.gte(cost));
-            const effectiveGain = purchaseMode === 'max' && purchase.levels === 0 ? 1 : purchase.levels;
-            const glyphName = SKILL_GLYPHS[skill.id] ?? BRANCH_GLYPHS[skill.branch];
-            const name = skillName(skill.id);
-
-            return (
-              <View key={skill.id} style={styles.cardWrapper}>
-                {pulseOverlay(skill.id)}
-                <View style={styles.card}>
-                  <View style={styles.cardIcon}>
-                    <DevGlyph name={glyphName} size={15} color={colors.accent.phosphorBright} />
-                  </View>
-                  <View style={styles.cardBody}>
-                    <View style={styles.cardTitleRow}>
-                      <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
-                      <Text style={styles.level}>{t('skills.lvl', { level })}</Text>
-                    </View>
-                    <Text style={styles.description} numberOfLines={1}>
-                      {unlocked ? t(`skills.items.${skill.id}.desc`) : requirementText(skill)}
-                    </Text>
-                    <Text style={styles.bonus}>
-                      {skill.kind === 'producer' ? (
-                        <ResourceValue kind={skill.produces}>{skillEffectText(skill, effectiveGain)}</ResourceValue>
-                      ) : skillEffectText(skill, effectiveGain)}
-                    </Text>
-                  </View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t('skills.buy')} ${name}`}
-                    accessibilityState={{ disabled: !affordable }}
-                    disabled={!affordable}
-                    onPress={() => handleBuy(skill.id)}
-                    style={[styles.buyButton, !affordable && styles.buyDisabled]}
-                  >
-                    <Text style={styles.buyText} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
-                      {isMaxed ? 'MAX' : (
-                        <ResourceValue kind={skill.costResource}>{FORMAT[skill.costResource](cost)}</ResourceValue>
-                      )}
-                    </Text>
-                    <Text style={styles.buyLabel}>{t('skills.buy')}</Text>
-                  </Pressable>
-                </View>
-              </View>
-            );
-          })
-        )}
+        {visibleSkills.map(renderSkill)}
+        {visibleUpgrades.map(renderUpgrade)}
       </View>
     </View>
   );

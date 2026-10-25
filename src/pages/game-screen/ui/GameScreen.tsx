@@ -6,6 +6,8 @@ import { useGameLoop } from '@entities/game-loop';
 import { HeaderHud } from '@widgets/header-hud';
 import { WorkspaceClicker } from '@widgets/workspace-clicker';
 import { SkillsCatalog } from '@widgets/skills-catalog';
+import { TAP_MODE_SWITCH_HEIGHT, TapModeSwitch, shouldShowTapModeSwitch } from '@widgets/tap-mode-switch';
+import { ResourceUnlockCard } from '@widgets/resource-unlock';
 import { CareerRoadmap } from '@widgets/career-roadmap';
 import { SimulatedLeaderboard } from '@widgets/simulated-leaderboard';
 import { BottomDock, type ActiveTab } from '@widgets/bottom-dock';
@@ -71,7 +73,16 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
           // Console (T-012): no scroll competing with taps; the whole area between HUD and dock is the tap
           // zone. Future buttons on top of it (next goal, tap mode) go into `overlay` so they never pay out.
           <View style={styles.consoleTab}>
-            <WorkspaceClicker header={hero} />
+            <WorkspaceClicker
+              header={(
+                <>
+                  {/* Reserve the switch's height so the overlay never covers the kicker. */}
+                  {shouldShowTapModeSwitch(rank.id) ? <View style={styles.switchSpacer} /> : null}
+                  {hero}
+                </>
+              )}
+              overlay={<TapModeSwitch />}
+            />
           </View>
         ) : (
           <ScrollView
@@ -85,6 +96,8 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
         )}
         <BottomDock activeTab={activeTab} onChangeTab={setActiveTab} />
       </View>
+      {/* Waits while the Career tab may show the promotion celebration, so two modals never stack. */}
+      <ResourceUnlockCard enabled={activeTab !== 'career'} />
     </SafeAreaView>
   );
 }
@@ -105,6 +118,9 @@ const styles = StyleSheet.create({
   },
   consoleTab: {
     flex: 1,
+  },
+  switchSpacer: {
+    height: TAP_MODE_SWITCH_HEIGHT,
   },
   content: {
     flexGrow: 1,
