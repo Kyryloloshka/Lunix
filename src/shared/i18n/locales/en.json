@@ -80,6 +80,8 @@
     "purchased": "OWNED",
     "multiplier": "x{mult} BOOST",
     "reqLevel": "Requires {skill} Lvl {level}",
+    "newBadge": "NEW",
+    "teaser": "??? · unlocks at rank {rank}",
     "items": {
       "html-tags": {
         "name": "HTML Tags from TubeTube",

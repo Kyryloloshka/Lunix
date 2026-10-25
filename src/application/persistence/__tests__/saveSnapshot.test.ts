@@ -11,7 +11,7 @@ describe('save snapshot', () => {
     totalCognitiveEarned: new Decimal(7, 350),
     stress: 42,
   };
-  const skills = { levels: { 'html-tags': 5 }, purchasedUpgrades: ['delegation'], currentRank: 2 };
+  const skills = { levels: { 'html-tags': 5 }, purchasedUpgrades: ['delegation'], currentRank: 2, seenSkillIds: ['html-tags'] };
 
   const onboarding = { introDone: true, tapDone: true, buyDone: false, stressDone: false };
 

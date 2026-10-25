@@ -1,11 +1,11 @@
 import { Decimal } from '@shared/lib/decimal';
 import type { CurrencySnapshot } from '@entities/currency';
-import type { SkillSnapshot } from '@features/purchase-skill';
+import { getReachedSkillIds, type SkillSnapshot } from '@features/purchase-skill';
 import { COMPLETED_ONBOARDING, type OnboardingSnapshot } from '@features/onboarding';
 import { getV1Refund, mapV1Rank } from './legacyV1';
 
-/** v3: onboarding progress (T-018). v2: career phases (T-016) — new skill ids, 11 ranks, lifetime Cognitive. */
-export const SAVE_VERSION = 3;
+/** v4: seen skill ids for the NEW badge (T-013). v3: onboarding progress (T-018). v2: career phases (T-016) — new skill ids, 11 ranks, lifetime Cognitive. */
+export const SAVE_VERSION = 4;
 
 interface SerializedDecimal {
   m: number;
@@ -34,8 +34,19 @@ export interface GameSaveV2 {
   skills: SkillSnapshot;
 }
 
+/** Skills block of v1–v3 saves: no `seenSkillIds` yet. */
+type SkillsBeforeV4 = Omit<SkillSnapshot, 'seenSkillIds'>;
+
 export interface GameSaveV3 {
   version: 3;
+  savedAt: number;
+  currency: GameSaveV2['currency'];
+  skills: SkillsBeforeV4;
+  onboarding: OnboardingSnapshot;
+}
+
+export interface GameSaveV4 {
+  version: 4;
   savedAt: number;
   currency: GameSaveV2['currency'];
   skills: SkillSnapshot;
@@ -55,7 +66,7 @@ export function serializeGame(
   onboarding: OnboardingSnapshot,
   savedAt: number,
 ): string {
-  const payload: GameSaveV3 = {
+  const payload: GameSaveV4 = {
     version: SAVE_VERSION,
     savedAt,
     currency: {
@@ -70,6 +81,7 @@ export function serializeGame(
       levels: skills.levels,
       purchasedUpgrades: skills.purchasedUpgrades,
       currentRank: skills.currentRank,
+      seenSkillIds: skills.seenSkillIds,
     },
     onboarding: {
       introDone: onboarding.introDone,
@@ -96,11 +108,23 @@ function parseStress(value: unknown): number {
 
 function parseSkills(raw: unknown): SkillSnapshot {
   const skills = (raw && typeof raw === 'object' ? raw : {}) as Partial<SkillSnapshot>;
-  return {
+  const base: SkillsBeforeV4 = {
     levels: skills.levels && typeof skills.levels === 'object' ? skills.levels : {},
     purchasedUpgrades: Array.isArray(skills.purchasedUpgrades) ? skills.purchasedUpgrades : [],
     currentRank: typeof skills.currentRank === 'number' ? skills.currentRank : 0,
   };
+  return Array.isArray(skills.seenSkillIds)
+    ? { ...base, seenSkillIds: skills.seenSkillIds.filter((id): id is string => typeof id === 'string') }
+    : migrateSkillsV3ToV4(base);
+}
+
+/**
+ * v3 → v4: adds `seenSkillIds`. Players of older saves have already met every skill their rank
+ * has opened, so those start as seen and the NEW badge only appears for future unlocks. Also used
+ * when a v4 save lacks the field.
+ */
+function migrateSkillsV3ToV4(skills: SkillsBeforeV4): SkillSnapshot {
+  return { ...skills, seenSkillIds: getReachedSkillIds(skills.currentRank) };
 }
 
 /**
@@ -122,7 +146,7 @@ function migrateV1(save: Partial<GameSaveV1>): GameSave {
       totalCognitiveEarned: cognitive,
       stress: parseStress(currency.stress),
     },
-    skills: { levels: {}, purchasedUpgrades: [], currentRank: mapV1Rank(skills.currentRank) },
+    skills: migrateSkillsV3ToV4({ levels: {}, purchasedUpgrades: [], currentRank: mapV1Rank(skills.currentRank) }),
     onboarding: COMPLETED_ONBOARDING,
   };
 }
@@ -180,7 +204,8 @@ export function parseGame(raw: string | null): GameSave | null {
   if (save.version === 1) return migrateV1(data as Partial<GameSaveV1>);
   // v2 → v3: existing players have seen the game already, so no intro or guided steps for them.
   if (save.version === 2) return parseCommon(data as SaveBody, COMPLETED_ONBOARDING);
-  if (save.version === SAVE_VERSION) {
+  // v3 → v4 (seen skills) happens inside parseSkills, so a v3 save is parsed like a v4 one.
+  if (save.version === 3 || save.version === SAVE_VERSION) {
     return parseCommon(data as SaveBody, parseOnboarding((data as { onboarding?: unknown }).onboarding));
   }
   return null;

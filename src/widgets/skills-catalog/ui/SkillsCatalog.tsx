@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   BRANCH_RESOURCE,
@@ -15,7 +15,7 @@ import { getUnlockedResources } from '@entities/career-rank';
 import { useCurrencyStore } from '@entities/currency';
 import type { Decimal } from '@shared/lib/decimal';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
-import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, MIN_TOUCH_TARGET, ResourceValue, type GlyphName } from '@shared/ui';
+import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, FadeSlideIn, MIN_TOUCH_TARGET, ResourceValue, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useMotionPreference } from '@shared/lib/motion';
@@ -29,7 +29,8 @@ import {
   type SkillContribution,
   type UpgradePreview,
 } from '@features/purchase-skill';
-import { getCatalogEntries, getCatalogTabs, type CatalogTab } from '../model/catalogTabs';
+import { getCatalogEntries, getCatalogTabs, getLockedTeaser, type CatalogTab } from '../model/catalogTabs';
+import { getNewSkillIds, sortUpgradesByStatus } from '../model/catalogOrder';
 
 function isBranchTab(tab: CatalogTab): tab is SkillBranch {
   return tab !== 'perks' && tab !== 'upgrades';
@@ -190,10 +191,30 @@ export function SkillsCatalog() {
   const activeTab = tabs.includes(category) ? category : 'knowledge';
   const branchTab = isBranchTab(activeTab) ? activeTab : null;
 
-  const { skills: visibleSkills, upgrades: visibleUpgrades } = useMemo(
+  const seenSkillIds = useSkillStore((state) => state.seenSkillIds);
+  const markSkillsSeen = useSkillStore((state) => state.markSkillsSeen);
+
+  const { skills: visibleSkills, upgrades: unsortedUpgrades } = useMemo(
     () => getCatalogEntries(activeTab, currentRank, (skillId) => isSkillUnlocked(skillId, levels, currentRank)),
     [activeTab, currentRank, levels],
   );
+  // Available first, bought last; independent of balances so the list never jumps.
+  const visibleUpgrades = useMemo(
+    () => sortUpgradesByStatus(unsortedUpgrades, purchasedUpgrades, levels),
+    [unsortedUpgrades, purchasedUpgrades, levels],
+  );
+  const newSkillIds = useMemo(() => getNewSkillIds(visibleSkills, seenSkillIds), [visibleSkills, seenSkillIds]);
+  const teaser = useMemo(() => getLockedTeaser(activeTab, currentRank), [activeTab, currentRank]);
+
+  // NEW badges stay while the tab is on screen; they are marked seen when the player leaves it.
+  const viewedRef = useRef(new Set<string>());
+  useEffect(() => {
+    visibleSkills.forEach((skill) => viewedRef.current.add(skill.id));
+  }, [visibleSkills]);
+  useEffect(() => () => {
+    markSkillsSeen([...viewedRef.current]);
+    viewedRef.current.clear();
+  }, [activeTab, markSkillsSeen]);
 
   // Contributions and upgrade previews depend only on levels and upgrades, not on balances.
   const contributions = useMemo(() => {
@@ -341,16 +362,20 @@ export function SkillsCatalog() {
     const name = skillName(skill.id);
     const contribution = contributions.get(skill.id) ?? null;
 
-    return (
-      <View key={skill.id} style={styles.cardWrapper}>
+    const isNew = newSkillIds.has(skill.id);
+    const card = (
+      <View style={styles.cardWrapper}>
         {pulseOverlay(skill.id)}
-        <View style={styles.card}>
+        <View style={[styles.card, isNew && styles.cardNew]}>
           <View style={styles.cardIcon}>
             <DevGlyph name={glyphName} size={15} color={colors.accent.phosphorBright} />
           </View>
           <View style={styles.cardBody}>
             <View style={styles.cardTitleRow}>
               <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
+              {isNew ? (
+                <Text style={styles.newBadge} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>{t('skills.newBadge')}</Text>
+              ) : null}
               <Text style={styles.level}>{t('skills.lvl', { level })}</Text>
             </View>
             <Text style={styles.description} numberOfLines={1}>
@@ -387,6 +412,8 @@ export function SkillsCatalog() {
         </View>
       </View>
     );
+    // New skills slide in from the top (a plain fade under reduced motion, handled by FadeSlideIn).
+    return isNew ? <FadeSlideIn key={skill.id} from="top">{card}</FadeSlideIn> : <View key={skill.id}>{card}</View>;
   };
 
   return (
@@ -442,6 +469,13 @@ export function SkillsCatalog() {
       </View>
       {/* Plain list: the page ScrollView is the only vertical scroll on this tab (no nested scroll). */}
       <View style={styles.listContent}>
+        {teaser ? (
+          <View style={styles.teaser} accessibilityLabel={t('skills.teaser', { rank: t(`career.ranks.${teaser.unlockRank}.title`) })}>
+            <Text style={styles.teaserText} numberOfLines={2} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
+              {t('skills.teaser', { rank: t(`career.ranks.${teaser.unlockRank}.title`) })}
+            </Text>
+          </View>
+        ) : null}
         {visibleSkills.map(renderSkill)}
         {visibleUpgrades.map(renderUpgrade)}
       </View>
@@ -612,6 +646,37 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     alignItems: 'center',
     marginLeft: spacing.sm,
+  },
+  cardNew: {
+    borderColor: colors.accent.amber,
+    backgroundColor: colors.accent.amberBg,
+  },
+  newBadge: {
+    color: colors.accent.amberBright,
+    fontFamily: typography.mono,
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginLeft: 4,
+    borderWidth: 1,
+    borderColor: colors.accent.amber,
+    borderRadius: radii.xs,
+    paddingHorizontal: 3,
+  },
+  teaser: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.border.default,
+    borderRadius: radii.md,
+    padding: spacing.sm,
+    marginBottom: 6,
+    backgroundColor: colors.bg.inset,
+  },
+  teaserText: {
+    color: colors.text.muted,
+    fontFamily: typography.mono,
+    fontSize: typography.sizes.xxs,
+    fontWeight: '800',
   },
   cardOwned: {
     borderColor: colors.border.subtle,

@@ -1,5 +1,6 @@
 import { Decimal } from '@shared/lib/decimal';
 import { useCurrencyStore } from '@entities/currency';
+import { SKILLS } from '@entities/skill';
 import { useSkillStore } from '../model/skillStore';
 
 const add = (resources: { capital?: number; cognitive?: number; influence?: number }) => {
@@ -20,6 +21,30 @@ describe('skill store', () => {
   beforeEach(() => {
     useCurrencyStore.getState().reset();
     useSkillStore.getState().reset();
+  });
+
+  it('tracks seen skills: reached ranks start seen, a newly opened skill is unseen until viewed or bought (T-013)', () => {
+    const before = useSkillStore.getState().seenSkillIds;
+    expect(before).toContain('html-tags');
+    promoteTo(3);
+    const reached = SKILLS.filter((skill) => skill.unlockRank === 3).map((skill) => skill.id);
+    expect(reached.length).toBeGreaterThan(0);
+    expect(useSkillStore.getState().seenSkillIds).not.toContain(reached[0]);
+    useSkillStore.getState().markSkillsSeen([reached[0], 'no-such-skill', reached[0]]);
+    expect(useSkillStore.getState().seenSkillIds.filter((id) => id === reached[0])).toHaveLength(1);
+    expect(useSkillStore.getState().seenSkillIds).not.toContain('no-such-skill');
+  });
+
+  it('buying a skill marks it seen', () => {
+    useSkillStore.setState({ seenSkillIds: [] });
+    add({ cognitive: 10 });
+    expect(useSkillStore.getState().buy('html-tags')).toBe(1);
+    expect(useSkillStore.getState().seenSkillIds).toEqual(['html-tags']);
+  });
+
+  it('hydrate drops unknown seen ids', () => {
+    useSkillStore.getState().hydrate({ levels: {}, purchasedUpgrades: [], currentRank: 0, seenSkillIds: ['git', 'ghost', 'git'] });
+    expect(useSkillStore.getState().seenSkillIds).toEqual(['git']);
   });
 
   it('buys a knowledge skill with Cognitive and syncs rates', () => {
@@ -117,7 +142,7 @@ describe('skill store', () => {
 
   it('never replays unlock cards after loading or resetting a save', () => {
     useSkillStore.setState({ pendingResourceUnlocks: ['capital'] });
-    useSkillStore.getState().hydrate({ levels: {}, purchasedUpgrades: [], currentRank: 6 });
+    useSkillStore.getState().hydrate({ levels: {}, purchasedUpgrades: [], currentRank: 6, seenSkillIds: [] });
     expect(useSkillStore.getState().pendingResourceUnlocks).toEqual([]);
     useSkillStore.setState({ pendingResourceUnlocks: ['influence'] });
     useSkillStore.getState().reset();
@@ -147,6 +172,7 @@ describe('skill store', () => {
       levels: { 'html-tags': 4.7, 'js-basics': -3, unknown: 99, aeropress: 999, sleep: Number.NaN },
       purchasedUpgrades: ['delegation', 'delegation', 'fake'],
       currentRank: 999,
+      seenSkillIds: [],
     });
     const state = useSkillStore.getState();
     expect(state.levels['html-tags']).toBe(4);

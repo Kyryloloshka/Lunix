@@ -45,7 +45,7 @@ function playForAWhile() {
     totalCognitiveEarned: Decimal.from(9999),
     stress: 70,
   });
-  useSkillStore.getState().hydrate({ levels: {}, purchasedUpgrades: [], currentRank: 4 });
+  useSkillStore.getState().hydrate({ levels: {}, purchasedUpgrades: [], currentRank: 4, seenSkillIds: [] });
 }
 
 beforeEach(() => {

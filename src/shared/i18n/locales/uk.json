@@ -80,6 +80,8 @@
     "purchased": "КУПЛЕНО",
     "multiplier": "x{mult} БУСТ",
     "reqLevel": "Потрібен {skill} Рів. {level}",
+    "newBadge": "НОВЕ",
+    "teaser": "??? · відкривається на ранзі {rank}",
     "items": {
       "html-tags": {
         "name": "HTML-теги з TubeTube",
