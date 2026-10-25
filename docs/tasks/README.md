@@ -37,21 +37,21 @@
 | ID | Задача | Тип | Пріоритет | Розмір | Статус | Після |
 | --- | --- | --- | --- | --- | --- | --- |
 | [T-001](T-001-parody-content.md) | Прибрати реальних людей з контенту + тест заборонених назв | content / legal | P0 | S | done | — |
-| [T-002](T-002-layout-overflow-and-small-screens.md) | Обрізані заголовки, вкладені скроли, верстка на малих і великих екранах | bug / ux | P0 | M | todo | — |
-| [T-016](T-016-career-phases-economy.md) | Фази кар'єри: знання → гроші → вплив, одна навичка — один ефект, тап на кожен ресурс | product / economy | P1 | L | in-progress (етапи 1–3 готові) | — |
-| [T-012](T-012-tap-anywhere.md) | Тапати по всій вкладці «Консоль», а не лише по редактору | ux | P1 | S | todo | T-002 |
-| [T-014](T-014-flow-stress-cognitive-resilience.md) | Ритм Flow і стресу + Cognitive дає стійкість | product / balance | P1 | M | todo | — |
+| [T-002](T-002-layout-overflow-and-small-screens.md) | Обрізані заголовки, вкладені скроли, верстка на малих і великих екранах | bug / ux | P0 | M | in-progress (код готовий; лишились Android і скріншоти) | — |
+| [T-016](T-016-career-phases-economy.md) | Фази кар'єри: знання → гроші → вплив, одна навичка — один ефект, тап на кожен ресурс | product / economy | P1 | L | in-progress (етапи 1–4 готові) | — |
+| [T-012](T-012-tap-anywhere.md) | Тапати по всій вкладці «Консоль», а не лише по редактору | ux | P1 | S | in-progress (код готовий; лишилась перевірка на Android) | T-002 |
+| [T-014](T-014-flow-stress-cognitive-resilience.md) | Ритм Flow і стресу + Cognitive дає стійкість | product / balance | P1 | M | done | — |
 | [T-017](T-017-honest-income-numbers.md) | Чесні цифри: реальний «/с», приріст з апгрейдами, внесок навички | bug / ux | P1 | M | todo | T-016 ет. 2 |
 | [T-018](T-018-intro-and-first-minutes.md) | Інтро і перші хвилини: хто я, що робити | feature / ux | P1 | M | todo | T-016 ет. 2 |
 | [T-003](T-003-next-goal-and-ftue-hints.md) | «Наступна ціль» завжди на екрані, бейджі дока, «ще N» на кнопках | feature / ux | P1 | M | todo | T-016 ет. 2, T-017 |
-| [T-004](T-004-design-system-v1.md) | Дизайн-система «Terminal Workbench» v1 | design system / refactor | P1 | L | todo | — |
-| [T-015](T-015-motion-system.md) | Система анімацій: кожна важлива подія має рух | juice / design system | P1 | L | todo | — |
+| [T-004](T-004-design-system-v1.md) | Дизайн-система «Terminal Workbench» v1 | design system / refactor | P1 | L | in-progress (етапи 1 і 3 готові, лишився 2) | — |
+| [T-015](T-015-motion-system.md) | Система анімацій: кожна важлива подія має рух | juice / design system | P1 | L | in-progress (етап 1 готовий) | — |
 | [T-005](T-005-localization-sweep.md) | Повна локалізація: хардкод, реєстри, a11y-лейбли | i18n / refactor | P1 | M | todo | T-001 |
-| [T-006](T-006-honest-settings-and-feedback.md) | Чесні налаштування: звук-пустушка, reduced motion з ОС, скидання прогресу | bug / feature | P1 | M | todo | — |
-| [T-008](T-008-career-screen-polish.md) | Кар'єра: драбина вгору, приховане майбутнє, свято промоушну | ux | P2 | M | todo | T-016 ет. 1 |
+| [T-006](T-006-honest-settings-and-feedback.md) | Чесні налаштування: звук-пустушка, reduced motion з ОС, скидання прогресу | bug / feature | P1 | M | done | — |
+| [T-008](T-008-career-screen-polish.md) | Кар'єра: драбина вгору, приховане майбутнє, свято промоушну | ux | P2 | M | in-progress (лишився п. 4: блок героя) | T-016 ет. 1 |
 | [T-013](T-013-skills-newest-first.md) | Найсильніші та нові навички — зверху списку | ux | P2 | S | todo | T-016 ет. 4 |
 | [T-009](T-009-living-clicker.md) | «Живий» клікер: свій вигляд на кожен режим тапу | juice | P2 | M | todo | T-016 ет. 2, T-015 ет. 1 |
-| [T-010](T-010-leaderboard-rivalry.md) | Лідерборд з суперником: «до наступного місця ще X» | ux / feature | P2 | S | todo | T-001, T-016 |
+| [T-010](T-010-leaderboard-rivalry.md) | Лідерборд з суперником: «до наступного місця ще X» | ux / feature | P2 | S | done | T-001, T-016 |
 | [T-011](T-011-component-tests.md) | Компонентні тести ключових флоу і доступності | quality | P2 | M | todo | — |
 | [T-007](T-007-resources-clarity-and-cognitive-sink.md) | ~~Зрозумілі ресурси і куди витрачати Cognitive~~ | — | — | — | superseded | → T-014, T-016, T-017, T-018 |
 
