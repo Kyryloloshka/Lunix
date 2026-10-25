@@ -137,8 +137,10 @@ export function calculateSkillEffects(
         * (branchMultipliers[skill.branch] ?? 1);
       perSec[skill.produces] = perSec[skill.produces].add(skill.perLevel.multiplyScalar(level * multiplier));
     } else if (skill.effect.type === 'tapPower') {
+      // Levels of one perk add up; different perks multiply ("base × perks", phases.md §4). The approved
+      // pacing (§8) assumes this: additive stacking left Work taps ~5× weaker and Senior 30 min late.
       for (const resource of skill.effect.resources) {
-        tapMultiplier[resource] += skill.effect.perLevel * level;
+        tapMultiplier[resource] *= 1 + skill.effect.perLevel * level;
       }
     } else {
       stressReduction += skill.effect.perLevel * level;

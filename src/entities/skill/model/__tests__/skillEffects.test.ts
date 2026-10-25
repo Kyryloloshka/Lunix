@@ -28,9 +28,18 @@ describe('skill effects', () => {
   it('applies perks as one rule each, not as income', () => {
     const effects = calculateSkillEffects({ aeropress: 2, 'mech-keyboard': 1, sleep: 3 });
     expect(effects.tapMultiplier.cognitive).toBeCloseTo(2);
-    expect(effects.tapMultiplier.capital).toBeCloseTo(3);
+    // Aeropress ×2 and keyboard ×2 multiply on Work taps.
+    expect(effects.tapMultiplier.capital).toBeCloseTo(4);
     expect(effects.stressReduction).toBe(12);
     expect(effects.cognitivePerSec.isZero()).toBe(true);
+  });
+
+  it('stacks levels of one tap perk additively and different tap perks multiplicatively', () => {
+    // Maxed perks: aeropress 15 → ×8.5, keyboard 10 → ×11; Work taps ×93.5 as in the approved pacing.
+    const effects = calculateSkillEffects({ aeropress: 15, 'mech-keyboard': 10 });
+    expect(effects.tapMultiplier.cognitive).toBeCloseTo(8.5);
+    expect(effects.tapMultiplier.influence).toBeCloseTo(8.5);
+    expect(effects.tapMultiplier.capital).toBeCloseTo(93.5);
   });
 
   it('multiplies one skill with a tech upgrade and a whole branch with a leadership perk', () => {
