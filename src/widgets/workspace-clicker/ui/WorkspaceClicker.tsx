@@ -29,6 +29,10 @@ const HAPTIC_THROTTLE_MS = 60;
 const FLOATER_ANCHOR_WIDTH = 240;
 // Non-zero so Android doesn't measure the floater text at height 0 and draw nothing
 const FLOATER_ANCHOR_HEIGHT = 48;
+// Adaptive editor: full width on phones (minus gutters), capped so it doesn't look stretched on tablets/web
+const EDITOR_MAX_WIDTH = 420;
+// The editor grows to fill the tab's free height, but not into a giant empty slab on tall screens
+const EDITOR_MAX_HEIGHT = 380;
 
 const TAP_HINT: Record<TapResource, string> = {
   cognitive: 'workspace.hintCognitive',
@@ -276,19 +280,20 @@ const AnimatedFloater = memo(function AnimatedFloater({ floater }: { floater: Fl
 });
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.lg },
-  statusRow: { flexDirection: 'row', width: '100%', paddingHorizontal: spacing.xl, justifyContent: 'space-between', alignItems: 'center' },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.lg, paddingHorizontal: spacing.lg },
+  statusRow: { flexDirection: 'row', width: '100%', maxWidth: EDITOR_MAX_WIDTH, paddingHorizontal: spacing.xs, justifyContent: 'space-between', alignItems: 'center' },
   statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   statusDot: { width: 6, height: 6, backgroundColor: colors.accent.phosphor, borderRadius: radii.full },
   statusText: { color: colors.accent.phosphor, fontSize: typography.sizes.xxs, fontWeight: '900', letterSpacing: 1 },
   sessionText: { color: colors.text.muted, fontSize: 9, fontWeight: '700', letterSpacing: 0.7 },
-  editorWrap: { marginTop: spacing.md, width: 300 },
-  touchSurface: { position: 'relative', width: '100%' },
+  editorWrap: { marginTop: spacing.md, width: '100%', maxWidth: EDITOR_MAX_WIDTH, flexGrow: 1, maxHeight: EDITOR_MAX_HEIGHT },
+  touchSurface: { position: 'relative', width: '100%', flexGrow: 1 },
   laptopButton: {
     backgroundColor: colors.bg.surface,
     borderWidth: 1,
     borderColor: colors.border.active,
     borderRadius: radii.lg,
+    flexGrow: 1,
     padding: spacing.md,
     alignItems: 'stretch',
     shadowColor: '#000000',
@@ -312,6 +317,7 @@ const styles = StyleSheet.create({
   fileMeta: { color: colors.text.muted, fontFamily: typography.mono, fontSize: 9 },
   codeArea: {
     backgroundColor: colors.bg.inset,
+    flexGrow: 1,
     minHeight: 104,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.xs,

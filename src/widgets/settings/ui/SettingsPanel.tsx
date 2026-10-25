@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { t, useLocale, type Locale } from '@shared/i18n';
 import { colors, radii, spacing, typography } from '@shared/theme';
-import { Panel } from '@shared/ui';
+import { MIN_TOUCH_TARGET, Panel } from '@shared/ui';
 import { useSettingsStore } from '@features/settings';
 
 type ToggleRowProps = {
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   switchText: { color: colors.text.muted, fontFamily: typography.mono, fontSize: typography.sizes.xxs, fontWeight: '900' },
   selectLabel: { color: colors.text.muted, fontFamily: typography.mono, fontSize: typography.sizes.xxs, fontWeight: '900', marginTop: spacing.md, marginBottom: 5 },
   selectRow: { flexDirection: 'row', gap: 6 },
-  selectOption: { flex: 1, minHeight: 36, alignItems: 'center', justifyContent: 'center', borderRadius: radii.sm, borderWidth: 1, borderColor: colors.border.default, backgroundColor: colors.bg.inset },
+  selectOption: { flex: 1, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', borderRadius: radii.sm, borderWidth: 1, borderColor: colors.border.default, backgroundColor: colors.bg.inset },
   selectOptionActive: { borderColor: colors.accent.phosphorDim, backgroundColor: colors.accent.phosphorBg },
   selectText: { color: colors.text.muted, fontFamily: typography.mono, fontSize: typography.sizes.xs, fontWeight: '900' },
   selectTextActive: { color: colors.accent.phosphorBright },

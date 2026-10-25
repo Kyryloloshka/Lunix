@@ -6,9 +6,12 @@ import {
   useCurrencyStore,
 } from '@entities/currency';
 import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
-import { DevGlyph } from '@shared/ui';
+import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph } from '@shared/ui';
 import { colors, getRankTheme, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
+
+// HUD numbers sit in a fixed 3-column grid: cap system font scaling so large fonts don't break it
+const HUD_FONT_SCALE = DENSE_TEXT_MAX_FONT_SCALE;
 
 interface HeaderHudProps {
   rankTitle: string;
@@ -36,7 +39,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
       <View style={styles.topRow}>
         <View style={styles.rankBadge}>
           <DevGlyph name="rank" size={12} color={rankTheme.accentBright} />
-          <Text style={styles.rankText}>
+          <Text style={styles.rankText} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
             [{rankIndex + 1}] {rankTitle}
           </Text>
         </View>
@@ -45,13 +48,13 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
           {flow.isActive ? (
             <View style={styles.flowBadge}>
               <DevGlyph name="bolt" size={12} color={colors.text.inverse} />
-              <Text style={styles.flowText}>
+              <Text style={styles.flowText} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
                 {t('status.flow')} x{flow.multiplier} · {Math.ceil(flow.remainingMs / 1000)}s
               </Text>
             </View>
           ) : (
             <View style={styles.comboProgress}>
-              <Text style={styles.comboText}>
+              <Text style={styles.comboText} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
                 {t('status.combo', {
                   current: flow.comboCount,
                   target: FLOW_COMBO_THRESHOLD,
@@ -77,34 +80,34 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
         <View style={styles.statBox}>
           <View style={styles.statHeader}>
             <DevGlyph name="terminal" size={11} color={colors.accent.phosphor} />
-            <Text style={[styles.label, { color: colors.accent.phosphor }]}>
+            <Text style={[styles.label, { color: colors.accent.phosphor }]} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
               {t('resources.capital').toUpperCase()}
             </Text>
           </View>
-          <Text style={styles.value}>{formatCurrency(capital)}</Text>
-          {rates.capitalPerSec.gt(0) ? <Text style={styles.rate}>{t('status.ratePerSec', { amount: formatCurrency(rates.capitalPerSec) })}</Text> : null}
+          <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{formatCurrency(capital)}</Text>
+          {rates.capitalPerSec.gt(0) ? <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{t('status.ratePerSec', { amount: formatCurrency(rates.capitalPerSec) })}</Text> : null}
         </View>
 
         <View style={styles.statBox}>
           <View style={styles.statHeader}>
             <DevGlyph name="brain" size={11} color={colors.accent.cyanBright} />
-            <Text style={[styles.label, { color: colors.accent.cyanBright }]}>
+            <Text style={[styles.label, { color: colors.accent.cyanBright }]} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
               {t('resources.cognitive').toUpperCase()}
             </Text>
           </View>
-          <Text style={styles.value}>{formatCognitive(cognitive)}</Text>
-          {rates.cognitivePerSec.gt(0) ? <Text style={styles.rate}>{t('status.ratePerSec', { amount: formatCognitive(rates.cognitivePerSec) })}</Text> : null}
+          <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{formatCognitive(cognitive)}</Text>
+          {rates.cognitivePerSec.gt(0) ? <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{t('status.ratePerSec', { amount: formatCognitive(rates.cognitivePerSec) })}</Text> : null}
         </View>
 
         <View style={styles.statBox}>
           <View style={styles.statHeader}>
             <DevGlyph name="bolt" size={11} color={colors.accent.rustBright} />
-            <Text style={[styles.label, { color: colors.accent.rustBright }]}>
+            <Text style={[styles.label, { color: colors.accent.rustBright }]} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
               {t('resources.influence').toUpperCase()}
             </Text>
           </View>
-          <Text style={styles.value}>{formatInfluence(influence)}</Text>
-          {rates.influencePerSec.gt(0) ? <Text style={styles.rate}>{t('status.ratePerSec', { amount: formatInfluence(rates.influencePerSec) })}</Text> : null}
+          <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{formatInfluence(influence)}</Text>
+          {rates.influencePerSec.gt(0) ? <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{t('status.ratePerSec', { amount: formatInfluence(rates.influencePerSec) })}</Text> : null}
         </View>
       </View>
 
@@ -112,11 +115,11 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
         <View style={styles.stressHeader}>
           <View style={styles.stressLeft}>
             <DevGlyph name="flame" size={11} color={stressColor} />
-            <Text style={styles.stressLabel}>
+            <Text style={styles.stressLabel} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
               {t('resources.stress')}: {Math.round(stress)}%
             </Text>
           </View>
-          <Text style={[styles.stressHint, stress > 70 && styles.throttlingHint]}>
+          <Text style={[styles.stressHint, stress > 70 && styles.throttlingHint]} numberOfLines={2} maxFontSizeMultiplier={HUD_FONT_SCALE}>
             {stress > 70
               ? `${t('status.throttling')} · -${getStressPenaltyPercent(stress)}% ${t('status.output')}`
               : t('status.optimal')}
@@ -149,10 +152,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
     marginBottom: spacing.sm,
   },
-  topRowActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  topRowActions: { flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   rankBadge: {
+    flexShrink: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.bg.subtle,
@@ -164,6 +170,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   rankText: {
+    flexShrink: 1,
     color: colors.text.primary,
     fontFamily: typography.mono,
     fontWeight: '800',
@@ -213,6 +220,7 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
+    minWidth: 0,
     backgroundColor: colors.bg.inset,
     padding: 7,
     borderRadius: radii.sm,
@@ -227,6 +235,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   label: {
+    flexShrink: 1,
     fontFamily: typography.mono,
     fontSize: 8,
     fontWeight: '900',
@@ -253,6 +262,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
     marginBottom: 4,
   },
   stressLeft: {
@@ -267,6 +277,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   stressHint: {
+    flexShrink: 1,
+    textAlign: 'right',
     color: colors.text.muted,
     fontFamily: typography.mono,
     fontSize: 9,
