@@ -28,4 +28,8 @@ export interface FlowState {
   comboCount: number;
   lastTapAt: number;
   windowStartedAt: number;
+  /** Time left in the open combo window, refreshed by tap/tick so the HUD never reads the clock. */
+  comboRemainingMs: number;
+  /** After Flow ends the combo cannot build until this reaches 0. Runtime only, never saved. */
+  cooldownRemainingMs: number;
 }

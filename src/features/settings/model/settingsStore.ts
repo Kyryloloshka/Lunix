@@ -1,97 +1,100 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getLocale, setLocale as setI18nLocale, isLocale, type Locale } from '@shared/i18n';
+import { getLocale, setLocale as setI18nLocale, type Locale } from '@shared/i18n';
 import { setGlobalNotation } from '@shared/lib/formatters/notationContext';
-
-export type NumberNotation = 'compact' | 'scientific';
-
-interface SettingsValues {
-  soundEnabled: boolean;
-  hapticsEnabled: boolean;
-  reducedMotion: boolean;
-  notation: NumberNotation;
-  locale: Locale;
-}
+import {
+  createDefaultSettings,
+  parseStoredSettings,
+  serializeSettings,
+  type NumberNotation,
+  type SettingsValues,
+} from './settingsSnapshot';
 
 interface SettingsState extends SettingsValues {
-  setSoundEnabled: (value: boolean) => void;
   setHapticsEnabled: (value: boolean) => void;
-  setReducedMotion: (value: boolean) => void;
+  /** `null` goes back to following the OS setting. */
+  setReducedMotionChoice: (value: boolean | null) => void;
   setNotation: (notation: NumberNotation) => void;
   setLocale: (locale: Locale) => void;
+  /** Reads stored settings once. Repeated calls share the same load and never revert later changes. */
   load: () => Promise<void>;
 }
 
+// Kept for compatibility: v1 settings live under this key and are migrated in place.
 const STORAGE_KEY = '@lunix_settings_v1';
 
-function sanitizeValues(source: Partial<SettingsValues>): SettingsValues {
-  return {
-    soundEnabled: typeof source.soundEnabled === 'boolean' ? source.soundEnabled : true,
-    hapticsEnabled: typeof source.hapticsEnabled === 'boolean' ? source.hapticsEnabled : true,
-    reducedMotion: typeof source.reducedMotion === 'boolean' ? source.reducedMotion : false,
-    notation: source.notation === 'scientific' ? 'scientific' : 'compact',
-    locale: isLocale(source.locale) ? source.locale : getLocale(),
-  };
+type SettingKey = keyof SettingsValues;
+
+/** Fields the player changed in this session. A load never overwrites them. */
+const changedKeys = new Set<SettingKey>();
+let isLoaded = false;
+let loadPromise: Promise<void> | null = null;
+
+function pickValues(state: SettingsValues): SettingsValues {
+  const { hapticsEnabled, reducedMotionChoice, notation, locale } = state;
+  return { hapticsEnabled, reducedMotionChoice, notation, locale };
 }
 
-// Set once the player changes anything, so a slow cold-boot load can't overwrite that choice.
-let changedBeforeLoad = false;
-
 async function persistValues(values: SettingsValues): Promise<void> {
-  changedBeforeLoad = true;
   try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    await AsyncStorage.setItem(STORAGE_KEY, serializeSettings(values));
   } catch {
     // Fail-safe storage write
   }
 }
 
-export const useSettingsStore = create<SettingsState>((set, get) => ({
-  soundEnabled: true,
-  hapticsEnabled: true,
-  reducedMotion: false,
-  notation: 'compact',
-  locale: getLocale(),
+export const useSettingsStore = create<SettingsState>((set, get) => {
+  const change = <K extends SettingKey>(key: K, value: SettingsValues[K]) => {
+    changedKeys.add(key);
+    set({ [key]: value } as Pick<SettingsValues, K>);
+    // Never write before the stored settings were read: that would replace the other stored fields
+    // with defaults. The load persists the merged result instead.
+    if (isLoaded) void persistValues(pickValues(get()));
+  };
 
-  setSoundEnabled: (soundEnabled) => {
-    set({ soundEnabled });
-    const { hapticsEnabled, reducedMotion, notation, locale } = get();
-    void persistValues({ soundEnabled, hapticsEnabled, reducedMotion, notation, locale });
-  },
-  setHapticsEnabled: (hapticsEnabled) => {
-    set({ hapticsEnabled });
-    const { soundEnabled, reducedMotion, notation, locale } = get();
-    void persistValues({ soundEnabled, hapticsEnabled, reducedMotion, notation, locale });
-  },
-  setReducedMotion: (reducedMotion) => {
-    set({ reducedMotion });
-    const { soundEnabled, hapticsEnabled, notation, locale } = get();
-    void persistValues({ soundEnabled, hapticsEnabled, reducedMotion, notation, locale });
-  },
-  setNotation: (notation) => {
-    setGlobalNotation(notation);
-    set({ notation });
-    const { soundEnabled, hapticsEnabled, reducedMotion, locale } = get();
-    void persistValues({ soundEnabled, hapticsEnabled, reducedMotion, notation, locale });
-  },
-  setLocale: (locale) => {
-    setI18nLocale(locale);
-    set({ locale });
-    const { soundEnabled, hapticsEnabled, reducedMotion, notation } = get();
-    void persistValues({ soundEnabled, hapticsEnabled, reducedMotion, notation, locale });
-  },
-  load: async () => {
-    try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored && !changedBeforeLoad) {
-        const parsed = JSON.parse(stored) as Partial<SettingsValues>;
-        const sanitized = sanitizeValues(parsed);
-        setI18nLocale(sanitized.locale);
-        setGlobalNotation(sanitized.notation);
-        set(sanitized);
-      }
-    } catch {
-      // safe fallback on cold boot
-    }
-  },
-}));
+  return {
+    ...createDefaultSettings(getLocale()),
+
+    setHapticsEnabled: (value) => change('hapticsEnabled', value),
+    setReducedMotionChoice: (value) => change('reducedMotionChoice', value),
+    setNotation: (notation) => {
+      setGlobalNotation(notation);
+      change('notation', notation);
+    },
+    setLocale: (locale) => {
+      setI18nLocale(locale);
+      change('locale', locale);
+    },
+    load: () => {
+      if (isLoaded) return Promise.resolve();
+      if (loadPromise) return loadPromise;
+      loadPromise = (async () => {
+        let raw: string | null = null;
+        try {
+          raw = await AsyncStorage.getItem(STORAGE_KEY);
+        } catch {
+          // Unreadable storage: keep defaults.
+        }
+        const stored = parseStoredSettings(raw, get().locale);
+        if (stored) {
+          // Whatever the player changed while the load was in flight wins over the stored value.
+          const merged: SettingsValues = { ...stored };
+          const current = pickValues(get());
+          for (const key of changedKeys) {
+            (merged as unknown as Record<SettingKey, unknown>)[key] = current[key];
+          }
+          setI18nLocale(merged.locale);
+          setGlobalNotation(merged.notation);
+          set(merged);
+        }
+        isLoaded = true;
+        // Writes the migrated shape (v1 → v2) and any change made before the load finished.
+        const values = pickValues(get());
+        if (changedKeys.size > 0 || (stored !== null && serializeSettings(values) !== raw)) {
+          await persistValues(values);
+        }
+      })();
+      return loadPromise;
+    },
+  };
+});

@@ -25,7 +25,17 @@
     "language": "Language",
     "notation": "Number format",
     "compact": "COMPACT",
-    "scientific": "SCIENTIFIC"
+    "scientific": "SCIENTIFIC",
+    "on": "ON",
+    "off": "OFF",
+    "reducedMotionSystem": "Follows your device setting",
+    "reducedMotionUseSystem": "Use device setting",
+    "resetHeading": "PROGRESS",
+    "resetHint": "Delete this save and start the career from the first rank.",
+    "resetStart": "Start career over",
+    "resetConfirmText": "You will lose the rank \"{rank}\", all resources, skills and upgrades. This cannot be undone.",
+    "resetConfirm": "Yes, start over",
+    "resetCancel": "Cancel"
   },
   "resources": {
     "capital": "Capital",
@@ -40,7 +50,10 @@
     "ratePerSec": "+{amount}/s",
     "throttling": "THROTTLING RISK",
     "output": "OUTPUT",
-    "optimal": "OPTIMAL"
+    "optimal": "OPTIMAL",
+    "cooldown": "Flow recharge · {seconds}s",
+    "resilience": "Resilience −{percent}%",
+    "resilienceA11y": "Resilience: taps cause {percent}% less workload"
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",

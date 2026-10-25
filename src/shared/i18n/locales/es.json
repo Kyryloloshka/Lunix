@@ -25,7 +25,17 @@
     "language": "Idioma",
     "notation": "Formato numérico",
     "compact": "COMPACTO",
-    "scientific": "CIENTÍFICO"
+    "scientific": "CIENTÍFICO",
+    "on": "SÍ",
+    "off": "NO",
+    "reducedMotionSystem": "Sigue el ajuste del dispositivo",
+    "reducedMotionUseSystem": "Usar ajuste del dispositivo",
+    "resetHeading": "PROGRESO",
+    "resetHint": "Borra esta partida y empieza la carrera desde el primer rango.",
+    "resetStart": "Empezar la carrera de nuevo",
+    "resetConfirmText": "Perderás el rango «{rank}», todos los recursos, habilidades y mejoras. No se puede deshacer.",
+    "resetConfirm": "Sí, empezar de nuevo",
+    "resetCancel": "Cancelar"
   },
   "resources": {
     "capital": "Capital",
@@ -40,7 +50,10 @@
     "ratePerSec": "+{amount}/s",
     "throttling": "RIESGO DE ESTRANGULAMIENTO",
     "output": "RENDIMIENTO",
-    "optimal": "ÓPTIMO"
+    "optimal": "ÓPTIMO",
+    "cooldown": "Recarga de Flow · {seconds}s",
+    "resilience": "Resiliencia −{percent}%",
+    "resilienceA11y": "Resiliencia: los toques generan un {percent}% menos de carga"
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",

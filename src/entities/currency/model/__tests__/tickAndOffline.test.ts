@@ -6,6 +6,7 @@ import {
   getOfflineSeconds,
   useCurrencyStore,
 } from '../currencyStore';
+import { RHYTHM_CONFIG } from '../rhythm';
 
 describe('ticks, combo and offline progress', () => {
   beforeEach(() => {
@@ -79,6 +80,7 @@ describe('ticks, combo and offline progress', () => {
   it('scales tap stress with the skill multiplier', () => {
     useCurrencyStore.getState().updateRates({ stressPerClickMultiplier: 0.5 });
     useCurrencyStore.getState().tap();
-    expect(useCurrencyStore.getState().stress).toBeCloseTo(0.175);
+    // Fresh save: no lifetime Cognitive yet, so resilience is neutral and only the skill applies.
+    expect(useCurrencyStore.getState().stress).toBeCloseTo(RHYTHM_CONFIG.stress.perTap * 0.5);
   });
 });
