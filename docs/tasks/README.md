@@ -38,7 +38,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | [T-001](T-001-parody-content.md) | Прибрати реальних людей з контенту + тест заборонених назв | content / legal | P0 | S | done | — |
 | [T-002](T-002-layout-overflow-and-small-screens.md) | Обрізані заголовки, вкладені скроли, верстка на малих і великих екранах | bug / ux | P0 | M | in-progress (код готовий; лишились Android і скріншоти) | — |
-| [T-016](T-016-career-phases-economy.md) | Фази кар'єри: знання → гроші → вплив, одна навичка — один ефект, тап на кожен ресурс | product / economy | P1 | L | in-progress (етапи 1–4 готові) | — |
+| [T-016](T-016-career-phases-economy.md) | Фази кар'єри: знання → гроші → вплив, одна навичка — один ефект, тап на кожен ресурс | product / economy | P1 | L | done | — |
 | [T-012](T-012-tap-anywhere.md) | Тапати по всій вкладці «Консоль», а не лише по редактору | ux | P1 | S | in-progress (код готовий; лишилась перевірка на Android) | T-002 |
 | [T-014](T-014-flow-stress-cognitive-resilience.md) | Ритм Flow і стресу + Cognitive дає стійкість | product / balance | P1 | M | done | — |
 | [T-017](T-017-honest-income-numbers.md) | Чесні цифри: реальний «/с», приріст з апгрейдами, внесок навички | bug / ux | P1 | M | todo | T-016 ет. 2 |
