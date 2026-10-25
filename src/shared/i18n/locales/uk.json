@@ -25,7 +25,17 @@
     "language": "Мова",
     "notation": "Формат чисел",
     "compact": "КОРОТКИЙ",
-    "scientific": "НАУКОВИЙ"
+    "scientific": "НАУКОВИЙ",
+    "on": "УВІМК",
+    "off": "ВИМК",
+    "reducedMotionSystem": "Як у налаштуваннях пристрою",
+    "reducedMotionUseSystem": "Брати з налаштувань пристрою",
+    "resetHeading": "ПРОГРЕС",
+    "resetHint": "Видалити це збереження й почати кар’єру з першого рангу.",
+    "resetStart": "Почати кар’єру заново",
+    "resetConfirmText": "Ви втратите ранг «{rank}», усі ресурси, навички й апгрейди. Скасувати це не можна.",
+    "resetConfirm": "Так, почати заново",
+    "resetCancel": "Скасувати"
   },
   "resources": {
     "capital": "Капітал",

@@ -20,7 +20,7 @@ import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/fo
 import { DevGlyph, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
-import { useSettingsStore } from '@features/settings';
+import { useMotionPreference } from '@shared/lib/motion';
 import { isSkillUnlocked, useSkillStore } from '@features/purchase-skill';
 
 type CatalogTab = SkillBranch | 'upgrades';
@@ -101,7 +101,7 @@ export function SkillsCatalog() {
   const capital = useCurrencyStore((state) => state.capital);
   const cognitive = useCurrencyStore((state) => state.cognitive);
   const influence = useCurrencyStore((state) => state.influence);
-  const reducedMotion = useSettingsStore((state) => state.reducedMotion);
+  const { reducedMotion } = useMotionPreference();
   const currentRank = useSkillStore((state) => state.currentRank);
   const buy = useSkillStore((state) => state.buy);
   const buyUpgrade = useSkillStore((state) => state.buyUpgrade);

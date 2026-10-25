@@ -83,7 +83,10 @@ export function resolveDuration(
   return kind === 'fade' ? Math.min(ms, durations.fast) : 0;
 }
 
-/** Combines the in-game setting with the OS accessibility flag: either one turns motion off. */
-export function isReducedMotion(gameSetting: boolean, osSetting: boolean): boolean {
-  return gameSetting || osSetting;
+/**
+ * Combines the player's in-game choice with the OS accessibility flag. `null` means the player never
+ * chose, so the OS setting applies; an explicit choice (on or off) always wins (T-006).
+ */
+export function isReducedMotion(gameChoice: boolean | null, osSetting: boolean): boolean {
+  return gameChoice ?? osSetting;
 }

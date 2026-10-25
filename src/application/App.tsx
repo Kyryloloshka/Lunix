@@ -7,11 +7,12 @@ import { GameScreen } from '@pages/game-screen';
 import { useSettingsStore } from '@features/settings';
 import { MotionPreferenceProvider } from '@shared/lib/motion';
 import { colors } from '@shared/theme';
+import { resetProgress } from './persistence/gamePersistence';
 import { useGamePersistence } from './persistence/useGamePersistence';
 
 export default function App() {
   const loadSettings = useSettingsStore((state) => state.load);
-  const reducedMotion = useSettingsStore((state) => state.reducedMotion);
+  const reducedMotionChoice = useSettingsStore((state) => state.reducedMotionChoice);
   const isGameLoaded = useGamePersistence();
 
   useEffect(() => {
@@ -21,9 +22,9 @@ export default function App() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
-        <MotionPreferenceProvider reducedMotion={reducedMotion}>
+        <MotionPreferenceProvider reducedMotion={reducedMotionChoice}>
           <StatusBar style="light" />
-          {isGameLoaded ? <GameScreen /> : <View style={{ flex: 1, backgroundColor: colors.bg.app }} />}
+          {isGameLoaded ? <GameScreen onResetProgress={resetProgress} /> : <View style={{ flex: 1, backgroundColor: colors.bg.app }} />}
         </MotionPreferenceProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
