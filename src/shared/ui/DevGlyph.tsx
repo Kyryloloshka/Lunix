@@ -26,7 +26,8 @@ export type GlyphName =
   | 'linkedin'
   | 'daily'
   | 'delegate'
-  | 'gear';
+  | 'gear'
+  | 'trend';
 
 interface DevGlyphProps {
   name: GlyphName;
@@ -34,7 +35,7 @@ interface DevGlyphProps {
   color?: string;
 }
 
-const glyphSymbols: Record<GlyphName, string> = {
+export const glyphSymbols: Readonly<Record<GlyphName, string>> = {
   terminal: '>_',
   'git-commit': '●',
   'git-branch': '⌥',
@@ -60,6 +61,7 @@ const glyphSymbols: Record<GlyphName, string> = {
   daily: 'SYNC',
   delegate: 'SUB',
   gear: '⚙',
+  trend: '↗',
 };
 
 export function DevGlyph({ name, size = 14, color = colors.text.primary }: DevGlyphProps) {

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   BRANCH_RESOURCE,
   SKILLS,
@@ -17,7 +17,7 @@ import { isResourceUnlocked } from '@entities/career-rank';
 import { useCurrencyStore } from '@entities/currency';
 import type { Decimal } from '@shared/lib/decimal';
 import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
-import { DevGlyph, type GlyphName } from '@shared/ui';
+import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, MIN_TOUCH_TARGET, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useSettingsStore } from '@features/settings';
@@ -175,8 +175,12 @@ export function SkillsCatalog() {
   return (
     <View style={styles.container}>
       <View style={styles.headingRow}>
-        <Text style={styles.heading}>{t('skills.heading')}</Text>
-        {headingRate ? <Text style={styles.rate}>{t('skills.rateLabel', { amount: headingRate })}</Text> : null}
+        <Text style={styles.heading} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>{t('skills.heading')}</Text>
+        {headingRate ? (
+          <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
+            {t('skills.rateLabel', { amount: headingRate })}
+          </Text>
+        ) : null}
       </View>
       {activeTab !== 'upgrades' ? (
         <View style={styles.purchaseModes}>
@@ -188,7 +192,10 @@ export function SkillsCatalog() {
               onPress={() => setPurchaseMode(mode)}
               style={[styles.modeButton, purchaseMode === mode && styles.modeButtonActive]}
             >
-              <Text style={[styles.modeText, purchaseMode === mode && styles.modeTextActive]}>
+              <Text
+                style={[styles.modeText, purchaseMode === mode && styles.modeTextActive]}
+                maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
+              >
                 {mode === 'max' ? 'MAX' : `x${mode}`}
               </Text>
             </Pressable>
@@ -204,13 +211,18 @@ export function SkillsCatalog() {
             onPress={() => setCategory(tab)}
             style={[styles.tab, activeTab === tab && styles.tabActive]}
           >
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+            <Text
+              style={[styles.tabText, activeTab === tab && styles.tabTextActive]}
+              numberOfLines={1}
+              maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
+            >
               {tab === 'upgrades' ? t('skills.upgradesTab') : t(`skills.branches.${tab}`)}
             </Text>
           </Pressable>
         ))}
       </View>
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+      {/* Plain list: the page ScrollView is the only vertical scroll on this tab (no nested scroll). */}
+      <View style={styles.listContent}>
         {activeTab === 'upgrades' ? (
           visibleUpgrades.map((upgrade) => {
             const isOwned = purchasedUpgrades.includes(upgrade.id);
@@ -255,7 +267,11 @@ export function SkillsCatalog() {
                       isOwned && styles.buyOwned,
                     ]}
                   >
-                    <Text style={[styles.buyText, isOwned && { color: colors.text.muted }]}>
+                    <Text
+                      style={[styles.buyText, isOwned && { color: colors.text.muted }]}
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
+                    >
                       {isOwned ? t('skills.purchased') : FORMAT[upgrade.costResource](upgrade.cost)}
                     </Text>
                     <Text style={styles.buyLabel}>{isOwned ? t('skills.active') : t('skills.buy')}</Text>
@@ -304,7 +320,9 @@ export function SkillsCatalog() {
                     onPress={() => handleBuy(skill.id)}
                     style={[styles.buyButton, !affordable && styles.buyDisabled]}
                   >
-                    <Text style={styles.buyText}>{isMaxed ? 'MAX' : FORMAT[skill.costResource](cost)}</Text>
+                    <Text style={styles.buyText} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
+                      {isMaxed ? 'MAX' : FORMAT[skill.costResource](cost)}
+                    </Text>
                     <Text style={styles.buyLabel}>{t('skills.buy')}</Text>
                   </Pressable>
                 </View>
@@ -312,17 +330,18 @@ export function SkillsCatalog() {
             );
           })
         )}
-      </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, marginTop: spacing.sm },
+  container: { marginTop: spacing.sm },
   headingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.sm,
   },
@@ -334,6 +353,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   rate: {
+    flexShrink: 1,
     color: colors.accent.phosphor,
     fontFamily: typography.mono,
     fontSize: typography.sizes.xs,
@@ -347,7 +367,7 @@ const styles = StyleSheet.create({
   },
   modeButton: {
     flex: 1,
-    minHeight: 24,
+    minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -379,8 +399,10 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 7,
+    minHeight: MIN_TOUCH_TARGET,
+    paddingHorizontal: 2,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: radii.sm,
   },
   tabActive: {
@@ -397,7 +419,6 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: colors.accent.phosphorBright,
   },
-  list: { flex: 1 },
   listContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl },
   cardWrapper: {
     position: 'relative',
@@ -464,6 +485,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accent.phosphorDim,
     minWidth: 68,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
     paddingVertical: 6,
     paddingHorizontal: 6,
     borderRadius: radii.sm,

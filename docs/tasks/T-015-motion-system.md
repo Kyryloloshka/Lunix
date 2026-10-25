@@ -4,7 +4,7 @@ title: Система анімацій: кожна важлива подія м�
 type: juice / design system
 priority: P1
 size: L
-status: todo
+status: in-progress
 epic: E9 (juice і фідбек)
 hook: juice, поступ, змінне підкріплення
 metric: тривалість сесії, D1, оцінка в сторі
@@ -65,3 +65,25 @@ needs-approval: no (Reanimated 4.7 уже в залежностях)
 ## Ризики і відкриті питання
 Перетинається з T-004 (дизайн-система), T-008, T-009, T-013. Етап 1 робити першим, решта задач
 використовує його примітиви.
+
+## Прогрес
+
+**2026-10-25 — етап 1 готовий** (гілка `task/T-015-stage1-motion`).
+- `shared/theme/motion.ts`: `durations` (instant 90 / fast 160 / base 240 / slow 400 / celebrate 1200),
+  `easings` (standard, emphasized, decelerate, accelerate — точки cubic-bezier, без імпорту Reanimated),
+  `springs` (press, pop), `PRESS_SCALE`, `SLIDE_DISTANCE`, чисті `resolveDuration(token, reduced, kind)`
+  (reduced: рух → 0 мс, fade → не довше `fast`) і `isReducedMotion(game, os)`.
+- `shared/lib/motion`: `MotionPreferenceProvider` + `useMotionPreference()`. Налаштування гри живе у
+  `features/settings`, тож `shared` його не імпортує: `App.tsx` читає `reducedMotion` зі стора і передає
+  у провайдер; провайдер тримає одну підписку на `AccessibilityInfo` (reduceMotionChanged).
+  Хелпери на Reanimated 4.7: `usePressScale`, `useCountUp` (кадри форматуються в Decimal на JS-потоці
+  при зміні значення, UI-потік лише перемикає індекс — без React-рендеру на кадр), `timingConfig`, `motionEasing`.
+- `shared/ui`: `CountUpText` (read-only `TextInput` з animatedProps `text`), `FadeSlideIn`.
+- Тести: `shared/theme/__tests__/motion.test.ts`, `shared/lib/motion/__tests__/countUpFrames.test.ts`
+  (0, від'ємні, > 1e308, некоректні кроки/прогрес).
+- ts:check, test (103/103), web export пройшли. Примітиви ще ніде не змонтовані, тож у застосунку їх не
+  перевіряли; `CountUpText` на нативному Android/iOS (оновлення `text` через animatedProps) не перевірено
+  на пристрої — перевірити на етапі 2 разом із HUD.
+
+Лишилось: етап 2 (пріоритетні моменти) і етап 3 (міграція наявних анімацій із `Animated` на Reanimated і
+токени). Віджети на етапі 1 не чіпали.
