@@ -309,6 +309,13 @@
     "you": "YOU",
     "playerName": "YOU ({label})",
     "playerRole": "Junior → CEO",
+    "playerDefaultName": "You",
+    "rivalEyebrow": "NEXT TARGET",
+    "rivalTarget": "Overtake {name}",
+    "rivalGap": "{gap} to go",
+    "rivalTop": "You lead the simulated board",
+    "rivalTopHint": "Keep earning: the simulated rivals keep growing too.",
+    "rivalA11y": "Next target: overtake {name}, {gap} to go, {percent}% of the way",
     "entries": {
       "vibe-ceo": {
         "name": "Vlad the Vibe Coder",

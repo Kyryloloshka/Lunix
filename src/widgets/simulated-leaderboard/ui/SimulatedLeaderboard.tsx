@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCurrencyStore } from '@entities/currency';
-import { Decimal } from '@shared/lib/decimal';
-import { Badge, DevGlyph, Panel, PanelHeader, type GlyphName } from '@shared/ui';
+import type { Decimal } from '@shared/lib/decimal';
+import { Badge, DevGlyph, FadeSlideIn, Panel, PanelHeader, ProgressBar, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { formatCurrency } from '@shared/lib/formatters';
 import { t, useLocale } from '@shared/i18n';
 import { NPC_LEADERS } from '../model/npcLeaders';
+import { buildStandings, selectRival } from '../model/standings';
 
 interface LeaderboardEntry {
   id: string;
@@ -14,33 +15,42 @@ interface LeaderboardEntry {
   role: string;
   capital: Decimal;
   icon: GlyphName;
-  isPlayer?: boolean;
+  place: number;
+  isPlayer: boolean;
 }
+
+const NPC_ICONS = new Map(NPC_LEADERS.map((npc) => [npc.id, npc.icon]));
+const PLAYER_ICON: GlyphName = 'trend';
 
 export function SimulatedLeaderboard() {
   const locale = useLocale();
   const totalCapitalEarned = useCurrencyStore((state) => state.totalCapitalEarned);
 
-  const leaderboard = useMemo(() => {
-    const npcEntries: LeaderboardEntry[] = NPC_LEADERS.map((entry) => ({
-      ...entry,
-      name: t(`leaderboard.entries.${entry.id}.name`),
-      role: t(`leaderboard.entries.${entry.id}.role`),
-    }));
-    const playerEntry: LeaderboardEntry = {
-      id: 'player',
-      name: t('leaderboard.playerName', { label: t('leaderboard.you') }),
-      role: t('leaderboard.playerRole'),
-      capital: totalCapitalEarned,
-      icon: 'bolt',
-      isPlayer: true,
-    };
-
-    const all = [...npcEntries, playerEntry];
-    return all.sort((a, b) => b.capital.compareTo(a.capital));
+  const { leaderboard, rival } = useMemo(() => {
+    const standings = buildStandings(NPC_LEADERS, totalCapitalEarned);
+    const entries: LeaderboardEntry[] = standings.map((standing) =>
+      standing.isPlayer
+        ? {
+            ...standing,
+            name: t('leaderboard.playerDefaultName'),
+            role: t('leaderboard.playerRole'),
+            icon: PLAYER_ICON,
+          }
+        : {
+            ...standing,
+            name: t(`leaderboard.entries.${standing.id}.name`),
+            role: t(`leaderboard.entries.${standing.id}.role`),
+            icon: NPC_ICONS.get(standing.id) ?? 'code',
+          },
+    );
+    return { leaderboard: entries, rival: selectRival(standings) };
+    // locale: names are re-translated when the language changes.
   }, [locale, totalCapitalEarned]);
 
-  const playerRankIndex = leaderboard.findIndex((item) => item.isPlayer) + 1;
+  const playerPlace = leaderboard.find((item) => item.isPlayer)?.place ?? leaderboard.length;
+  const rivalName = rival ? t(`leaderboard.entries.${rival.id}.name`) : '';
+  const rivalGap = rival ? formatCurrency(rival.gap) : '';
+  const rivalPercent = rival ? Math.floor(rival.progress * 100) : 100;
 
   return (
     <Panel tone="subtle" style={styles.container}>
@@ -48,20 +58,53 @@ export function SimulatedLeaderboard() {
         <PanelHeader
           eyebrow={t('leaderboard.heading')}
           title={t('leaderboard.subheading')}
-          trailing={<Badge tone="flow">{t('leaderboard.rankBadge', { rank: playerRankIndex })}</Badge>}
+          trailing={<Badge tone="flow">{t('leaderboard.rankBadge', { rank: playerPlace })}</Badge>}
         />
       </View>
 
       <Text style={styles.disclaimer}>{t('leaderboard.disclaimer')}</Text>
 
-      <View style={styles.list}>
-        {leaderboard.map((item, index) => {
-          const rankNum = index + 1;
-          const isTop3 = rankNum <= 3;
+      <FadeSlideIn key={rival?.id ?? 'top'} from="top" duration="fast">
+        <View
+          style={styles.rivalCard}
+          accessible
+          accessibilityRole="summary"
+          accessibilityLabel={
+            rival
+              ? t('leaderboard.rivalA11y', { name: rivalName, gap: rivalGap, percent: rivalPercent })
+              : `${t('leaderboard.rivalTop')}. ${t('leaderboard.rivalTopHint')}`
+          }
+        >
+          <Text style={styles.rivalEyebrow}>{t('leaderboard.rivalEyebrow')}</Text>
+          {rival ? (
+            <>
+              <View style={styles.rivalRow}>
+                <Text style={styles.rivalTarget} numberOfLines={2}>
+                  {t('leaderboard.rivalTarget', { name: rivalName })}
+                </Text>
+                <Text style={styles.rivalGap}>{t('leaderboard.rivalGap', { gap: rivalGap })}</Text>
+              </View>
+              <ProgressBar
+                value={rival.progress}
+                max={1}
+                color={colors.accent.phosphorBright}
+                style={styles.rivalBar}
+              />
+            </>
+          ) : (
+            <>
+              <Text style={styles.rivalTarget}>{t('leaderboard.rivalTop')}</Text>
+              <Text style={styles.role}>{t('leaderboard.rivalTopHint')}</Text>
+            </>
+          )}
+        </View>
+      </FadeSlideIn>
 
-          return (
+      <View style={styles.list}>
+        {leaderboard.map((item) => {
+          const isTop3 = item.place <= 3;
+          const row = (
             <View
-              key={item.id}
               style={[
                 styles.row,
                 item.isPlayer && styles.playerRow,
@@ -76,7 +119,7 @@ export function SimulatedLeaderboard() {
                     item.isPlayer && styles.playerRankNum,
                   ]}
                 >
-                  #{rankNum}
+                  #{item.place}
                 </Text>
               </View>
 
@@ -89,16 +132,7 @@ export function SimulatedLeaderboard() {
               </View>
 
               <View style={styles.infoCol}>
-                <View style={styles.nameRow}>
-                  <Text style={[styles.name, item.isPlayer && styles.playerName]}>
-                    {item.name}
-                  </Text>
-                  {item.isPlayer ? (
-                    <Badge tone="success" compact>
-                      {t('leaderboard.you')}
-                    </Badge>
-                  ) : null}
-                </View>
+                <Text style={[styles.name, item.isPlayer && styles.playerName]}>{item.name}</Text>
                 <Text style={styles.role}>{item.role}</Text>
               </View>
 
@@ -113,6 +147,15 @@ export function SimulatedLeaderboard() {
                 </Text>
               </View>
             </View>
+          );
+
+          // Re-mounting the player row on a new place plays the overtake animation (fade only under reduced motion).
+          return item.isPlayer ? (
+            <FadeSlideIn key={`player-${item.place}`} from="bottom">
+              {row}
+            </FadeSlideIn>
+          ) : (
+            <View key={item.id}>{row}</View>
           );
         })}
       </View>
@@ -133,6 +176,44 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xxs,
     color: colors.text.muted,
     marginBottom: spacing.md,
+  },
+  rivalCard: {
+    backgroundColor: colors.bg.inset,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: colors.accent.phosphorDim,
+    padding: spacing.sm,
+    marginBottom: spacing.md,
+    gap: 4,
+  },
+  rivalEyebrow: {
+    fontFamily: typography.mono,
+    fontSize: typography.sizes.xxs,
+    fontWeight: '800',
+    color: colors.text.muted,
+  },
+  rivalRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  rivalTarget: {
+    flexShrink: 1,
+    fontFamily: typography.mono,
+    fontSize: typography.sizes.xs,
+    fontWeight: '800',
+    color: colors.text.primary,
+  },
+  rivalGap: {
+    fontFamily: typography.mono,
+    fontSize: typography.sizes.xs,
+    fontWeight: '900',
+    color: colors.accent.phosphorBright,
+  },
+  rivalBar: {
+    marginTop: 2,
   },
   list: {
     gap: 4,
@@ -184,11 +265,6 @@ const styles = StyleSheet.create({
   infoCol: {
     flex: 1,
     minWidth: 0,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
   },
   name: {
     fontFamily: typography.mono,
