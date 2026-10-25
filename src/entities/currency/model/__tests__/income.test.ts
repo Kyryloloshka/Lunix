@@ -23,6 +23,22 @@ describe('income window (pure)', () => {
     expect(getIncomePerSec(window, 5000).capital.toNumber()).toBeCloseTo(10);
   });
 
+  it('stays exactly at the passive rate while idle even when tick timing jitters', () => {
+    // Regression: dividing by wall-clock span made an idle HUD wobble (24 vs 26 ticks in the window).
+    const ratePerSec = 7;
+    const deltas = [180, 250, 200, 230, 170, 260, 190, 210];
+    let window = EMPTY_INCOME_WINDOW;
+    let now = 0;
+    for (let i = 0; i < 200; i += 1) {
+      const delta = deltas[i % deltas.length];
+      now += delta;
+      window = recordIncome(window, now, { capital: Decimal.from((ratePerSec * delta) / 1000) }, delta);
+      if (now >= INCOME_WINDOW_MS) {
+        expect(getIncomePerSec(window, now).capital.toNumber()).toBeCloseTo(ratePerSec, 9);
+      }
+    }
+  });
+
   it('forgets samples older than the window', () => {
     let window = recordIncome(EMPTY_INCOME_WINDOW, 1000, { capital: Decimal.from(1000) }, 1000);
     for (const at of [2000, 3000, 4000, 5000, 1000 + INCOME_WINDOW_MS + 1]) {

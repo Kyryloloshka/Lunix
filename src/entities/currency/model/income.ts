@@ -13,6 +13,8 @@ export type ResourceAmounts = Record<TapResource, Decimal>;
 interface IncomeSample {
   at: number;
   earned: ResourceAmounts;
+  /** Time this sample stands for: a tick covers its delta, a tap covers none. */
+  coveredMs: number;
 }
 
 /** Runtime-only record of what the player really earned recently (taps, passive, Flow, stress). */
@@ -47,7 +49,8 @@ export function recordIncome(
   const startedAt = restart ? now - Math.max(0, coveredMs) : window.startedAt;
   const cutoff = now - INCOME_WINDOW_MS;
   const kept = base.filter((sample) => sample.at > cutoff);
-  return { samples: [...kept, { at: now, earned: { ...ZERO_AMOUNTS, ...earned } }], startedAt };
+  const covered = Number.isFinite(coveredMs) ? Math.max(0, coveredMs) : 0;
+  return { samples: [...kept, { at: now, earned: { ...ZERO_AMOUNTS, ...earned }, coveredMs: covered }], startedAt };
 }
 
 /** Pure: average earnings per second over the last window, per resource. */
@@ -56,13 +59,20 @@ export function getIncomePerSec(window: IncomeWindow, now: number): ResourceAmou
   if (last === undefined || !Number.isFinite(now) || now - last.at > INCOME_GAP_RESET_MS) return ZERO_AMOUNTS;
   const cutoff = now - INCOME_WINDOW_MS;
   const totals: ResourceAmounts = { ...ZERO_AMOUNTS };
+  let coveredMs = 0;
   for (const sample of window.samples) {
     if (sample.at <= cutoff) continue;
+    coveredMs += sample.coveredMs;
     totals.capital = totals.capital.add(sample.earned.capital);
     totals.cognitive = totals.cognitive.add(sample.earned.cognitive);
     totals.influence = totals.influence.add(sample.earned.influence);
   }
-  const spanSeconds = Math.min(INCOME_WINDOW_MS, Math.max(MIN_SPAN_MS, now - window.startedAt)) / 1000;
+  // Divide by the time the samples actually cover, not by wall-clock span: tick timers jitter, so a
+  // fixed window holds 24 or 26 ticks in turn and a wall-clock average wobbles even when idle.
+  // Earnings and covered time come from the same samples, so the ratio is exact; taps alone (no tick yet)
+  // fall back to the wall-clock span.
+  const spanMs = coveredMs > 0 ? coveredMs : Math.min(INCOME_WINDOW_MS, now - window.startedAt);
+  const spanSeconds = Math.max(MIN_SPAN_MS, spanMs) / 1000;
   return {
     capital: totals.capital.multiplyScalar(1 / spanSeconds),
     cognitive: totals.cognitive.multiplyScalar(1 / spanSeconds),
