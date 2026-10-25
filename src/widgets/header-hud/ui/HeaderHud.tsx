@@ -7,7 +7,7 @@ import {
   useCurrencyStore,
 } from '@entities/currency';
 import { FlowCooldownMeter, ResilienceTag } from './RhythmIndicators';
-import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
+import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
 import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph } from '@shared/ui';
 import { colors, getRankTheme, radii, resources, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
@@ -97,8 +97,8 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
               {t('resources.cognitive').toUpperCase()}
             </Text>
           </View>
-          <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{formatCognitive(cognitive)}</Text>
-          {rates.cognitivePerSec.gt(0) ? <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{t('status.ratePerSec', { amount: formatCognitive(rates.cognitivePerSec) })}</Text> : null}
+          <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{formatDecimal(cognitive)}</Text>
+          {rates.cognitivePerSec.gt(0) ? <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{t('status.ratePerSec', { amount: formatDecimal(rates.cognitivePerSec) })}</Text> : null}
         </View>
 
         <View style={styles.statBox}>
@@ -108,8 +108,8 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
               {t('resources.influence').toUpperCase()}
             </Text>
           </View>
-          <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{formatInfluence(influence)}</Text>
-          {rates.influencePerSec.gt(0) ? <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{t('status.ratePerSec', { amount: formatInfluence(rates.influencePerSec) })}</Text> : null}
+          <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{formatDecimal(influence)}</Text>
+          {rates.influencePerSec.gt(0) ? <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>{t('status.ratePerSec', { amount: formatDecimal(rates.influencePerSec) })}</Text> : null}
         </View>
       </View>
 

@@ -19,11 +19,12 @@ import {
   Panel,
   PanelHeader,
   ProgressBar,
+  ResourceValue,
   type GlyphName,
 } from '@shared/ui';
 import { colors, radii, resources, spacing, typography } from '@shared/theme';
 import type { Decimal } from '@shared/lib/decimal';
-import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
+import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
 import { t, useLocale } from '@shared/i18n';
 import { useSkillStore } from '@features/purchase-skill';
 import { PromotionCelebration } from './PromotionCelebration';
@@ -48,9 +49,9 @@ const RANK_GLYPHS: Record<number, GlyphName> = {
 };
 
 const FORMAT: Record<RankResource, (value: Decimal) => string> = {
-  cognitive: formatCognitive,
-  capital: formatCurrency,
-  influence: formatInfluence,
+  cognitive: (value) => formatDecimal(value),
+  capital: (value) => formatCurrency(value),
+  influence: (value) => formatDecimal(value),
 };
 
 const NODE_SIZE = 36;
@@ -155,7 +156,13 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
                     {item.met ? '✓ ' : ''}
                     {requirementLabel(item)}
                   </Text>
-                  <Text style={styles.reqValue}>{requirementValue(item)}</Text>
+                  {item.requirement.type === 'skillLevel' ? (
+                    <Text style={styles.reqValue}>{requirementValue(item)}</Text>
+                  ) : (
+                    <ResourceValue kind={item.requirement.resource} style={styles.reqValue}>
+                      {requirementValue(item)}
+                    </ResourceValue>
+                  )}
                 </View>
                 <ProgressBar
                   value={Math.round(getRequirementRatio(item) * 100)}

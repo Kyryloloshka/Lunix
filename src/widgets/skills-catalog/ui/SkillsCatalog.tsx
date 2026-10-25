@@ -16,8 +16,8 @@ import {
 import { isResourceUnlocked } from '@entities/career-rank';
 import { useCurrencyStore } from '@entities/currency';
 import type { Decimal } from '@shared/lib/decimal';
-import { formatCognitive, formatCurrency, formatInfluence } from '@shared/lib/formatters';
-import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, MIN_TOUCH_TARGET, type GlyphName } from '@shared/ui';
+import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
+import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, MIN_TOUCH_TARGET, ResourceValue, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useMotionPreference } from '@shared/lib/motion';
@@ -28,9 +28,9 @@ type CatalogTab = SkillBranch | 'upgrades';
 const BRANCH_TABS: SkillBranch[] = ['knowledge', 'work', 'influence'];
 
 const FORMAT: Record<SkillResource, (value: Decimal) => string> = {
-  cognitive: formatCognitive,
-  capital: formatCurrency,
-  influence: formatInfluence,
+  cognitive: (value) => formatDecimal(value),
+  capital: (value) => formatCurrency(value),
+  influence: (value) => formatDecimal(value),
 };
 
 const BRANCH_GLYPHS: Record<SkillBranch, GlyphName> = {
@@ -178,7 +178,11 @@ export function SkillsCatalog() {
         <Text style={styles.heading} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>{t('skills.heading')}</Text>
         {headingRate ? (
           <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
-            {t('skills.rateLabel', { amount: headingRate })}
+            {activeTab !== 'upgrades' ? (
+              <ResourceValue kind={BRANCH_RESOURCE[activeTab]}>
+                {t('skills.rateLabel', { amount: headingRate })}
+              </ResourceValue>
+            ) : null}
           </Text>
         ) : null}
       </View>
@@ -272,7 +276,11 @@ export function SkillsCatalog() {
                       numberOfLines={1}
                       maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
                     >
-                      {isOwned ? t('skills.purchased') : FORMAT[upgrade.costResource](upgrade.cost)}
+                      {isOwned ? t('skills.purchased') : (
+                        <ResourceValue kind={upgrade.costResource}>
+                          {FORMAT[upgrade.costResource](upgrade.cost)}
+                        </ResourceValue>
+                      )}
                     </Text>
                     <Text style={styles.buyLabel}>{isOwned ? t('skills.active') : t('skills.buy')}</Text>
                   </Pressable>
@@ -310,7 +318,11 @@ export function SkillsCatalog() {
                     <Text style={styles.description} numberOfLines={1}>
                       {unlocked ? t(`skills.items.${skill.id}.desc`) : requirementText(skill)}
                     </Text>
-                    <Text style={styles.bonus}>{skillEffectText(skill, effectiveGain)}</Text>
+                    <Text style={styles.bonus}>
+                      {skill.kind === 'producer' ? (
+                        <ResourceValue kind={skill.produces}>{skillEffectText(skill, effectiveGain)}</ResourceValue>
+                      ) : skillEffectText(skill, effectiveGain)}
+                    </Text>
                   </View>
                   <Pressable
                     accessibilityRole="button"
@@ -321,7 +333,9 @@ export function SkillsCatalog() {
                     style={[styles.buyButton, !affordable && styles.buyDisabled]}
                   >
                     <Text style={styles.buyText} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
-                      {isMaxed ? 'MAX' : FORMAT[skill.costResource](cost)}
+                      {isMaxed ? 'MAX' : (
+                        <ResourceValue kind={skill.costResource}>{FORMAT[skill.costResource](cost)}</ResourceValue>
+                      )}
                     </Text>
                     <Text style={styles.buyLabel}>{t('skills.buy')}</Text>
                   </Pressable>
