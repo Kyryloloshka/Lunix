@@ -2,10 +2,11 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCurrencyStore } from '@entities/currency';
 import { Decimal } from '@shared/lib/decimal';
-import { Badge, DevGlyph, Panel, type GlyphName } from '@shared/ui';
+import { Badge, DevGlyph, Panel, PanelHeader, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { formatCurrency } from '@shared/lib/formatters';
 import { t, useLocale } from '@shared/i18n';
+import { NPC_LEADERS } from '../model/npcLeaders';
 
 interface LeaderboardEntry {
   id: string;
@@ -15,18 +16,6 @@ interface LeaderboardEntry {
   icon: GlyphName;
   isPlayer?: boolean;
 }
-
-const NPC_LEADERS: Omit<LeaderboardEntry, 'name' | 'role' | 'isPlayer'>[] = [
-  { id: 'sundar', capital: Decimal.from(1e11), icon: 'rank' },
-  { id: 'satya', capital: Decimal.from(8.5e10), icon: 'server' },
-  { id: 'musk', capital: Decimal.from(7e10), icon: 'bolt' },
-  { id: 'alex-arch', capital: Decimal.from(1.5e7), icon: 'system-design' },
-  { id: 'dima-lead', capital: Decimal.from(450000), icon: 'git-branch' },
-  { id: 'katya-senior', capital: Decimal.from(180000), icon: 'cpu' },
-  { id: 'vasya-middle', capital: Decimal.from(65000), icon: 'coffee' },
-  { id: 'petya-jun', capital: Decimal.from(12000), icon: 'code' },
-  { id: 'olex-trainee', capital: Decimal.from(2000), icon: 'terminal' },
-];
 
 export function SimulatedLeaderboard() {
   const locale = useLocale();
@@ -56,13 +45,11 @@ export function SimulatedLeaderboard() {
   return (
     <Panel tone="subtle" style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.eyebrow}>{t('leaderboard.heading')}</Text>
-          <Text style={styles.title}>{t('leaderboard.subheading')}</Text>
-        </View>
-        <Badge tone="flow">
-          {t('leaderboard.rankBadge', { rank: playerRankIndex })}
-        </Badge>
+        <PanelHeader
+          eyebrow={t('leaderboard.heading')}
+          title={t('leaderboard.subheading')}
+          trailing={<Badge tone="flow">{t('leaderboard.rankBadge', { rank: playerRankIndex })}</Badge>}
+        />
       </View>
 
       <Text style={styles.disclaimer}>{t('leaderboard.disclaimer')}</Text>
@@ -140,23 +127,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.surface,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 4,
-  },
-  eyebrow: {
-    fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
-    fontWeight: '900',
-    color: colors.text.muted,
-    letterSpacing: 1.2,
-  },
-  title: {
-    fontSize: typography.sizes.md,
-    fontWeight: '900',
-    color: colors.text.primary,
-    marginTop: 2,
   },
   disclaimer: {
     fontSize: typography.sizes.xxs,

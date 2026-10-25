@@ -5,7 +5,18 @@ import { parseGame, serializeGame } from './saveSnapshot';
 
 const STORAGE_KEY = '@lunix_game_v1';
 
-export async function saveGame(now = Date.now()): Promise<void> {
+// Every write goes through one queue, so a slow autosave that already serialized the old progress
+// can never land after a reset (or any newer save) and bring that progress back.
+let writeQueue: Promise<void> = Promise.resolve();
+
+function enqueueWrite(task: () => Promise<void>): Promise<void> {
+  const run = writeQueue.then(task, task);
+  writeQueue = run.catch(() => undefined);
+  return run;
+}
+
+/** Serializes the stores at the moment the write runs, not when it was requested. */
+async function writeSnapshot(now: number): Promise<void> {
   const currency = useCurrencyStore.getState();
   const skills = useSkillStore.getState();
   try {
@@ -14,6 +25,23 @@ export async function saveGame(now = Date.now()): Promise<void> {
   } catch {
     // Storage can be full or unavailable; keep playing and retry on the next autosave.
   }
+}
+
+export function saveGame(now = Date.now()): Promise<void> {
+  return enqueueWrite(() => writeSnapshot(now));
+}
+
+/**
+ * Starts the career over: resets every game store and immediately stores the fresh state as the save.
+ * Runs in the write queue after any save already in flight, so autosave can't restore old progress.
+ */
+export function resetProgress(now = Date.now()): Promise<void> {
+  return enqueueWrite(async () => {
+    useCurrencyStore.getState().reset();
+    // Resetting skills also recomputes rates from the empty skill set.
+    useSkillStore.getState().reset();
+    await writeSnapshot(now);
+  });
 }
 
 /** Restore the save and grant offline earnings once. Returns null when there was nothing to claim. */

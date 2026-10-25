@@ -11,10 +11,16 @@ import { SimulatedLeaderboard } from '@widgets/simulated-leaderboard';
 import { BottomDock, type ActiveTab } from '@widgets/bottom-dock';
 import { useSkillStore } from '@features/purchase-skill';
 import { SettingsPanel } from '@widgets/settings';
+import { CONTENT_MAX_WIDTH, TEXT_MAX_FONT_SCALE } from '@shared/ui';
 import { colors, getRankTheme, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 
-export function GameScreen() {
+interface GameScreenProps {
+  /** Wired by the app layer, which owns save/load. */
+  onResetProgress: () => Promise<void>;
+}
+
+export function GameScreen({ onResetProgress }: GameScreenProps) {
   useGameLoop();
   useLocale();
   const [activeTab, setActiveTab] = useState<ActiveTab>('work');
@@ -22,6 +28,20 @@ export function GameScreen() {
   const storedRank = useSkillStore((state) => state.currentRank);
   const rank = CAREER_RANKS[Math.min(storedRank, CAREER_RANKS.length - 1)];
   const rankTheme = getRankTheme(rank.id);
+
+  const hero = (
+    <View style={styles.hero}>
+      <Text
+        style={[styles.kicker, { color: rankTheme.accentBright }]}
+        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+      >
+        {t('app.session')} // {t(`career.ranks.${rank.id}.title`).toUpperCase()}
+      </Text>
+      <Text style={styles.statusBadge} maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}>
+        {t(`career.ranks.${rank.id}.desc`)}
+      </Text>
+    </View>
+  );
 
   const renderTab = () => {
     switch (activeTab) {
@@ -32,10 +52,10 @@ export function GameScreen() {
       case 'leaders':
         return <SimulatedLeaderboard />;
       case 'settings':
-        return <SettingsPanel />;
+        return <SettingsPanel onResetProgress={onResetProgress} />;
       case 'work':
       default:
-        return <WorkspaceClicker />;
+        return null;
     }
   };
 
@@ -44,20 +64,27 @@ export function GameScreen() {
       style={[styles.screen, { backgroundColor: rankTheme.appBackground }]}
       edges={['top', 'bottom']}
     >
-      <HeaderHud rankTitle={t(`career.ranks.${rank.id}.title`)} rankIndex={rank.id} />
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.hero}>
-          <Text style={[styles.kicker, { color: rankTheme.accentBright }]}>
-            {t('app.session')} // {t(`career.ranks.${rank.id}.title`).toUpperCase()}
-          </Text>
-          <Text style={styles.statusBadge}>{t(`career.ranks.${rank.id}.desc`)}</Text>
-        </View>
-        {renderTab()}
-      </ScrollView>
-      <BottomDock activeTab={activeTab} onChangeTab={setActiveTab} />
+      {/* One centered column for HUD, tab content and dock; the tab content is the only vertical scroll. */}
+      <View style={styles.column}>
+        <HeaderHud rankTitle={t(`career.ranks.${rank.id}.title`)} rankIndex={rank.id} />
+        {activeTab === 'work' ? (
+          // Console (T-012): no scroll competing with taps; the whole area between HUD and dock is the tap
+          // zone. Future buttons on top of it (next goal, tap mode) go into `overlay` so they never pay out.
+          <View style={styles.consoleTab}>
+            <WorkspaceClicker header={hero} />
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            {hero}
+            {renderTab()}
+          </ScrollView>
+        )}
+        <BottomDock activeTab={activeTab} onChangeTab={setActiveTab} />
+      </View>
     </SafeAreaView>
   );
 }
@@ -66,6 +93,18 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.bg.app,
+  },
+  column: {
+    flex: 1,
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
+  },
+  scroll: {
+    flex: 1,
+  },
+  consoleTab: {
+    flex: 1,
   },
   content: {
     flexGrow: 1,
@@ -82,6 +121,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xxs,
     fontWeight: '900',
     letterSpacing: 1.2,
+    textAlign: 'center',
   },
   statusBadge: {
     color: colors.text.secondary,

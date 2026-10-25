@@ -4,7 +4,7 @@ title: "Екран кар'єри: драбина вгору, приховане 
 type: ux
 priority: P2
 size: M
-status: todo
+status: in-progress
 epic: E9 (анімація промоушну), E10 (кар'єра)
 hook: ефект поступу, juice, цікавість
 metric: % гравців, що досягли Junior за 15 хв; сесії/день
@@ -64,3 +64,27 @@ needs-approval: no
 
 ## Де в коді
 `widgets/career-roadmap`, `pages/game-screen`, `widgets/workspace-clicker`, `features/purchase-skill` (подія промоушну).
+
+## Прогрес
+- 2026-10-25 (гілка `task/T-008-career-screen`):
+  - Модель `entities/career-rank/model/ladder.ts`: `getVisibleLadder` (знизу вгору: пройдені → поточний →
+    наступний → один силует «???»; фінал відкривається лише коли стає наступним), `getRankVisibility`
+    (`visible | next | hidden`), `getRequirementRatio` / `getRequirementShortfall` (через Decimal, скінченні
+    після 1e308), `getFirstUnmetRequirement`, `getNewlyUnlockedResources`. Тести: `__tests__/ladder.test.ts`.
+  - `CareerRoadmap`: драбина вгору (силует і наступна ціль зверху, тож екран відкривається на
+    поточному/наступному без програмного скролу), без червоного «ЗАБЛОКОВАНО», без бейджа `N / total`;
+    наступний ранг — бурштиновий «НАСТУПНА ЦІЛЬ»; прогрес-бар на кожну умову, включно з Influence;
+    кнопка підвищення видима завжди, disabled + текст причини («Бракує X …») + `accessibilityLabel`/`State`.
+    Нововідкритий ранг і силует з'являються через `FadeSlideIn` (T-015).
+  - `PromotionCelebration`: повноекранна картка (Modal) з новим титулом, відкритими ресурсами і новою
+    ціллю; pop через `springs.pop`, автозакриття ~1.8 с, хаптика heavy (якщо увімкнена). Reduced motion —
+    статична картка без автозакриття.
+  - HUD: прибрано префікс «[N]» перед назвою рангу.
+  - Ключі локалей лише додані (uk/en/es); `career.progressBadge`/`career.locked` більше не вживаються.
+- Відкладено (поза скоупом цієї гілки):
+  - п. 4 — герой-блок і дубль «СЕСІЯ / КАР'ЄРА_001» живуть у `pages/game-screen` і `workspace-clicker`
+    (зона T-012); прибрати там.
+  - Подія `rank_up` з моделі (PRD §7 events[]) — потребує зміни `skillStore`/рушія; зараз свято
+    запускається з UI після успішного `promote()`.
+  - Звук свята — після T-006 b.
+  - Мова назв рангів — вирішує T-005.

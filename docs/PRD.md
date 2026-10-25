@@ -37,7 +37,9 @@ Egg Inc і Evolution-подібних мерджів.
 ## 2. Поточний стан проєкту
 
 Стек: Expo SDK 58, React Native 0.88, React 19.3, TypeScript 6, Zustand 5, Reanimated 4.7,
-react-native-svg, expo-haptics, expo-av, AsyncStorage, Jest 30. Архітектура — Feature-Sliced Design.
+react-native-svg, expo-haptics, AsyncStorage, Jest 30. Архітектура — Feature-Sliced Design.
+Звуку в грі поки немає: аудіо-залежності (`expo-av`/`expo-audio`) не встановлено, перемикач звуку
+прибрано з налаштувань (T-006). Звуковий пак E9 потребує окремого погодження нової залежності.
 
 | Область | Що є | Стан |
 | --- | --- | --- |

@@ -25,7 +25,17 @@
     "language": "Мова",
     "notation": "Формат чисел",
     "compact": "КОРОТКИЙ",
-    "scientific": "НАУКОВИЙ"
+    "scientific": "НАУКОВИЙ",
+    "on": "УВІМК",
+    "off": "ВИМК",
+    "reducedMotionSystem": "Як у налаштуваннях пристрою",
+    "reducedMotionUseSystem": "Брати з налаштувань пристрою",
+    "resetHeading": "ПРОГРЕС",
+    "resetHint": "Видалити це збереження й почати кар’єру з першого рангу.",
+    "resetStart": "Почати кар’єру заново",
+    "resetConfirmText": "Ви втратите ранг «{rank}», усі ресурси, навички й апгрейди. Скасувати це не можна.",
+    "resetConfirm": "Так, почати заново",
+    "resetCancel": "Скасувати"
   },
   "resources": {
     "capital": "Капітал",
@@ -40,7 +50,10 @@
     "ratePerSec": "+{amount}/с",
     "throttling": "РИЗИК ПЕРЕВАНТАЖЕННЯ",
     "output": "ВИХІД",
-    "optimal": "ОПТИМАЛЬНО"
+    "optimal": "ОПТИМАЛЬНО",
+    "cooldown": "Перезарядка Flow · {seconds}с",
+    "resilience": "Стійкість −{percent}%",
+    "resilienceA11y": "Стійкість: тапи дають на {percent}% менше навантаження"
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",
@@ -64,7 +77,7 @@
     "reqLevel": "Потрібен {skill} Рів. {level}",
     "items": {
       "html-tags": {
-        "name": "HTML-теги з ютубу",
+        "name": "HTML-теги з TubeTube",
         "desc": "Перший <div> і багато <br>"
       },
       "css-centering": {
@@ -226,7 +239,7 @@
     "ranks": {
       "0": {
         "title": "Першокурсник",
-        "desc": "Ноутбук, Stack Overflow і велика мрія"
+        "desc": "Ноутбук, Stack Overflaw і велика мрія"
       },
       "1": {
         "title": "Студент-самоучка",
@@ -265,13 +278,28 @@
         "desc": "Технічне бачення продукту для мільйонів"
       },
       "10": {
-        "title": "CEO Google",
+        "title": "CEO Gooble",
         "desc": "Керування глобальною технологічною компанією"
       }
     },
     "reqEarned": "Зароблено ({resource}):",
     "reqSpend": "Витратити ({resource}):",
-    "reqSkill": "{skill}, рівень:"
+    "reqSkill": "{skill}, рівень:",
+    "nextGoal": "НАСТУПНА ЦІЛЬ",
+    "silhouetteTitle": "???",
+    "silhouetteDesc": "Вище на тебе ще щось чекає",
+    "silhouetteA11y": "Прихований ранг. Відкриється після наступного підвищення.",
+    "missingResource": "Бракує {amount} {resource}",
+    "missingSkill": "Потрібно {skill} рівня {level}",
+    "readyToPromote": "Усі умови виконано",
+    "promoteA11y": "Пройти підвищення до рангу {rank}",
+    "promoteBlockedA11y": "Підвищення до рангу {rank} недоступне. {reason}",
+    "celebrateEyebrow": "ПІДВИЩЕННЯ",
+    "celebrateTitle": "Тепер ти {rank}",
+    "celebrateUnlocked": "Відкрито: {resource}",
+    "celebrateNextGoal": "Нова ціль: {rank}",
+    "celebrateContinue": "ДАЛІ",
+    "celebrateA11y": "Підвищення. Тепер ти {rank}. Торкнись, щоб продовжити."
   },
   "leaderboard": {
     "heading": "РЕЙТИНГ РОЗРОБНИКІВ",
@@ -282,21 +310,21 @@
     "playerName": "ВИ ({label})",
     "playerRole": "Junior → CEO",
     "entries": {
-      "sundar": {
-        "name": "Сундар Пічаї",
-        "role": "CEO Google"
+      "vibe-ceo": {
+        "name": "Влад Вайбкодер",
+        "role": "CEO Gooble"
       },
-      "satya": {
-        "name": "Сатья Наделла",
-        "role": "CEO Microsoft"
+      "monolith-ceo": {
+        "name": "Марта Моноліт",
+        "role": "CEO Macrosoft"
       },
-      "musk": {
-        "name": "Ілон Маск",
+      "meme-ceo": {
+        "name": "Макс Ракетпост",
         "role": "Головний мем-директор"
       },
       "alex-arch": {
         "name": "Саня Архітектор",
-        "role": "Колишній FAANG Principal"
+        "role": "Колишній MAANGO Principal"
       },
       "dima-lead": {
         "name": "Дмитро Тімлід",

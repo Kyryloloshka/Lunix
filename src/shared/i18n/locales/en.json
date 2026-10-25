@@ -25,7 +25,17 @@
     "language": "Language",
     "notation": "Number format",
     "compact": "COMPACT",
-    "scientific": "SCIENTIFIC"
+    "scientific": "SCIENTIFIC",
+    "on": "ON",
+    "off": "OFF",
+    "reducedMotionSystem": "Follows your device setting",
+    "reducedMotionUseSystem": "Use device setting",
+    "resetHeading": "PROGRESS",
+    "resetHint": "Delete this save and start the career from the first rank.",
+    "resetStart": "Start career over",
+    "resetConfirmText": "You will lose the rank \"{rank}\", all resources, skills and upgrades. This cannot be undone.",
+    "resetConfirm": "Yes, start over",
+    "resetCancel": "Cancel"
   },
   "resources": {
     "capital": "Capital",
@@ -40,7 +50,10 @@
     "ratePerSec": "+{amount}/s",
     "throttling": "THROTTLING RISK",
     "output": "OUTPUT",
-    "optimal": "OPTIMAL"
+    "optimal": "OPTIMAL",
+    "cooldown": "Flow recharge · {seconds}s",
+    "resilience": "Resilience −{percent}%",
+    "resilienceA11y": "Resilience: taps cause {percent}% less workload"
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",
@@ -64,7 +77,7 @@
     "reqLevel": "Requires {skill} Lvl {level}",
     "items": {
       "html-tags": {
-        "name": "HTML Tags from YouTube",
+        "name": "HTML Tags from TubeTube",
         "desc": "Your first <div> and a lot of <br>"
       },
       "css-centering": {
@@ -226,7 +239,7 @@
     "ranks": {
       "0": {
         "title": "First-Year Student",
-        "desc": "A laptop, Stack Overflow and a big dream"
+        "desc": "A laptop, Stack Overflaw and a big dream"
       },
       "1": {
         "title": "Self-Taught Student",
@@ -265,13 +278,28 @@
         "desc": "Technical vision for a product serving millions"
       },
       "10": {
-        "title": "Google CEO",
+        "title": "Gooble CEO",
         "desc": "Leading a global technology company"
       }
     },
     "reqEarned": "Earned ({resource}):",
     "reqSpend": "Spend ({resource}):",
-    "reqSkill": "{skill}, level:"
+    "reqSkill": "{skill}, level:",
+    "nextGoal": "NEXT GOAL",
+    "silhouetteTitle": "???",
+    "silhouetteDesc": "Something is waiting further up",
+    "silhouetteA11y": "Hidden rank. It reveals itself after the next promotion.",
+    "missingResource": "Need {amount} more {resource}",
+    "missingSkill": "Need {skill} at level {level}",
+    "readyToPromote": "All requirements met",
+    "promoteA11y": "Claim promotion to {rank}",
+    "promoteBlockedA11y": "Promotion to {rank} unavailable. {reason}",
+    "celebrateEyebrow": "PROMOTION",
+    "celebrateTitle": "You are now {rank}",
+    "celebrateUnlocked": "Unlocked: {resource}",
+    "celebrateNextGoal": "New goal: {rank}",
+    "celebrateContinue": "CONTINUE",
+    "celebrateA11y": "Promotion. You are now {rank}. Tap to continue."
   },
   "leaderboard": {
     "heading": "DEVELOPER LEADERBOARD",
@@ -282,21 +310,21 @@
     "playerName": "YOU ({label})",
     "playerRole": "Junior → CEO",
     "entries": {
-      "sundar": {
-        "name": "Sundar Pichai",
-        "role": "Google CEO"
+      "vibe-ceo": {
+        "name": "Vlad the Vibe Coder",
+        "role": "Gooble CEO"
       },
-      "satya": {
-        "name": "Satya Nadella",
-        "role": "Microsoft CEO"
+      "monolith-ceo": {
+        "name": "Marta the Monolith",
+        "role": "Macrosoft CEO"
       },
-      "musk": {
-        "name": "Elon Musk",
+      "meme-ceo": {
+        "name": "Max Rocketpost",
         "role": "Chief Meme Officer"
       },
       "alex-arch": {
         "name": "Alex the Architect",
-        "role": "Former FAANG Principal"
+        "role": "Former MAANGO Principal"
       },
       "dima-lead": {
         "name": "Dima the Lead",

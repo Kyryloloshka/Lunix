@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   BRANCH_RESOURCE,
   SKILLS,
@@ -17,10 +17,10 @@ import { isResourceUnlocked } from '@entities/career-rank';
 import { useCurrencyStore } from '@entities/currency';
 import type { Decimal } from '@shared/lib/decimal';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
-import { DevGlyph, ResourceValue, type GlyphName } from '@shared/ui';
+import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, MIN_TOUCH_TARGET, ResourceValue, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
-import { useSettingsStore } from '@features/settings';
+import { useMotionPreference } from '@shared/lib/motion';
 import { isSkillUnlocked, useSkillStore } from '@features/purchase-skill';
 
 type CatalogTab = SkillBranch | 'upgrades';
@@ -101,7 +101,7 @@ export function SkillsCatalog() {
   const capital = useCurrencyStore((state) => state.capital);
   const cognitive = useCurrencyStore((state) => state.cognitive);
   const influence = useCurrencyStore((state) => state.influence);
-  const reducedMotion = useSettingsStore((state) => state.reducedMotion);
+  const { reducedMotion } = useMotionPreference();
   const currentRank = useSkillStore((state) => state.currentRank);
   const buy = useSkillStore((state) => state.buy);
   const buyUpgrade = useSkillStore((state) => state.buyUpgrade);
@@ -175,11 +175,15 @@ export function SkillsCatalog() {
   return (
     <View style={styles.container}>
       <View style={styles.headingRow}>
-        <Text style={styles.heading}>{t('skills.heading')}</Text>
-        {headingRate && activeTab !== 'upgrades' ? (
-          <ResourceValue kind={BRANCH_RESOURCE[activeTab]} style={styles.rate}>
-            {t('skills.rateLabel', { amount: headingRate })}
-          </ResourceValue>
+        <Text style={styles.heading} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>{t('skills.heading')}</Text>
+        {headingRate ? (
+          <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
+            {activeTab !== 'upgrades' ? (
+              <ResourceValue kind={BRANCH_RESOURCE[activeTab]}>
+                {t('skills.rateLabel', { amount: headingRate })}
+              </ResourceValue>
+            ) : null}
+          </Text>
         ) : null}
       </View>
       {activeTab !== 'upgrades' ? (
@@ -192,7 +196,10 @@ export function SkillsCatalog() {
               onPress={() => setPurchaseMode(mode)}
               style={[styles.modeButton, purchaseMode === mode && styles.modeButtonActive]}
             >
-              <Text style={[styles.modeText, purchaseMode === mode && styles.modeTextActive]}>
+              <Text
+                style={[styles.modeText, purchaseMode === mode && styles.modeTextActive]}
+                maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
+              >
                 {mode === 'max' ? 'MAX' : `x${mode}`}
               </Text>
             </Pressable>
@@ -208,13 +215,18 @@ export function SkillsCatalog() {
             onPress={() => setCategory(tab)}
             style={[styles.tab, activeTab === tab && styles.tabActive]}
           >
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+            <Text
+              style={[styles.tabText, activeTab === tab && styles.tabTextActive]}
+              numberOfLines={1}
+              maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
+            >
               {tab === 'upgrades' ? t('skills.upgradesTab') : t(`skills.branches.${tab}`)}
             </Text>
           </Pressable>
         ))}
       </View>
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+      {/* Plain list: the page ScrollView is the only vertical scroll on this tab (no nested scroll). */}
+      <View style={styles.listContent}>
         {activeTab === 'upgrades' ? (
           visibleUpgrades.map((upgrade) => {
             const isOwned = purchasedUpgrades.includes(upgrade.id);
@@ -259,13 +271,17 @@ export function SkillsCatalog() {
                       isOwned && styles.buyOwned,
                     ]}
                   >
-                    {isOwned ? (
-                      <Text style={[styles.buyText, { color: colors.text.muted }]}>{t('skills.purchased')}</Text>
-                    ) : (
-                      <ResourceValue kind={upgrade.costResource} style={styles.buyText}>
-                        {FORMAT[upgrade.costResource](upgrade.cost)}
-                      </ResourceValue>
-                    )}
+                    <Text
+                      style={[styles.buyText, isOwned && { color: colors.text.muted }]}
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
+                    >
+                      {isOwned ? t('skills.purchased') : (
+                        <ResourceValue kind={upgrade.costResource}>
+                          {FORMAT[upgrade.costResource](upgrade.cost)}
+                        </ResourceValue>
+                      )}
+                    </Text>
                     <Text style={styles.buyLabel}>{isOwned ? t('skills.active') : t('skills.buy')}</Text>
                   </Pressable>
                 </View>
@@ -302,13 +318,11 @@ export function SkillsCatalog() {
                     <Text style={styles.description} numberOfLines={1}>
                       {unlocked ? t(`skills.items.${skill.id}.desc`) : requirementText(skill)}
                     </Text>
-                    {skill.kind === 'producer' ? (
-                      <ResourceValue kind={skill.produces} style={styles.bonus}>
-                        {skillEffectText(skill, effectiveGain)}
-                      </ResourceValue>
-                    ) : (
-                      <Text style={styles.bonus}>{skillEffectText(skill, effectiveGain)}</Text>
-                    )}
+                    <Text style={styles.bonus}>
+                      {skill.kind === 'producer' ? (
+                        <ResourceValue kind={skill.produces}>{skillEffectText(skill, effectiveGain)}</ResourceValue>
+                      ) : skillEffectText(skill, effectiveGain)}
+                    </Text>
                   </View>
                   <Pressable
                     accessibilityRole="button"
@@ -318,13 +332,11 @@ export function SkillsCatalog() {
                     onPress={() => handleBuy(skill.id)}
                     style={[styles.buyButton, !affordable && styles.buyDisabled]}
                   >
-                    {isMaxed ? (
-                      <Text style={styles.buyText}>MAX</Text>
-                    ) : (
-                      <ResourceValue kind={skill.costResource} style={styles.buyText}>
-                        {FORMAT[skill.costResource](cost)}
-                      </ResourceValue>
-                    )}
+                    <Text style={styles.buyText} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
+                      {isMaxed ? 'MAX' : (
+                        <ResourceValue kind={skill.costResource}>{FORMAT[skill.costResource](cost)}</ResourceValue>
+                      )}
+                    </Text>
                     <Text style={styles.buyLabel}>{t('skills.buy')}</Text>
                   </Pressable>
                 </View>
@@ -332,17 +344,18 @@ export function SkillsCatalog() {
             );
           })
         )}
-      </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, marginTop: spacing.sm },
+  container: { marginTop: spacing.sm },
   headingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.sm,
   },
@@ -354,6 +367,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   rate: {
+    flexShrink: 1,
     color: colors.accent.phosphor,
     fontFamily: typography.mono,
     fontSize: typography.sizes.xs,
@@ -367,7 +381,7 @@ const styles = StyleSheet.create({
   },
   modeButton: {
     flex: 1,
-    minHeight: 24,
+    minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -399,8 +413,10 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 7,
+    minHeight: MIN_TOUCH_TARGET,
+    paddingHorizontal: 2,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: radii.sm,
   },
   tabActive: {
@@ -417,7 +433,6 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: colors.accent.phosphorBright,
   },
-  list: { flex: 1 },
   listContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl },
   cardWrapper: {
     position: 'relative',
@@ -484,6 +499,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accent.phosphorDim,
     minWidth: 68,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
     paddingVertical: 6,
     paddingHorizontal: 6,
     borderRadius: radii.sm,

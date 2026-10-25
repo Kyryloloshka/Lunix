@@ -3,15 +3,16 @@ import { AccessibilityInfo } from 'react-native';
 import { isReducedMotion } from '../../theme/motion';
 
 export interface MotionPreference {
-  /** True when either the game setting or the OS asks for reduced motion. Use this one. */
+  /** The player's explicit choice if any, otherwise the OS setting. Use this one. */
   reducedMotion: boolean;
-  gameReducedMotion: boolean;
+  /** `null` until the player picks a value in settings. */
+  gameReducedMotion: boolean | null;
   osReducedMotion: boolean;
 }
 
 const DEFAULT_PREFERENCE: MotionPreference = {
   reducedMotion: false,
-  gameReducedMotion: false,
+  gameReducedMotion: null,
   osReducedMotion: false,
 };
 
@@ -44,10 +45,10 @@ function useOsReducedMotion(): boolean {
 
 interface MotionPreferenceProviderProps {
   /**
-   * The player's in-game "Reduce motion" setting. It lives in `features/settings`, which `shared` must
-   * not import, so the app layer reads it and passes it here.
+   * The player's in-game "Reduce motion" choice (`null` = follow the OS). It lives in
+   * `features/settings`, which `shared` must not import, so the app layer reads it and passes it here.
    */
-  reducedMotion: boolean;
+  reducedMotion: boolean | null;
   children: ReactNode;
 }
 
@@ -66,7 +67,7 @@ export function MotionPreferenceProvider({ reducedMotion, children }: MotionPref
 }
 
 /**
- * Current motion preference: in-game setting OR the OS setting. Without a provider above it,
+ * Current motion preference: the player's explicit choice, otherwise the OS setting. Without a provider above it,
  * motion is enabled (reducedMotion false).
  */
 export function useMotionPreference(): MotionPreference {

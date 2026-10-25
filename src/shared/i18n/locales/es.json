@@ -25,7 +25,17 @@
     "language": "Idioma",
     "notation": "Formato numérico",
     "compact": "COMPACTO",
-    "scientific": "CIENTÍFICO"
+    "scientific": "CIENTÍFICO",
+    "on": "SÍ",
+    "off": "NO",
+    "reducedMotionSystem": "Sigue el ajuste del dispositivo",
+    "reducedMotionUseSystem": "Usar ajuste del dispositivo",
+    "resetHeading": "PROGRESO",
+    "resetHint": "Borra esta partida y empieza la carrera desde el primer rango.",
+    "resetStart": "Empezar la carrera de nuevo",
+    "resetConfirmText": "Perderás el rango «{rank}», todos los recursos, habilidades y mejoras. No se puede deshacer.",
+    "resetConfirm": "Sí, empezar de nuevo",
+    "resetCancel": "Cancelar"
   },
   "resources": {
     "capital": "Capital",
@@ -40,7 +50,10 @@
     "ratePerSec": "+{amount}/s",
     "throttling": "RIESGO DE ESTRANGULAMIENTO",
     "output": "RENDIMIENTO",
-    "optimal": "ÓPTIMO"
+    "optimal": "ÓPTIMO",
+    "cooldown": "Recarga de Flow · {seconds}s",
+    "resilience": "Resiliencia −{percent}%",
+    "resilienceA11y": "Resiliencia: los toques generan un {percent}% menos de carga"
   },
   "workspace": {
     "prompt": "$ git commit -m 'ship'",
@@ -64,7 +77,7 @@
     "reqLevel": "Requiere {skill} Nivel {level}",
     "items": {
       "html-tags": {
-        "name": "Etiquetas HTML de YouTube",
+        "name": "Etiquetas HTML de TubeTube",
         "desc": "Tu primer <div> y muchos <br>"
       },
       "css-centering": {
@@ -226,7 +239,7 @@
     "ranks": {
       "0": {
         "title": "Estudiante de primer año",
-        "desc": "Un portátil, Stack Overflow y un gran sueño"
+        "desc": "Un portátil, Stack Overflaw y un gran sueño"
       },
       "1": {
         "title": "Estudiante autodidacta",
@@ -265,13 +278,28 @@
         "desc": "Visión técnica para productos a escala masiva"
       },
       "10": {
-        "title": "CEO de Google",
+        "title": "CEO de Gooble",
         "desc": "Dirección de una multinacional tecnológica líder"
       }
     },
     "reqEarned": "Ganado ({resource}):",
     "reqSpend": "Gastar ({resource}):",
-    "reqSkill": "{skill}, nivel:"
+    "reqSkill": "{skill}, nivel:",
+    "nextGoal": "SIGUIENTE META",
+    "silhouetteTitle": "???",
+    "silhouetteDesc": "Algo te espera más arriba",
+    "silhouetteA11y": "Rango oculto. Se revelará tras el próximo ascenso.",
+    "missingResource": "Faltan {amount} de {resource}",
+    "missingSkill": "Necesitas {skill} en nivel {level}",
+    "readyToPromote": "Todos los requisitos cumplidos",
+    "promoteA11y": "Obtener ascenso a {rank}",
+    "promoteBlockedA11y": "Ascenso a {rank} no disponible. {reason}",
+    "celebrateEyebrow": "ASCENSO",
+    "celebrateTitle": "Ahora eres {rank}",
+    "celebrateUnlocked": "Desbloqueado: {resource}",
+    "celebrateNextGoal": "Nueva meta: {rank}",
+    "celebrateContinue": "CONTINUAR",
+    "celebrateA11y": "Ascenso. Ahora eres {rank}. Toca para continuar."
   },
   "leaderboard": {
     "heading": "RANKING DE DESARROLLADORES",
@@ -282,21 +310,21 @@
     "playerName": "TÚ ({label})",
     "playerRole": "Junior → CEO",
     "entries": {
-      "sundar": {
-        "name": "Sundar Pichai",
-        "role": "CEO de Google"
+      "vibe-ceo": {
+        "name": "Vlad el Vibe Coder",
+        "role": "CEO de Gooble"
       },
-      "satya": {
-        "name": "Satya Nadella",
-        "role": "CEO de Microsoft"
+      "monolith-ceo": {
+        "name": "Marta la Monolito",
+        "role": "CEO de Macrosoft"
       },
-      "musk": {
-        "name": "Elon Musk",
+      "meme-ceo": {
+        "name": "Max Rocketpost",
         "role": "Director General de Memes"
       },
       "alex-arch": {
         "name": "Alex el Arquitecto",
-        "role": "Ex-Principal en FAANG"
+        "role": "Ex-Principal en MAANGO"
       },
       "dima-lead": {
         "name": "Dima el Lead",
