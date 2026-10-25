@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { getOfflineSeconds, useCurrencyStore } from '@entities/currency';
+import { toSnapshot, useOnboardingStore } from '@features/onboarding';
 import { loadGame, saveGame } from './gamePersistence';
 
 const AUTOSAVE_INTERVAL_MS = 10_000;
@@ -27,6 +28,16 @@ export function useGamePersistence(): boolean {
       if (canSave) void saveGame();
     }, AUTOSAVE_INTERVAL_MS);
 
+    // Onboarding steps change rarely and the player expects them to stick (a skipped intro must not come
+    // back after a quick restart), so they are saved right away instead of waiting for the next autosave.
+    let lastOnboarding = JSON.stringify(toSnapshot(useOnboardingStore.getState()));
+    const unsubscribeOnboarding = useOnboardingStore.subscribe((state) => {
+      const next = JSON.stringify(toSnapshot(state));
+      if (next === lastOnboarding) return;
+      lastOnboarding = next;
+      if (canSave) void saveGame();
+    });
+
     const subscription = AppState.addEventListener('change', (state) => {
       if (!canSave) return;
       if (state === 'active') {
@@ -47,6 +58,7 @@ export function useGamePersistence(): boolean {
       cancelled = true;
       clearInterval(autosave);
       subscription.remove();
+      unsubscribeOnboarding();
     };
   }, []);
 

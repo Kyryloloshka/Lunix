@@ -8,6 +8,8 @@ import { WorkspaceClicker } from '@widgets/workspace-clicker';
 import { SkillsCatalog } from '@widgets/skills-catalog';
 import { TAP_MODE_SWITCH_HEIGHT, TapModeSwitch, shouldShowTapModeSwitch } from '@widgets/tap-mode-switch';
 import { ResourceUnlockCard } from '@widgets/resource-unlock';
+import { IntroSequence } from '@widgets/intro';
+import { DockHint, StressHint, TapGuide, useOnboardingSync } from '@widgets/onboarding-hints';
 import { CareerRoadmap } from '@widgets/career-roadmap';
 import { SimulatedLeaderboard } from '@widgets/simulated-leaderboard';
 import { BottomDock, type ActiveTab } from '@widgets/bottom-dock';
@@ -26,6 +28,8 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
   useGameLoop();
   useLocale();
   const [activeTab, setActiveTab] = useState<ActiveTab>('work');
+  // Steps close by what the player does (tap, buy, rest); this keeps the onboarding store informed.
+  useOnboardingSync(activeTab === 'work');
 
   const storedRank = useSkillStore((state) => state.currentRank);
   const rank = CAREER_RANKS[Math.min(storedRank, CAREER_RANKS.length - 1)];
@@ -81,7 +85,14 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
                   {hero}
                 </>
               )}
-              overlay={<TapModeSwitch />}
+              overlay={(
+                <>
+                  <TapModeSwitch />
+                  {/* Onboarding hints (T-018) ignore touches, so the tap that closes a step is a normal tap. */}
+                  <TapGuide />
+                  <StressHint />
+                </>
+              )}
             />
           </View>
         ) : (
@@ -94,10 +105,13 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
             {renderTab()}
           </ScrollView>
         )}
+        <DockHint onSkillsTab={activeTab === 'skills'} />
         <BottomDock activeTab={activeTab} onChangeTab={setActiveTab} />
       </View>
       {/* Waits while the Career tab may show the promotion celebration, so two modals never stack. */}
       <ResourceUnlockCard enabled={activeTab !== 'career'} />
+      {/* First launch (or replay from settings): covers the game until completed or skipped. */}
+      <IntroSequence />
     </SafeAreaView>
   );
 }

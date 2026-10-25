@@ -34,7 +34,9 @@
     "resetStart": "Start career over",
     "resetConfirmText": "You will lose the rank \"{rank}\", all resources, skills and upgrades. This cannot be undone.",
     "resetConfirm": "Yes, start over",
-    "resetCancel": "Cancel"
+    "resetCancel": "Cancel",
+    "replayIntro": "Replay intro",
+    "replayIntroHint": "The short story from the start of the game. Your progress stays as is."
   },
   "resources": {
     "capital": "Capital",
@@ -469,6 +471,37 @@
         "source": "Taps in Network mode and Influence skills: reviews, a blog, talks.",
         "use": "Promotions from Senior up spend Influence. Also leadership perks and Influence upgrades."
       }
+    }
+  },
+  "onboarding": {
+    "intro": {
+      "a11yRegion": "Game intro",
+      "line1": "Freshman year. A laptop, Stack Overflaw and one big dream.",
+      "line2": "Every tap is an hour of studying. Knowledge → skills → your first job.",
+      "line3": "Tap to study.",
+      "next": "Tap to continue",
+      "start": "Start",
+      "skip": "Skip",
+      "skipA11y": "Skip the intro and start the game",
+      "step": "Screen {current} of {total}"
+    },
+    "tap": {
+      "label": "Tap to study",
+      "a11y": "Hint: tap the screen to study"
+    },
+    "warmup": {
+      "label": "Almost there: {have} / {cost} {resource} for your first skill",
+      "a11y": "Hint: collect {cost} for your first skill, you have {have}"
+    },
+    "buy": {
+      "label": "You have {resource}! Open \"{tab}\" and buy your first skill",
+      "a11y": "Hint: open the {tab} tab and buy your first skill"
+    },
+    "stress": {
+      "title": "Workload is rising",
+      "body": "This is not money, it is a fatigue meter. Above 70% you earn less. Pause for a few seconds and it drops.",
+      "dismiss": "Got it",
+      "dismissA11y": "Close the workload hint"
     }
   }
 }
