@@ -39,7 +39,27 @@ jest.mock('react-native-reanimated', () => {
       return value;
     },
     withDelay: (_delay, value) => value,
+    withSequence: (...values) => values[values.length - 1],
+    withRepeat: (value) => value,
     cancelAnimation: () => {},
+    isSharedValue: () => false,
     runOnJS: (fn) => fn,
   };
 });
+
+// Component tests import stores that persist through AsyncStorage; use the library's official in-memory mock.
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
+// Haptics are an optional enhancement with no native module in Jest.
+jest.mock('expo-haptics', () => ({
+  impactAsync: jest.fn(() => Promise.resolve()),
+  notificationAsync: jest.fn(() => Promise.resolve()),
+  selectionAsync: jest.fn(() => Promise.resolve()),
+  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
+  NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
+}));
+
+// Official gesture-handler mocks (native module, detectors) so GestureDetector mounts in Jest.
+require('react-native-gesture-handler/jestSetup');
