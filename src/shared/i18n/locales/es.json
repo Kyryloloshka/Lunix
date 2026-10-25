@@ -34,7 +34,9 @@
     "resetStart": "Empezar la carrera de nuevo",
     "resetConfirmText": "Perderás el rango «{rank}», todos los recursos, habilidades y mejoras. No se puede deshacer.",
     "resetConfirm": "Sí, empezar de nuevo",
-    "resetCancel": "Cancelar"
+    "resetCancel": "Cancelar",
+    "replayIntro": "Ver la introducción",
+    "replayIntroHint": "La breve historia del inicio del juego. Tu progreso no cambia."
   },
   "resources": {
     "capital": "Capital",
@@ -462,6 +464,37 @@
         "source": "Toques en modo Contactos y habilidades de Influencia: revisiones, un blog, charlas.",
         "use": "Los ascensos desde Senior gastan Influencia. También las ventajas de liderazgo y sus mejoras."
       }
+    }
+  },
+  "onboarding": {
+    "intro": {
+      "a11yRegion": "Introducción al juego",
+      "line1": "Primer curso. Un portátil, Stack Overflaw y un gran sueño.",
+      "line2": "Cada toque es una hora de estudio. Conocimiento → habilidades → tu primer trabajo.",
+      "line3": "Toca para estudiar.",
+      "next": "Toca para continuar",
+      "start": "Empezar",
+      "skip": "Saltar",
+      "skipA11y": "Saltar la introducción y empezar el juego",
+      "step": "Pantalla {current} de {total}"
+    },
+    "tap": {
+      "label": "Toca para estudiar",
+      "a11y": "Pista: toca la pantalla para estudiar"
+    },
+    "warmup": {
+      "label": "Ya casi: {have} / {cost} de {resource} para tu primera habilidad",
+      "a11y": "Pista: reúne {cost} para tu primera habilidad, tienes {have}"
+    },
+    "buy": {
+      "label": "¡Tienes {resource}! Abre «{tab}» y compra tu primera habilidad",
+      "a11y": "Pista: abre la pestaña {tab} y compra tu primera habilidad"
+    },
+    "stress": {
+      "title": "La carga sube",
+      "body": "No es dinero, es un medidor de cansancio. Por encima del 70% ganas menos. Haz una pausa de unos segundos y baja.",
+      "dismiss": "Entendido",
+      "dismissA11y": "Cerrar la pista de carga de trabajo"
     }
   }
 }

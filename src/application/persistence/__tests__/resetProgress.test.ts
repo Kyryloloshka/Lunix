@@ -26,6 +26,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 import { Decimal } from '@shared/lib/decimal';
 import { useCurrencyStore } from '@entities/currency';
 import { useSkillStore } from '@features/purchase-skill';
+import { useOnboardingStore } from '@features/onboarding';
 import { resetProgress, saveGame } from '../gamePersistence';
 import { parseGame } from '../saveSnapshot';
 
@@ -53,6 +54,7 @@ beforeEach(() => {
   mockReleaseWrite = null;
   useCurrencyStore.getState().reset();
   useSkillStore.getState().reset();
+  useOnboardingStore.getState().reset();
 });
 
 describe('resetProgress', () => {
@@ -71,6 +73,17 @@ describe('resetProgress', () => {
     expect(save?.skills.currentRank).toBe(0);
     expect(save?.currency.capital.isZero()).toBe(true);
     expect(save?.currency.totalCapitalEarned.isZero()).toBe(true);
+  });
+
+  it('reset brings the intro back for the new career, and the finished intro survives a save', async () => {
+    useOnboardingStore.getState().hydrate({ introDone: true, tapDone: true, buyDone: true, stressDone: true });
+    await saveGame(1000);
+    expect(storedSave()?.onboarding.introDone).toBe(true);
+
+    await resetProgress(2000);
+
+    expect(useOnboardingStore.getState().introDone).toBe(false);
+    expect(storedSave()?.onboarding).toEqual({ introDone: false, tapDone: false, buyDone: false, stressDone: false });
   });
 
   it('an autosave after the reset keeps the fresh state', async () => {

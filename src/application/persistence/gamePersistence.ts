@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getOfflineSeconds, useCurrencyStore, type OfflineEarnings } from '@entities/currency';
 import { useSkillStore } from '@features/purchase-skill';
+import { toSnapshot, useOnboardingStore } from '@features/onboarding';
 import { parseGame, serializeGame } from './saveSnapshot';
 
 const STORAGE_KEY = '@lunix_game_v1';
@@ -20,7 +21,7 @@ async function writeSnapshot(now: number): Promise<void> {
   const currency = useCurrencyStore.getState();
   const skills = useSkillStore.getState();
   try {
-    await AsyncStorage.setItem(STORAGE_KEY, serializeGame(currency, skills, now));
+    await AsyncStorage.setItem(STORAGE_KEY, serializeGame(currency, skills, toSnapshot(useOnboardingStore.getState()), now));
     currency.saveTimestamp();
   } catch {
     // Storage can be full or unavailable; keep playing and retry on the next autosave.
@@ -40,6 +41,7 @@ export function resetProgress(now = Date.now()): Promise<void> {
     useCurrencyStore.getState().reset();
     // Resetting skills also recomputes rates from the empty skill set.
     useSkillStore.getState().reset();
+    useOnboardingStore.getState().reset();
     await writeSnapshot(now);
   });
 }
@@ -58,6 +60,7 @@ export async function loadGame(now = Date.now()): Promise<OfflineEarnings | null
   useCurrencyStore.getState().hydrate(save.currency);
   // Hydrating skills also recomputes rates, which offline earnings depend on.
   useSkillStore.getState().hydrate(save.skills);
+  useOnboardingStore.getState().hydrate(save.onboarding);
   const earnings = useCurrencyStore.getState().applyOfflineProgress(getOfflineSeconds(save.savedAt, now));
   // Persist immediately so the same offline window can't be claimed twice.
   await saveGame(now);
