@@ -83,6 +83,47 @@ describe('skill store', () => {
     expect(useSkillStore.getState().tap().resource).toBe('capital');
   });
 
+  it('emits one unlock event per new resource on promotion, and none for ranks that open nothing', () => {
+    promoteTo(1);
+    add({ cognitive: 1e6 });
+    useSkillStore.setState({ levels: { ...useSkillStore.getState().levels, 'js-basics': 3, git: 1 } });
+    expect(useSkillStore.getState().promote()).toBe(true); // rank 2: nothing new
+    expect(useSkillStore.getState().pendingResourceUnlocks).toEqual([]);
+    expect(useSkillStore.getState().promote()).toBe(true); // rank 3: first salary
+    expect(useSkillStore.getState().pendingResourceUnlocks).toEqual(['capital']);
+
+    expect(useSkillStore.getState().acknowledgeResourceUnlock()).toBe('capital');
+    expect(useSkillStore.getState().pendingResourceUnlocks).toEqual([]);
+    expect(useSkillStore.getState().acknowledgeResourceUnlock()).toBeUndefined();
+  });
+
+  it('does not emit unlock events for a failed promotion', () => {
+    promoteTo(2);
+    expect(useSkillStore.getState().promote()).toBe(false);
+    expect(useSkillStore.getState().pendingResourceUnlocks).toEqual([]);
+  });
+
+  it('queues Influence after Capital and keeps the order until each card is acknowledged', () => {
+    useSkillStore.setState({ pendingResourceUnlocks: ['capital'] });
+    promoteTo(4);
+    add({ capital: 1e6 });
+    useSkillStore.setState({ levels: { ...useSkillStore.getState().levels, algorithms: 5 } });
+    expect(useSkillStore.getState().promote()).toBe(true);
+    expect(useSkillStore.getState().pendingResourceUnlocks).toEqual(['capital', 'influence']);
+    expect(useSkillStore.getState().tapResource).toBe('influence');
+    expect(useSkillStore.getState().acknowledgeResourceUnlock()).toBe('capital');
+    expect(useSkillStore.getState().acknowledgeResourceUnlock()).toBe('influence');
+  });
+
+  it('never replays unlock cards after loading or resetting a save', () => {
+    useSkillStore.setState({ pendingResourceUnlocks: ['capital'] });
+    useSkillStore.getState().hydrate({ levels: {}, purchasedUpgrades: [], currentRank: 6 });
+    expect(useSkillStore.getState().pendingResourceUnlocks).toEqual([]);
+    useSkillStore.setState({ pendingResourceUnlocks: ['influence'] });
+    useSkillStore.getState().reset();
+    expect(useSkillStore.getState().pendingResourceUnlocks).toEqual([]);
+  });
+
   it('rejects tap modes that are not unlocked yet', () => {
     expect(useSkillStore.getState().setTapResource('capital')).toBe(false);
     expect(useSkillStore.getState().tapResource).toBe('cognitive');

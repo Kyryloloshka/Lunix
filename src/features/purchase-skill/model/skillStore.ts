@@ -16,6 +16,7 @@ import {
 import {
   areRankRequirementsMet,
   clampRank,
+  getNewlyUnlockedResources,
   getRankProgress,
   getUnlockedResources,
   isResourceUnlocked,
@@ -69,7 +70,7 @@ export function canPromote(nextRank: number): boolean {
   return areRankRequirementsMet(nextRank, getProgressContext(useSkillStore.getState().levels));
 }
 
-/** The newest resource the player has: taps follow it until the tap-mode switch exists (T-016 stage 5). */
+/** The newest resource the player has: taps follow it after a promotion and after loading a save. */
 function latestUnlockedResource(rank: number): SkillResource {
   return getUnlockedResources(rank).at(-1) ?? 'cognitive';
 }
@@ -83,10 +84,18 @@ export interface SkillSnapshot {
 interface SkillStore extends SkillSnapshot {
   /** Which resource a tap produces. UI state, not saved. */
   tapResource: SkillResource;
+  /**
+   * Resources opened by a promotion in this session, oldest first, waiting for their unlock card
+   * (T-016 stage 5). An event queue, not saved: a resource unlocks on exactly one promotion, so the
+   * card shows once per save without "seen" flags. Loading a save starts with an empty queue.
+   */
+  pendingResourceUnlocks: SkillResource[];
   buy: (id: string, mode?: PurchaseMode) => number;
   buyUpgrade: (id: string) => boolean;
   promote: () => boolean;
   setTapResource: (resource: SkillResource) => boolean;
+  /** Removes the oldest pending unlock event (its card was shown) and returns it. */
+  acknowledgeResourceUnlock: () => SkillResource | undefined;
   tap: () => TapResult;
   hydrate: (snapshot: SkillSnapshot) => void;
   reset: () => void;
@@ -112,6 +121,7 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
   purchasedUpgrades: [],
   currentRank: 0,
   tapResource: 'cognitive',
+  pendingResourceUnlocks: [],
   buy: (id, mode = 1) => {
     const skill = skillById(id);
     const { levels, currentRank } = get();
@@ -160,10 +170,14 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
     ), Decimal.ZERO);
     if (spend.isPositive() && !useCurrencyStore.getState().spendResources({ influence: spend })) return false;
 
-    const hadResources = getUnlockedResources(get().currentRank).length;
+    const unlocked = getNewlyUnlockedResources(get().currentRank, nextRank);
     set({ currentRank: nextRank });
-    if (getUnlockedResources(nextRank).length > hadResources) {
-      set({ tapResource: latestUnlockedResource(nextRank) });
+    if (unlocked.length > 0) {
+      // A new resource is the point of this promotion: taps switch to it and the UI gets an event.
+      set((state) => ({
+        tapResource: latestUnlockedResource(nextRank),
+        pendingResourceUnlocks: [...state.pendingResourceUnlocks, ...unlocked],
+      }));
     }
     return true;
   },
@@ -172,6 +186,12 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
     set({ tapResource: resource });
     return true;
   },
+  acknowledgeResourceUnlock: () => {
+    const [first, ...rest] = get().pendingResourceUnlocks;
+    if (first === undefined) return undefined;
+    set({ pendingResourceUnlocks: rest });
+    return first;
+  },
   tap: () => {
     const { tapResource, currentRank } = get();
     const resource = isResourceUnlocked(tapResource, currentRank) ? tapResource : 'cognitive';
@@ -179,11 +199,11 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
   },
   hydrate: (snapshot) => {
     const sanitized = sanitizeSnapshot(snapshot);
-    set({ ...sanitized, tapResource: latestUnlockedResource(sanitized.currentRank) });
+    set({ ...sanitized, tapResource: latestUnlockedResource(sanitized.currentRank), pendingResourceUnlocks: [] });
     syncRatesFromSkills(sanitized.levels, sanitized.purchasedUpgrades);
   },
   reset: () => {
-    set({ levels: INITIAL_SKILL_LEVELS, purchasedUpgrades: [], currentRank: 0, tapResource: 'cognitive' });
+    set({ levels: INITIAL_SKILL_LEVELS, purchasedUpgrades: [], currentRank: 0, tapResource: 'cognitive', pendingResourceUnlocks: [] });
     syncRatesFromSkills(INITIAL_SKILL_LEVELS, []);
   },
 }));

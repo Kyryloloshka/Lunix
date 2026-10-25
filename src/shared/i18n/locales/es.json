@@ -303,7 +303,8 @@
     "perkStress": "−{pct}% de estrés por toque",
     "targetLevel": "{skill} · NIVEL {level}",
     "leadershipHint": "Potencia toda una rama",
-    "active": "ACTIVO"
+    "active": "ACTIVO",
+    "perksTab": "VENTAJAS"
   },
   "career": {
     "heading": "HOJA DE RUTA PROFESIONAL",
@@ -430,6 +431,40 @@
       "olex-trainee": {
         "name": "Olex el Trainee",
         "role": "Primer currículum enviado"
+      }
+    }
+  },
+  "tapMode": {
+    "label": "Modo de toque",
+    "modes": {
+      "cognitive": "Estudiar",
+      "capital": "Trabajar",
+      "influence": "Contactos"
+    },
+    "modeA11y": "{mode}: un toque da {resource}"
+  },
+  "resourceUnlock": {
+    "eyebrow": "NUEVO RECURSO",
+    "sourceLabel": "De dónde sale",
+    "useLabel": "Para qué sirve",
+    "modeHint": "Lo ganas tocando en modo «{mode}». El selector de modo está encima del editor.",
+    "continue": "ENTENDIDO",
+    "a11y": "Nuevo recurso: {resource}. Toca para continuar.",
+    "items": {
+      "cognitive": {
+        "title": "Nuevo: Cognición — lo que sabes",
+        "source": "Toques en modo Estudiar y habilidades de la rama Saber.",
+        "use": "Nuevas habilidades de Saber, ventajas y mejoras técnicas. Cuanto más sabes, mejor llevas el estrés."
+      },
+      "capital": {
+        "title": "Nuevo: Capital — tu primer sueldo",
+        "source": "Toques en modo Trabajar y proyectos de la rama Trabajo. Al principio, calderilla.",
+        "use": "Proyectos de Trabajo, habilidades de Influencia y el teclado mecánico. El Saber se sigue pagando con Cognición."
+      },
+      "influence": {
+        "title": "Nuevo: Influencia — capital político",
+        "source": "Toques en modo Contactos y habilidades de Influencia: revisiones, un blog, charlas.",
+        "use": "Los ascensos desde Senior gastan Influencia. También las ventajas de liderazgo y sus mejoras."
       }
     }
   }
