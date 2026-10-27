@@ -58,7 +58,7 @@
 | [T-011](T-011-component-tests.md) | Компонентні тести ключових флоу і доступності | quality | P2 | M | done | — |
 | [T-019](T-019-welcome-back-screen.md) | Екран «Поки тебе не було»: офлайн-дохід видно і приємно забрати | feature / ux | P0 | M | todo | — |
 | [T-021](T-021-dev-tools-and-ci.md) | Dev-tools і CI: debug-меню, прискорення часу, перевірки на кожен пуш | quality / tooling | P0 | M | todo | — |
-| [T-022](T-022-engine-events.md) | Шина подій рушія (`skill_bought`, `rank_up`, `tap`…) | refactor | P0 | M | todo | — |
+| [T-022](T-022-engine-events.md) | Шина подій рушія (`skill_bought`, `rank_up`, `tap`…) | refactor | P0 | M | done | — |
 | [T-023](T-023-golden-commit.md) | Golden Commit: випадковий баф (Frenzy, Lucky, Click Storm) | feature | P0 | M | todo | T-022 |
 | [T-025](T-025-achievements.md) | Досягнення: 100+ ачівок, +1% доходу за кожну, стікербук | feature / content | P0 | L | todo | T-022 |
 | [T-026](T-026-prestige-exit.md) | Престиж Exit / IPO: Equity, дерево перків, новий ран швидше | product / economy | P0 | L | todo | T-022, T-025 (етап 1 — дизайн — можна раніше) |
