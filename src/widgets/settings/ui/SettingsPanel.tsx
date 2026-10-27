@@ -4,34 +4,16 @@ import { CAREER_RANKS } from '@entities/career-rank';
 import { t, useLocale, type Locale } from '@shared/i18n';
 import { useMotionPreference } from '@shared/lib/motion';
 import { colors, radii, spacing, typography } from '@shared/theme';
-import { GameButton, MIN_TOUCH_TARGET, Panel } from '@shared/ui';
-import { useSettingsStore } from '@features/settings';
+import { Button, MIN_TOUCH_TARGET, Panel, SegmentedControl, Toggle, type SegmentOption } from '@shared/ui';
+import { useSettingsStore, type NumberNotation } from '@features/settings';
 import { useSkillStore } from '@features/purchase-skill';
 import { useOnboardingStore } from '@features/onboarding';
 
-type ToggleRowProps = {
-  label: string;
-  value: boolean;
-  onChange: (value: boolean) => void;
-};
-
-function ToggleRow({ label, value, onChange }: ToggleRowProps) {
-  return (
-    <Pressable
-      accessibilityRole="switch"
-      accessibilityState={{ checked: value }}
-      onPress={() => onChange(!value)}
-      style={styles.row}
-    >
-      <Text style={styles.label}>{label}</Text>
-      <View style={[styles.switch, value && styles.switchActive]}>
-        <Text style={[styles.switchText, value && styles.switchTextActive]}>
-          {value ? t('settings.on') : t('settings.off')}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
+const LOCALE_OPTIONS: readonly SegmentOption<Locale>[] = [
+  { value: 'uk', label: 'UK' },
+  { value: 'en', label: 'EN' },
+  { value: 'es', label: 'ES' },
+];
 
 type ResetProgressSectionProps = {
   onResetProgress: () => Promise<void>;
@@ -62,27 +44,20 @@ function ResetProgressSection({ onResetProgress }: ResetProgressSectionProps) {
             {t('settings.resetConfirmText', { rank: t(`career.ranks.${rank.id}.title`) })}
           </Text>
           <View style={styles.resetActions}>
-            <GameButton tone="secondary" size="sm" style={styles.resetAction} onPress={() => setConfirming(false)}>
+            <Button tone="secondary" size="sm" style={styles.resetAction} onPress={() => setConfirming(false)}>
               {t('settings.resetCancel')}
-            </GameButton>
-            <GameButton
-              tone="warning"
-              size="sm"
-              style={styles.resetAction}
-              disabled={busy}
-              accessibilityState={{ disabled: busy, busy }}
-              onPress={confirm}
-            >
+            </Button>
+            <Button tone="danger" size="sm" style={styles.resetAction} loading={busy} onPress={confirm}>
               {t('settings.resetConfirm')}
-            </GameButton>
+            </Button>
           </View>
         </View>
       ) : (
         <>
           <Text style={styles.resetHint}>{t('settings.resetHint')}</Text>
-          <GameButton tone="secondary" size="sm" fullWidth onPress={() => setConfirming(true)}>
+          <Button tone="secondary" size="sm" fullWidth onPress={() => setConfirming(true)}>
             {t('settings.resetStart')}
-          </GameButton>
+          </Button>
         </>
       )}
     </View>
@@ -106,6 +81,10 @@ export function SettingsPanel({ onResetProgress }: SettingsPanelProps) {
   const replayIntro = useOnboardingStore((state) => state.replayIntro);
   const notation = useSettingsStore((state) => state.notation);
   const setNotation = useSettingsStore((state) => state.setNotation);
+  const notationOptions: readonly SegmentOption<NumberNotation>[] = [
+    { value: 'compact', label: t('settings.compact') },
+    { value: 'scientific', label: t('settings.scientific') },
+  ];
   // Effective value: the player's explicit choice, or the OS setting while they haven't chosen.
   const { reducedMotion } = useMotionPreference();
 
@@ -113,8 +92,8 @@ export function SettingsPanel({ onResetProgress }: SettingsPanelProps) {
     <Panel tone="subtle" style={styles.container}>
       <Text style={styles.heading}>{t('settings.heading')}</Text>
       <Text style={styles.subtitle}>{t('settings.subheading')}</Text>
-      <ToggleRow label={t('settings.haptics')} value={hapticsEnabled} onChange={setHapticsEnabled} />
-      <ToggleRow label={t('settings.reducedMotion')} value={reducedMotion} onChange={setReducedMotionChoice} />
+      <Toggle label={t('settings.haptics')} value={hapticsEnabled} onChange={setHapticsEnabled} onText={t('settings.on')} offText={t('settings.off')} />
+      <Toggle label={t('settings.reducedMotion')} value={reducedMotion} onChange={setReducedMotionChoice} onText={t('settings.on')} offText={t('settings.off')} />
       {reducedMotionChoice === null ? (
         <Text style={styles.hint}>{t('settings.reducedMotionSystem')}</Text>
       ) : (
@@ -128,42 +107,14 @@ export function SettingsPanel({ onResetProgress }: SettingsPanelProps) {
         </Pressable>
       )}
       <Text style={styles.selectLabel}>{t('settings.language')}</Text>
-      <View style={styles.selectRow}>
-        {(['uk', 'en', 'es'] as Locale[]).map((option) => (
-          <Pressable
-            key={option}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: locale === option }}
-            onPress={() => setLocale(option)}
-            style={[styles.selectOption, locale === option && styles.selectOptionActive]}
-          >
-            <Text style={[styles.selectText, locale === option && styles.selectTextActive]}>
-              {option.toUpperCase()}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <SegmentedControl role="radio" options={LOCALE_OPTIONS} value={locale} onChange={setLocale} />
       <Text style={styles.selectLabel}>{t('settings.notation')}</Text>
-      <View style={styles.selectRow}>
-        {(['compact', 'scientific'] as const).map((option) => (
-          <Pressable
-            key={option}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: notation === option }}
-            onPress={() => setNotation(option)}
-            style={[styles.selectOption, notation === option && styles.selectOptionActive]}
-          >
-            <Text style={[styles.selectText, notation === option && styles.selectTextActive]}>
-              {t(`settings.${option}`)}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <SegmentedControl role="radio" options={notationOptions} value={notation} onChange={setNotation} />
       <View style={styles.introSection}>
         <Text style={styles.resetHint}>{t('settings.replayIntroHint')}</Text>
-        <GameButton tone="secondary" size="sm" fullWidth onPress={replayIntro}>
+        <Button tone="secondary" size="sm" fullWidth onPress={replayIntro}>
           {t('settings.replayIntro')}
-        </GameButton>
+        </Button>
       </View>
       <ResetProgressSection onResetProgress={onResetProgress} />
     </Panel>
@@ -171,24 +122,13 @@ export function SettingsPanel({ onResetProgress }: SettingsPanelProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { marginHorizontal: spacing.lg, marginVertical: spacing.md, backgroundColor: colors.bg.surface },
+  container: { marginHorizontal: spacing.lg, marginVertical: spacing.md, backgroundColor: colors.surface.raised },
   heading: { color: colors.text.primary, fontFamily: typography.mono, fontSize: typography.sizes.md, fontWeight: '900' },
   subtitle: { color: colors.text.secondary, fontSize: typography.sizes.xs, marginTop: 3, marginBottom: spacing.md },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48, borderTopWidth: 1, borderTopColor: colors.border.subtle },
-  label: { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: '700' },
-  switch: { minWidth: 48, paddingVertical: 5, alignItems: 'center', borderRadius: radii.sm, borderWidth: 1, borderColor: colors.border.default, backgroundColor: colors.bg.inset },
-  switchActive: { borderColor: colors.accent.phosphorDim, backgroundColor: colors.accent.phosphorBg },
-  switchText: { color: colors.text.muted, fontFamily: typography.mono, fontSize: typography.sizes.xxs, fontWeight: '900' },
-  switchTextActive: { color: colors.accent.phosphorBright },
   hint: { color: colors.text.muted, fontSize: typography.sizes.xs, marginBottom: spacing.xs },
   hintButton: { alignSelf: 'flex-start', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   hintLink: { color: colors.accent.cyanBright, textDecorationLine: 'underline', marginBottom: 0 },
-  selectLabel: { color: colors.text.muted, fontFamily: typography.mono, fontSize: typography.sizes.xxs, fontWeight: '900', marginTop: spacing.md, marginBottom: 5 },
-  selectRow: { flexDirection: 'row', gap: 6 },
-  selectOption: { flex: 1, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', borderRadius: radii.sm, borderWidth: 1, borderColor: colors.border.default, backgroundColor: colors.bg.inset },
-  selectOptionActive: { borderColor: colors.accent.phosphorDim, backgroundColor: colors.accent.phosphorBg },
-  selectText: { color: colors.text.muted, fontFamily: typography.mono, fontSize: typography.sizes.xs, fontWeight: '900' },
-  selectTextActive: { color: colors.accent.phosphorBright },
+  selectLabel: { color: colors.text.muted, fontFamily: typography.mono, fontSize: typography.sizes.xs, fontWeight: '900', marginTop: spacing.md, marginBottom: 5 },
   introSection: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border.subtle, paddingTop: spacing.sm },
   resetSection: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border.subtle },
   resetHint: { color: colors.text.secondary, fontSize: typography.sizes.xs, marginBottom: spacing.sm },

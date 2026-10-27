@@ -14,6 +14,7 @@ import { Platform, type TextStyle } from 'react-native';
 
 /** Raw palette. Prefer semantic tokens in `colors`; the palette exists so themes can remap it. */
 export const palette = {
+  black: '#000000',
   graphite: {
     950: '#080a0b',
     900: '#0b0d0f',
@@ -73,8 +74,6 @@ const text = {
   muted: palette.paper.muted,
   /** Text on filled accent/feedback backgrounds (buttons, badges). */
   onAccent: palette.graphite[900],
-  /** @deprecated use `text.onAccent`. */
-  inverse: palette.graphite[900],
 } as const;
 
 export const colors = {
@@ -94,6 +93,8 @@ export const colors = {
     danger: palette.red,
     dangerBg: palette.redBg,
   },
+  /** Shadow color for elevated surfaces. */
+  shadow: palette.black,
   /** Focus ring for keyboard/switch navigation. */
   focus: palette.cyanBright,
   /**
@@ -120,17 +121,6 @@ export const colors = {
     red: palette.red,
     redBright: palette.redBright,
     redBg: palette.redBg,
-  },
-  /**
-   * @deprecated legacy surface names; use `colors.surface.*`
-   * (app → base, surface → raised, elevated → overlay, subtle → sunken, inset → inset).
-   */
-  bg: {
-    app: surface.base,
-    surface: surface.raised,
-    elevated: surface.overlay,
-    subtle: surface.sunken,
-    inset: surface.inset,
   },
 } as const;
 
@@ -220,8 +210,6 @@ const fontFamilies = {
 } as const;
 
 const sizes = {
-  /** @deprecated raised from 9 to the 11pt minimum; use `xs` or `typography.roles.label`. */
-  xxs: MIN_READABLE_FONT_SIZE,
   xs: MIN_READABLE_FONT_SIZE,
   sm: 13,
   base: 15,
@@ -293,14 +281,14 @@ export const typography = {
 
 export const shadows = {
   low: {
-    shadowColor: '#000000',
+    shadowColor: palette.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
     shadowRadius: 4,
     elevation: 2,
   },
   medium: {
-    shadowColor: '#000000',
+    shadowColor: palette.black,
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.24,
     shadowRadius: 10,

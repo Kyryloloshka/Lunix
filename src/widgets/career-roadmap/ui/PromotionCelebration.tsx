@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   },
   scrim: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: colors.bg.inset,
+    backgroundColor: colors.surface.inset,
     opacity: 0.88,
   },
   cardWrap: {
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     maxWidth: 360,
   },
   card: {
-    backgroundColor: colors.bg.surface,
+    backgroundColor: colors.surface.raised,
     borderWidth: 2,
     borderRadius: radii.lg,
     padding: spacing.xl,

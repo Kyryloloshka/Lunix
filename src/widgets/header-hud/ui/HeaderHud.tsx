@@ -11,7 +11,7 @@ import {
 } from '@entities/currency';
 import { FlowCooldownMeter, ResilienceTag } from './RhythmIndicators';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
-import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, FadeSlideIn } from '@shared/ui';
+import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, FadeSlideIn, Meter } from '@shared/ui';
 import { colors, getRankTheme, radii, resources, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 
@@ -83,14 +83,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
                   seconds: toCountdownSeconds(flow.comboCount > 0 ? flow.comboRemainingMs : COMBO_WINDOW_MS),
                 })}
               </Text>
-              <View style={styles.comboTrack}>
-                <View
-                  style={[
-                    styles.comboFill,
-                    { width: `${Math.min(100, (flow.comboCount / FLOW_COMBO_THRESHOLD) * 100)}%` },
-                  ]}
-                />
-              </View>
+              <Meter kind="combo" ratio={flow.comboCount / FLOW_COMBO_THRESHOLD} style={styles.comboMeter} />
             </View>
           )}
         </View>
@@ -142,14 +135,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
               : t('status.optimal')}
           </Text>
         </View>
-        <View style={styles.stressTrack}>
-          <View
-            style={[
-              styles.stressFill,
-              { width: `${stress}%`, backgroundColor: stressColor },
-            ]}
-          />
-        </View>
+        <Meter kind="stress" ratio={stress / 100} color={stressColor} />
       </View>
     </View>
   );
@@ -157,7 +143,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.bg.surface,
+    backgroundColor: colors.surface.raised,
     borderRadius: radii.lg,
     padding: spacing.md,
     marginHorizontal: spacing.lg,
@@ -178,7 +164,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.bg.subtle,
+    backgroundColor: colors.surface.sunken,
     borderWidth: 1,
     borderColor: colors.border.subtle,
     paddingHorizontal: 8,
@@ -206,28 +192,18 @@ const styles = StyleSheet.create({
     color: colors.text.onAccent,
     fontFamily: typography.mono,
     fontWeight: '900',
-    fontSize: 10,
+    fontSize: typography.sizes.xs,
     letterSpacing: 0.5,
   },
   comboProgress: {
     alignItems: 'flex-end',
     gap: 3,
   },
-  comboTrack: {
-    width: 64,
-    height: 3,
-    backgroundColor: colors.bg.inset,
-    borderRadius: radii.full,
-    overflow: 'hidden',
-  },
-  comboFill: {
-    height: '100%',
-    backgroundColor: colors.accent.amber,
-  },
+  comboMeter: { width: 64 },
   comboText: {
     color: colors.text.muted,
     fontFamily: typography.mono,
-    fontSize: 10,
+    fontSize: typography.sizes.xs,
   },
   resourcesGrid: {
     flexDirection: 'row',
@@ -242,7 +218,7 @@ const styles = StyleSheet.create({
   statBox: {
     // flexGrow, not flex: 1: inside the auto-height statSlot, flex: 1 means flexBasis 0 and Android collapses the box to 0 height
     flexGrow: 1,
-    backgroundColor: colors.bg.inset,
+    backgroundColor: colors.surface.inset,
     padding: 7,
     borderRadius: radii.sm,
     borderWidth: 1,
@@ -289,7 +265,7 @@ const styles = StyleSheet.create({
   stressLabel: {
     color: colors.text.secondary,
     fontFamily: typography.mono,
-    fontSize: 10,
+    fontSize: typography.sizes.xs,
     fontWeight: '700',
   },
   stressHint: {
@@ -297,21 +273,11 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     color: colors.text.muted,
     fontFamily: typography.mono,
-    fontSize: 9,
+    fontSize: typography.sizes.xs,
     letterSpacing: 0.5,
   },
   throttlingHint: {
     color: colors.accent.red,
     fontWeight: '800',
-  },
-  stressTrack: {
-    height: 4,
-    backgroundColor: colors.bg.inset,
-    borderRadius: radii.full,
-    overflow: 'hidden',
-  },
-  stressFill: {
-    height: '100%',
-    borderRadius: radii.full,
   },
 });

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCurrencyStore } from '@entities/currency';
 import type { Decimal } from '@shared/lib/decimal';
-import { Badge, DevGlyph, FadeSlideIn, Panel, PanelHeader, ProgressBar, type GlyphName } from '@shared/ui';
+import { Badge, DevGlyph, FadeSlideIn, Meter, Panel, PanelHeader, type GlyphName } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { formatCurrency } from '@shared/lib/formatters';
 import { t, useLocale } from '@shared/i18n';
@@ -84,9 +84,8 @@ export function SimulatedLeaderboard() {
                 </Text>
                 <Text style={styles.rivalGap}>{t('leaderboard.rivalGap', { gap: rivalGap })}</Text>
               </View>
-              <ProgressBar
-                value={rival.progress}
-                max={1}
+              <Meter
+                ratio={rival.progress}
                 color={colors.accent.phosphorBright}
                 style={styles.rivalBar}
               />
@@ -167,18 +166,18 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: spacing.lg,
     marginVertical: spacing.md,
-    backgroundColor: colors.bg.surface,
+    backgroundColor: colors.surface.raised,
   },
   header: {
     marginBottom: 4,
   },
   disclaimer: {
-    fontSize: typography.sizes.xxs,
+    fontSize: typography.sizes.xs,
     color: colors.text.muted,
     marginBottom: spacing.md,
   },
   rivalCard: {
-    backgroundColor: colors.bg.inset,
+    backgroundColor: colors.surface.inset,
     borderRadius: radii.sm,
     borderWidth: 1,
     borderColor: colors.accent.phosphorDim,
@@ -188,7 +187,7 @@ const styles = StyleSheet.create({
   },
   rivalEyebrow: {
     fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
+    fontSize: typography.sizes.xs,
     fontWeight: '800',
     color: colors.text.muted,
   },
@@ -221,7 +220,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.bg.inset,
+    backgroundColor: colors.surface.inset,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
     borderRadius: radii.sm,
@@ -240,7 +239,7 @@ const styles = StyleSheet.create({
   },
   rankNum: {
     fontFamily: typography.mono,
-    fontSize: 10,
+    fontSize: typography.sizes.xs,
     fontWeight: '800',
     color: colors.text.muted,
   },
@@ -255,7 +254,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: radii.xs,
-    backgroundColor: colors.bg.surface,
+    backgroundColor: colors.surface.raised,
     borderWidth: 1,
     borderColor: colors.border.subtle,
     alignItems: 'center',
@@ -276,7 +275,7 @@ const styles = StyleSheet.create({
     color: colors.accent.phosphorBright,
   },
   role: {
-    fontSize: typography.sizes.xxs,
+    fontSize: typography.sizes.xs,
     color: colors.text.secondary,
     marginTop: 1,
   },

@@ -72,12 +72,12 @@ export function BottomDock({ activeTab, onChangeTab, badges }: BottomDockProps) 
 
 const styles = StyleSheet.create({
   dockContainer: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, paddingTop: spacing.xs, backgroundColor: 'transparent' },
-  dock: { flexDirection: 'row', backgroundColor: colors.bg.surface, borderWidth: 1, borderColor: colors.border.default, borderRadius: radii.lg, padding: spacing.xs, justifyContent: 'space-around', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 },
+  dock: { flexDirection: 'row', backgroundColor: colors.surface.raised, borderWidth: 1, borderColor: colors.border.default, borderRadius: radii.lg, padding: spacing.xs, justifyContent: 'space-around', shadowColor: colors.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 },
   // Icon above label: five tabs fit at 320pt without the labels running into each other.
   tabButton: { flex: 1, minWidth: 0, minHeight: MIN_TOUCH_TARGET + 4, alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.xs, paddingHorizontal: 2, borderRadius: radii.md, gap: 3 },
   tabButtonActive: { backgroundColor: colors.accent.phosphorBg, borderWidth: 1, borderColor: colors.accent.phosphorDim },
   // A dot with a ring on the icon's corner: a shape the eye finds without relying on its hue alone.
-  badge: { position: 'absolute', top: -3, right: -6, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent.amberBright, borderWidth: 2, borderColor: colors.bg.surface },
-  label: { fontFamily: typography.mono, fontSize: typography.sizes.xxs, fontWeight: '800', color: colors.text.muted },
+  badge: { position: 'absolute', top: -3, right: -6, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent.amberBright, borderWidth: 2, borderColor: colors.surface.raised },
+  label: { fontFamily: typography.mono, fontSize: typography.sizes.xs, fontWeight: '800', color: colors.text.muted },
   labelActive: { color: colors.accent.phosphorBright },
 });

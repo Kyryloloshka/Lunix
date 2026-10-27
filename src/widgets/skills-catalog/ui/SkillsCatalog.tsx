@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import {
   BRANCH_RESOURCE,
   calculateBulkPurchase,
@@ -15,7 +15,17 @@ import { getUnlockedResources } from '@entities/career-rank';
 import { useCurrencyStore } from '@entities/currency';
 import type { Decimal } from '@shared/lib/decimal';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
-import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, FadeSlideIn, MIN_TOUCH_TARGET, ResourceValue, type GlyphName } from '@shared/ui';
+import {
+  Button,
+  DENSE_TEXT_MAX_FONT_SCALE,
+  DevGlyph,
+  FadeSlideIn,
+  ListRow,
+  ResourceValue,
+  SegmentedControl,
+  type GlyphName,
+  type SegmentOption,
+} from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useMotionPreference } from '@shared/lib/motion';
@@ -38,6 +48,13 @@ import { getNewSkillIds, sortUpgradesByStatus } from '../model/catalogOrder';
 function isBranchTab(tab: CatalogTab): tab is SkillBranch {
   return tab !== 'perks' && tab !== 'upgrades';
 }
+
+const PURCHASE_MODE_OPTIONS: readonly SegmentOption<PurchaseMode>[] = [
+  { value: 1, label: 'x1' },
+  { value: 10, label: 'x10' },
+  { value: 100, label: 'x100' },
+  { value: 'max', label: 'MAX' },
+];
 
 function tabLabel(tab: CatalogTab): string {
   if (tab === 'upgrades') return t('skills.upgradesTab');
@@ -219,67 +236,62 @@ const UpgradeCard = memo(function UpgradeCard({
     ? BRANCH_GLYPHS[upgrade.effect.branch]
     : SKILL_GLYPHS[upgrade.effect.skillId] ?? BRANCH_GLYPHS[skillById(upgrade.effect.skillId)?.branch ?? 'knowledge'];
   const name = upgradeName(upgrade);
-    return (
-      <View style={styles.cardWrapper}>
-        {overlay}
-        <View style={[styles.card, isOwned && styles.cardOwned]}>
-          <View style={styles.cardIcon}>
-            <DevGlyph name={glyphName} size={15} color={colors.accent.amber} />
-          </View>
-          <View style={styles.cardBody}>
-            <View style={styles.cardTitleRow}>
-              <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
-            </View>
-            <Text style={[styles.level, styles.upgradeEffect]}>{upgradeEffectText(upgrade)}</Text>
-            {preview && meetsLevel && (preview.before.gt(0) || preview.after.gt(0)) ? (
-              <Text style={styles.bonus} numberOfLines={1}>
-                {preview.skillId ? `${skillName(preview.skillId)}: ` : `${t(`skills.branches.${upgrade.effect.type === 'branchMultiplier' ? upgrade.effect.branch : 'knowledge'}`)}: `}
-                <ResourceValue kind={preview.resource}>
-                  {t('skills.upgradeFromTo', {
-                    from: FORMAT[preview.resource](preview.before),
-                    to: FORMAT[preview.resource](preview.after),
-                  })}
-                </ResourceValue>
-              </Text>
-            ) : null}
-            <Text style={[styles.bonus, !meetsLevel && { color: colors.accent.rustBright }]}>
-              {required
-                ? (meetsLevel
-                  ? t('skills.targetLevel', { skill: skillName(required.skillId), level: targetLevel })
-                  : t('skills.reqLevel', { skill: skillName(required.skillId), level: required.level }))
-                : t('skills.leadershipHint')}
-            </Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={wait ? `${t('skills.buy')} ${name}. ${wait.a11y}` : `${t('skills.buy')} ${name}`}
-            accessibilityState={{ disabled: !affordable || isOwned }}
-            disabled={!affordable || isOwned}
-            onPress={() => onBuy(upgrade)}
-            style={[
-              styles.buyButton,
-              (!affordable || isOwned) && styles.buyDisabled,
-              isOwned && styles.buyOwned,
-            ]}
+  return (
+    <ListRow
+      tone={isOwned ? 'owned' : 'default'}
+      overlay={overlay}
+      icon={<DevGlyph name={glyphName} size={15} color={colors.accent.amber} />}
+      trailing={(
+        <Button
+          tone="secondary"
+          size="sm"
+          style={styles.buyButton}
+          accessibilityLabel={`${t('skills.buy')} ${name}`}
+          disabled={!affordable || isOwned}
+          disabledReason={isOwned ? undefined : wait?.a11y}
+          onPress={() => onBuy(upgrade)}
+        >
+          <Text
+            style={[styles.buyText, isOwned && styles.buyTextOwned]}
+            numberOfLines={1}
+            maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
           >
-            <Text
-              style={[styles.buyText, isOwned && { color: colors.text.muted }]}
-              numberOfLines={1}
-              maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
-            >
-              {isOwned ? t('skills.purchased') : (
-                <ResourceValue kind={upgrade.costResource}>
-                  {FORMAT[upgrade.costResource](upgrade.cost)}
-                </ResourceValue>
-              )}
-            </Text>
-            <Text style={[styles.buyLabel, wait && styles.buyWait]} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
-              {isOwned ? t('skills.active') : (wait?.text ?? t('skills.buy'))}
-            </Text>
-          </Pressable>
-        </View>
+            {isOwned ? t('skills.purchased') : (
+              <ResourceValue kind={upgrade.costResource}>
+                {FORMAT[upgrade.costResource](upgrade.cost)}
+              </ResourceValue>
+            )}
+          </Text>
+          <Text style={[styles.buyLabel, wait && styles.buyWait]} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
+            {isOwned ? t('skills.active') : (wait?.text ?? t('skills.buy'))}
+          </Text>
+        </Button>
+      )}
+    >
+      <View style={styles.cardTitleRow}>
+        <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
       </View>
-    );
+      <Text style={[styles.level, styles.upgradeEffect]}>{upgradeEffectText(upgrade)}</Text>
+      {preview && meetsLevel && (preview.before.gt(0) || preview.after.gt(0)) ? (
+        <Text style={styles.bonus} numberOfLines={1}>
+          {preview.skillId ? `${skillName(preview.skillId)}: ` : `${t(`skills.branches.${upgrade.effect.type === 'branchMultiplier' ? upgrade.effect.branch : 'knowledge'}`)}: `}
+          <ResourceValue kind={preview.resource}>
+            {t('skills.upgradeFromTo', {
+              from: FORMAT[preview.resource](preview.before),
+              to: FORMAT[preview.resource](preview.after),
+            })}
+          </ResourceValue>
+        </Text>
+      ) : null}
+      <Text style={[styles.bonus, !meetsLevel && styles.bonusLocked]}>
+        {required
+          ? (meetsLevel
+            ? t('skills.targetLevel', { skill: skillName(required.skillId), level: targetLevel })
+            : t('skills.reqLevel', { skill: skillName(required.skillId), level: required.level }))
+          : t('skills.leadershipHint')}
+      </Text>
+    </ListRow>
+  );
 }, (prev, next) => (
   // The wait label is rebuilt every tick; compare its text, not its identity.
   prev.upgrade === next.upgrade
@@ -295,7 +307,7 @@ const UpgradeCard = memo(function UpgradeCard({
 ));
 
 export function SkillsCatalog() {
-  useLocale();
+  const locale = useLocale();
   const [category, setCategory] = useState<CatalogTab>('knowledge');
   const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>(1);
   const [upgradedSkillId, setUpgradedSkillId] = useState<string | null>(null);
@@ -317,6 +329,8 @@ export function SkillsCatalog() {
   const tabs = useMemo(() => getCatalogTabs(currentRank), [currentRank]);
   const activeTab = tabs.includes(category) ? category : 'knowledge';
   const branchTab = isBranchTab(activeTab) ? activeTab : null;
+  // Rebuilt only when the tab set or the language changes, so the memoized control keeps equal props.
+  const tabOptions = useMemo(() => tabs.map((tab) => ({ value: tab, label: tabLabel(tab) })), [tabs, locale]);
 
   const seenSkillIds = useSkillStore((state) => state.seenSkillIds);
   const markSkillsSeen = useSkillStore((state) => state.markSkillsSeen);
@@ -466,43 +480,19 @@ export function SkillsCatalog() {
 
     const isNew = newSkillIds.has(skill.id);
     const card = (
-      <View style={styles.cardWrapper}>
-        {pulseOverlay(skill.id)}
-        <View style={[styles.card, isNew && styles.cardNew]}>
-          <View style={styles.cardIcon}>
-            <DevGlyph name={glyphName} size={15} color={colors.accent.phosphorBright} />
-          </View>
-          <View style={styles.cardBody}>
-            <View style={styles.cardTitleRow}>
-              <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
-              {isNew ? (
-                <Text style={styles.newBadge} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>{t('skills.newBadge')}</Text>
-              ) : null}
-              <Text style={styles.level}>{t('skills.lvl', { level })}</Text>
-            </View>
-            <Text style={styles.description} numberOfLines={1}>
-              {unlocked ? t(`skills.items.${skill.id}.desc`) : requirementText(skill)}
-            </Text>
-            <Text style={styles.bonus}>
-              <GainText
-                skill={skill}
-                gain={gainFor(skill.id, effectiveGain)}
-                rank={currentRank}
-              />
-            </Text>
-            {contribution ? (
-              <Text style={styles.contribution} numberOfLines={1}>
-                <ContributionText skill={skill} contribution={contribution} rank={currentRank} />
-              </Text>
-            ) : null}
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={wait ? `${t('skills.buy')} ${name}. ${wait.a11y}` : `${t('skills.buy')} ${name}`}
-            accessibilityState={{ disabled: !affordable }}
+      <ListRow
+        tone={isNew ? 'highlight' : 'default'}
+        overlay={pulseOverlay(skill.id)}
+        icon={<DevGlyph name={glyphName} size={15} color={colors.accent.phosphorBright} />}
+        trailing={(
+          <Button
+            tone="secondary"
+            size="sm"
+            style={styles.buyButton}
+            accessibilityLabel={`${t('skills.buy')} ${name}`}
             disabled={!affordable}
+            disabledReason={wait?.a11y}
             onPress={() => handleBuy(skill.id)}
-            style={[styles.buyButton, !affordable && styles.buyDisabled]}
           >
             <Text style={styles.buyText} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
               {isMaxed ? 'MAX' : (
@@ -512,9 +502,32 @@ export function SkillsCatalog() {
             <Text style={[styles.buyLabel, wait && styles.buyWait]} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
               {wait?.text ?? t('skills.buy')}
             </Text>
-          </Pressable>
+          </Button>
+        )}
+      >
+        <View style={styles.cardTitleRow}>
+          <Text style={styles.skillName} numberOfLines={1}>{name}</Text>
+          {isNew ? (
+            <Text style={styles.newBadge} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>{t('skills.newBadge')}</Text>
+          ) : null}
+          <Text style={styles.level}>{t('skills.lvl', { level })}</Text>
         </View>
-      </View>
+        <Text style={styles.description} numberOfLines={1}>
+          {unlocked ? t(`skills.items.${skill.id}.desc`) : requirementText(skill)}
+        </Text>
+        <Text style={styles.bonus}>
+          <GainText
+            skill={skill}
+            gain={gainFor(skill.id, effectiveGain)}
+            rank={currentRank}
+          />
+        </Text>
+        {contribution ? (
+          <Text style={styles.contribution} numberOfLines={1}>
+            <ContributionText skill={skill} contribution={contribution} rank={currentRank} />
+          </Text>
+        ) : null}
+      </ListRow>
     );
     // New skills slide in from the top (a plain fade under reduced motion, handled by FadeSlideIn).
     return isNew ? <FadeSlideIn key={skill.id} from="top">{card}</FadeSlideIn> : <View key={skill.id}>{card}</View>;
@@ -533,44 +546,22 @@ export function SkillsCatalog() {
         ) : null}
       </View>
       {visibleSkills.length > 0 ? (
-        <View style={styles.purchaseModes}>
-          {([1, 10, 100, 'max'] as PurchaseMode[]).map((mode) => (
-            <Pressable
-              key={String(mode)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: purchaseMode === mode }}
-              onPress={() => setPurchaseMode(mode)}
-              style={[styles.modeButton, purchaseMode === mode && styles.modeButtonActive]}
-            >
-              <Text
-                style={[styles.modeText, purchaseMode === mode && styles.modeTextActive]}
-                maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
-              >
-                {mode === 'max' ? 'MAX' : `x${mode}`}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <SegmentedControl
+          style={styles.purchaseModes}
+          role="radio"
+          tone="amber"
+          options={PURCHASE_MODE_OPTIONS}
+          value={purchaseMode}
+          onChange={setPurchaseMode}
+        />
       ) : null}
-      <View style={styles.tabs}>
-        {tabs.map((tab) => (
-          <Pressable
-            key={tab}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === tab }}
-            onPress={() => setCategory(tab)}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-          >
-            <Text
-              style={[styles.tabText, activeTab === tab && styles.tabTextActive]}
-              numberOfLines={1}
-              maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}
-            >
-              {tabLabel(tab)}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <SegmentedControl
+        style={styles.tabs}
+        role="tab"
+        options={tabOptions}
+        value={activeTab}
+        onChange={setCategory}
+      />
       {/* Plain list: the page ScrollView is the only vertical scroll on this tab (no nested scroll). */}
       <View style={styles.listContent}>
         {teaser ? (
@@ -598,84 +589,25 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   heading: {
+    ...typography.roles.label,
     color: colors.text.muted,
-    fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
-    fontWeight: '900',
+    fontWeight: typography.weights.black,
     letterSpacing: 1.5,
   },
   rate: {
+    ...typography.roles.label,
     flexShrink: 1,
     color: colors.accent.phosphor,
-    fontFamily: typography.mono,
-    fontSize: typography.sizes.xs,
-    fontWeight: '700',
   },
   purchaseModes: {
-    flexDirection: 'row',
-    gap: 4,
     marginHorizontal: spacing.lg,
     marginBottom: spacing.xs,
   },
-  modeButton: {
-    flex: 1,
-    minHeight: MIN_TOUCH_TARGET,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-    borderRadius: radii.xs,
-    backgroundColor: colors.bg.surface,
-    paddingVertical: 2,
-  },
-  modeButtonActive: {
-    borderColor: colors.accent.amber,
-    backgroundColor: colors.accent.amberBg,
-  },
-  modeText: {
-    color: colors.text.muted,
-    fontFamily: typography.mono,
-    fontSize: 9,
-    fontWeight: '900',
-  },
-  modeTextActive: { color: colors.accent.amberBright },
   tabs: {
-    flexDirection: 'row',
     marginHorizontal: spacing.lg,
     marginBottom: spacing.sm,
-    backgroundColor: colors.bg.surface,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-    padding: 3,
-  },
-  tab: {
-    flex: 1,
-    minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radii.sm,
-  },
-  tabActive: {
-    backgroundColor: colors.bg.elevated,
-    borderWidth: 1,
-    borderColor: colors.border.active,
-  },
-  tabText: {
-    color: colors.text.muted,
-    fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
-    fontWeight: '800',
-  },
-  tabTextActive: {
-    color: colors.accent.phosphorBright,
   },
   listContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl },
-  cardWrapper: {
-    position: 'relative',
-    marginBottom: 6,
-  },
   pulseClone: {
     ...StyleSheet.absoluteFill,
     borderWidth: 2,
@@ -683,89 +615,47 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     backgroundColor: colors.accent.phosphorBg,
   },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.bg.surface,
-    borderRadius: radii.md,
-    padding: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-  },
-  cardIcon: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.bg.inset,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    marginRight: spacing.sm,
-  },
-  cardBody: { flex: 1, minWidth: 0 },
   cardTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   skillName: {
+    ...typography.roles.label,
     color: colors.text.primary,
-    fontFamily: typography.mono,
-    fontWeight: '800',
-    fontSize: typography.sizes.xs,
     flexShrink: 1,
   },
   level: {
+    ...typography.roles.label,
     color: colors.accent.amber,
-    fontFamily: typography.mono,
-    fontSize: 9,
-    fontWeight: '800',
-    marginLeft: 4,
+    marginLeft: spacing.xxs,
   },
   description: {
+    ...typography.roles.body,
     color: colors.text.secondary,
-    fontSize: 10,
+    fontSize: typography.sizes.xs,
+    lineHeight: 15,
     marginTop: 2,
   },
   upgradeEffect: { marginLeft: 0, marginTop: 2, color: colors.accent.phosphorBright },
   contribution: {
+    ...typography.roles.label,
     color: colors.text.muted,
-    fontFamily: typography.mono,
-    fontSize: 9,
     marginTop: 1,
   },
   bonus: {
+    ...typography.roles.label,
     color: colors.accent.phosphor,
-    fontFamily: typography.mono,
-    fontSize: 10,
-    fontWeight: '700',
     marginTop: 3,
   },
-  buyButton: {
-    backgroundColor: colors.bg.elevated,
-    borderWidth: 1,
-    borderColor: colors.accent.phosphorDim,
-    minWidth: 68,
-    minHeight: MIN_TOUCH_TARGET,
-    justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 6,
-    borderRadius: radii.sm,
-    alignItems: 'center',
-    marginLeft: spacing.sm,
-  },
-  cardNew: {
-    borderColor: colors.accent.amber,
-    backgroundColor: colors.accent.amberBg,
-  },
+  bonusLocked: { color: colors.accent.rustBright },
+  buyButton: { minWidth: 68, paddingHorizontal: spacing.xs },
   newBadge: {
+    ...typography.roles.label,
     color: colors.accent.amberBright,
-    fontFamily: typography.mono,
-    fontSize: 8,
-    fontWeight: '900',
+    fontWeight: typography.weights.black,
     letterSpacing: 1,
-    marginLeft: 4,
+    marginLeft: spacing.xxs,
     borderWidth: 1,
     borderColor: colors.accent.amber,
     borderRadius: radii.xs,
-    paddingHorizontal: 3,
+    paddingHorizontal: spacing.xxs,
   },
   teaser: {
     borderWidth: 1,
@@ -773,41 +663,25 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
     borderRadius: radii.md,
     padding: spacing.sm,
-    marginBottom: 6,
-    backgroundColor: colors.bg.inset,
+    marginBottom: spacing.xs + 1,
+    backgroundColor: colors.surface.inset,
   },
   teaserText: {
+    ...typography.roles.label,
     color: colors.text.muted,
-    fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
-    fontWeight: '800',
-  },
-  cardOwned: {
-    borderColor: colors.border.subtle,
-    opacity: 0.75,
-  },
-  buyOwned: {
-    borderColor: colors.border.subtle,
-    backgroundColor: colors.bg.surface,
-  },
-  buyDisabled: {
-    borderColor: colors.border.subtle,
-    opacity: 0.5,
   },
   buyText: {
+    ...typography.roles.label,
     color: colors.accent.phosphorBright,
-    fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
-    fontWeight: '900',
+    fontWeight: typography.weights.black,
   },
+  buyTextOwned: { color: colors.text.muted },
   buyWait: {
     color: colors.text.secondary,
   },
   buyLabel: {
+    ...typography.roles.label,
     color: colors.text.muted,
-    fontFamily: typography.mono,
-    fontSize: 8,
-    fontWeight: '900',
     marginTop: 1,
   },
 });

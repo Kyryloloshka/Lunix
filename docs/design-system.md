@@ -30,9 +30,6 @@ of truth: `src/shared/theme` (colors, type, motion) and `src/shared/ui` (compone
 | `spacing`, `radii`, `shadows` | Layout scale | No magic numbers in widgets |
 | `typography.roles.{display,title,body,label,monoNum}` | Text styles by role | Spread into `StyleSheet.create` |
 
-Deprecated (removed in T-004 stage 2): `colors.bg.*`, `colors.text.inverse`, `theme`,
-`typography.sizes.xxs`.
-
 ### Typography and the brand font
 - Brand font: **JetBrains Mono** (weights 400 / 700 / 800), from the official
   `@expo-google-fonts/jetbrains-mono` package, loaded once at app start by `src/application/fonts`
@@ -72,16 +69,17 @@ Deprecated (removed in T-004 stage 2): `colors.bg.*`, `colors.text.inverse`, `th
 | Need | Use |
 | --- | --- |
 | A resource amount (price, rate, requirement) | `ResourceValue` |
-| Resource balance tile | `ResourcePill` |
 | Tech or status icon | `DevGlyph` (never emoji) |
-| Section or panel frame | `Panel`, `SectionHeader` |
+| Section or panel frame | `Panel`, `PanelHeader` |
 | Small status tag | `Badge` (tone + text, not color alone) |
-| Action button | `GameButton` (filled tones use `text.onAccent`, min 44 pt) |
-| Progress | `ProgressBar` (pair it with a text value) |
+| Action button | `Button` (tones primary/secondary/ghost/danger; `disabled` + `disabledReason`, `loading`; min 44 pt) |
+| One of N choices / view switch | `SegmentedControl` (`role="radio"` for settings, `"tab"` for views) |
+| On/off setting | `Toggle` (state shown as text) |
+| Stress, combo, progress | `Meter` (`valueText` makes it a `progressbar`; otherwise put the number in nearby text) |
+| Icon + text + action row (skill, upgrade, rank) | `ListRow` / `Card` |
 | Animated counter / entrance | `CountUpText`, `FadeSlideIn` |
 
-T-004 stage 2 adds `Button`, `SegmentedControl`, `Toggle`, `Meter`, `Card`/`ListRow`, `PanelHeader`
-and replaces the hand-made versions in widgets. Until then, new UI should still read tokens only.
+Widgets must not hand-build buttons, segmented switches or bars: use the components above. A test (`widgetStyleRules.test.ts`) fails on hex/rgb colors and numeric `fontSize` below 11 in `src/widgets`.
 
 ## Do / Don't
 | Do | Don't |

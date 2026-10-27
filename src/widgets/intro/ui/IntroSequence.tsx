@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     zIndex: 100,
     elevation: 100,
-    backgroundColor: colors.bg.app,
+    backgroundColor: colors.surface.base,
   },
   surface: {
     flex: 1,

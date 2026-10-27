@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     alignItems: 'stretch',
     overflow: 'hidden',
-    shadowColor: '#000000',
+    shadowColor: colors.shadow,
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 12 },
     shadowRadius: 20,

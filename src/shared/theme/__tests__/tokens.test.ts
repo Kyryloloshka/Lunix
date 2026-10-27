@@ -1,5 +1,5 @@
 import { getLocale, setLocale, t, type Locale } from '@shared/i18n';
-import { FILLED_TONES } from '../../ui/GameButton';
+import { FILLED_BUTTON_TONES } from '../../ui/Button';
 import { glyphSymbols } from '../../ui/DevGlyph';
 import {
   baseTheme,
@@ -61,12 +61,13 @@ describe('semantic color tokens', () => {
     }
   });
 
-  it('GameButton filled tones (incl. primary) use text.onAccent, not white on violet', () => {
+  it('Button filled tones use text.onAccent, readable on their own fill', () => {
     // Regression: primary used #ffffff on #9f91bc, 2.9:1.
     expect(contrastRatio('#ffffff', colors.accent.violet)).toBeLessThan(MIN_TEXT_CONTRAST);
-    expect(FILLED_TONES.has('primary')).toBe(true);
-    expect(FILLED_TONES.has('success')).toBe(true);
-    expect(FILLED_TONES.has('warning')).toBe(true);
+    expect(FILLED_BUTTON_TONES.has('primary')).toBe(true);
+    expect(FILLED_BUTTON_TONES.has('danger')).toBe(true);
+    expect(contrastRatio(colors.text.onAccent, colors.feedback.warning)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(colors.text.onAccent, colors.feedback.danger)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
   });
 
   it('no longer exposes the legacy green/indigo/rose/gold aliases', () => {

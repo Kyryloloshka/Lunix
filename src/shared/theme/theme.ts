@@ -41,9 +41,6 @@ export const baseTheme: Theme = {
   shadows,
 };
 
-/** @deprecated use `baseTheme` (or `createRankTheme`). */
-export const theme = baseTheme;
-
 /** Pure: returns a new theme with the overlay's surfaces, border and accent applied. */
 export function applyAccentOverlay(base: Theme, overlay: RankAccentOverlay): Theme {
   const surface = {
@@ -58,12 +55,6 @@ export function applyAccentOverlay(base: Theme, overlay: RankAccentOverlay): The
     colors: {
       ...base.colors,
       surface,
-      bg: {
-        ...base.colors.bg,
-        app: surface.base,
-        subtle: surface.sunken,
-        surface: surface.raised,
-      },
       border: { ...base.colors.border, active: overlay.border },
     },
   };

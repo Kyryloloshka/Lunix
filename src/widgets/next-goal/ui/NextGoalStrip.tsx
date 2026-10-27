@@ -12,7 +12,7 @@ import {
 } from '@features/purchase-skill';
 import type { Decimal } from '@shared/lib/decimal';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
-import { DENSE_TEXT_MAX_FONT_SCALE, MIN_TOUCH_TARGET, ProgressBar, ResourceValue } from '@shared/ui';
+import { DENSE_TEXT_MAX_FONT_SCALE, MIN_TOUCH_TARGET, Meter, ResourceValue } from '@shared/ui';
 import { colors, radii, resources, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { readNextGoalState } from '../model/useNextGoalState';
@@ -119,7 +119,7 @@ export function NextGoalStrip({ onOpenTab }: NextGoalStripProps) {
       {progress ? (
         <View style={styles.progressRow}>
           <View style={styles.bar}>
-            <ProgressBar value={goal.ratio} max={1} color={color} height={5} />
+            <Meter ratio={goal.ratio} color={color} height={5} />
           </View>
           <ResourceValue kind={goal.resource} style={styles.progressText} numberOfLines={1}>{progress}</ResourceValue>
         </View>
@@ -180,14 +180,14 @@ const styles = StyleSheet.create({
   kicker: {
     color: colors.text.muted,
     fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
+    fontSize: typography.sizes.xs,
     fontWeight: '800',
     letterSpacing: 1,
   },
   status: {
     color: colors.text.secondary,
     fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
+    fontSize: typography.sizes.xs,
     fontWeight: '800',
   },
   statusReady: {
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   progressText: {
     color: colors.text.secondary,
     fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
+    fontSize: typography.sizes.xs,
     fontWeight: '800',
   },
 });

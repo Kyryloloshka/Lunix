@@ -6,8 +6,8 @@ import {
   toCountdownSeconds,
   useCurrencyStore,
 } from '@entities/currency';
-import { DevGlyph } from '@shared/ui';
-import { colors, radii, resources, typography } from '@shared/theme';
+import { DevGlyph, Meter } from '@shared/ui';
+import { colors, resources, typography } from '@shared/theme';
 import { t } from '@shared/i18n';
 
 /** Flow recharge meter: shown after Flow ends while the combo cannot build (T-014). */
@@ -25,9 +25,7 @@ export function FlowCooldownMeter() {
       accessibilityValue={{ min: 0, max: 100, now: Math.round(charged * 100) }}
     >
       <Text style={styles.text}>{t('status.cooldown', { seconds })}</Text>
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${charged * 100}%` }]} />
-      </View>
+      <Meter ratio={charged} color={resources.flow.color} style={styles.track} />
     </View>
   );
 }
@@ -58,13 +56,6 @@ const styles = StyleSheet.create({
     color: colors.text.muted,
     letterSpacing: 0,
   },
-  track: {
-    width: 64,
-    height: 3,
-    backgroundColor: colors.bg.inset,
-    borderRadius: radii.full,
-    overflow: 'hidden',
-  },
-  fill: { height: '100%', backgroundColor: resources.flow.color },
+  track: { width: 64 },
   resilience: { flexDirection: 'row', alignItems: 'center', gap: 3 },
 });
