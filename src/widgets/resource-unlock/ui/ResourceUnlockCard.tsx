@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import type { SkillResource } from '@entities/skill';
 import { useSkillStore } from '@features/purchase-skill';
 import { useSettingsStore } from '@features/settings';
 import { DevGlyph, FadeSlideIn, MIN_TOUCH_TARGET, TEXT_MAX_FONT_SCALE } from '@shared/ui';
@@ -13,39 +14,35 @@ const HERO_GLYPH_SIZE = 28;
 const HERO_SIZE = 56;
 
 interface ResourceUnlockCardProps {
-  /**
-   * False while another full-screen moment may be on screen (the promotion celebration on the
-   * Career tab); the event waits in the store and shows as soon as this turns true.
-   */
-  enabled: boolean;
+  /** The resource that just opened (the first pending unlock event). */
+  resource: SkillResource;
+  /** Called after the event was acknowledged in the store; the modal host closes the queue entry. */
+  onDismiss: () => void;
 }
 
 /**
- * "New: Capital — your first salary" (T-016 stage 5): shown once per unlocked resource, driven by the
- * store's `pendingResourceUnlocks` events. Explains where the resource comes from and what it is for.
- * Stays until the player dismisses it (no auto-close: it is the explanation, not just juice).
+ * "New: Capital — your first salary" (T-016 stage 5): shown once per unlocked resource, scheduled by the
+ * shared modal queue from the store's `pendingResourceUnlocks` events. Explains where the resource comes
+ * from and what it is for. Stays until the player dismisses it (no auto-close: it is the explanation).
  */
-export function ResourceUnlockCard({ enabled }: ResourceUnlockCardProps) {
+export function ResourceUnlockCard({ resource, onDismiss }: ResourceUnlockCardProps) {
   useLocale();
-  const resource = useSkillStore((state) => state.pendingResourceUnlocks[0]);
   const acknowledge = useSkillStore((state) => state.acknowledgeResourceUnlock);
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
-  const visible = enabled && resource !== undefined;
 
   useEffect(() => {
-    if (!visible || !hapticsEnabled) return;
+    if (!hapticsEnabled) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     // One buzz per card; a settings change while it is open must not replay it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, resource]);
-
-  if (!visible) return null;
+  }, [resource]);
 
   const token = resources[resource];
   const copy = getResourceUnlockCopy(resource);
   const name = t(token.labelKey);
   const dismiss = () => {
     acknowledge();
+    onDismiss();
   };
 
   return (

@@ -493,6 +493,20 @@
       }
     }
   },
+  "welcomeBack": {
+    "eyebrow": "MIENTRAS NO ESTABAS",
+    "title": "Estuviste fuera {duration}",
+    "durationHm": "{hours} h {minutes} min",
+    "durationM": "{minutes} minutos",
+    "line": {
+      "phase1": "Páginas de documentación leídas mientras dormías: {count}",
+      "phase2": "Bugs corregidos mientras estabas desconectado: {count}",
+      "phase3": "Tickets cerrados sin ti: {count}"
+    },
+    "capped": "El almacén guarda hasta 8 horas de trabajo. Vuelve un poco antes para llevártelo todo.",
+    "collect": "RECOGER",
+    "collectA11y": "Recoger lo ganado y continuar"
+  },
   "nextGoal": {
     "label": "SIGUIENTE META",
     "a11yLabel": "Siguiente meta: {goal}",

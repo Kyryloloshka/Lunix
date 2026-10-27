@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCurrencyStore } from '@entities/currency';
 import {
@@ -27,7 +26,7 @@ import type { Decimal } from '@shared/lib/decimal';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
 import { t, useLocale } from '@shared/i18n';
 import { useSkillStore } from '@features/purchase-skill';
-import { PromotionCelebration } from './PromotionCelebration';
+import { showPromotionCelebration } from '../model/promotionModal';
 
 interface CareerRoadmapProps {
   currentRankId: number;
@@ -108,7 +107,6 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
   const influence = useCurrencyStore((state) => state.influence);
   const levels = useSkillStore((state) => state.levels);
   const promote = useSkillStore((state) => state.promote);
-  const [celebratedRank, setCelebratedRank] = useState<number | null>(null);
   const progressContext = {
     earned: { cognitive: totalCognitiveEarned, capital: totalCapitalEarned },
     balance: { cognitive, capital, influence },
@@ -182,7 +180,7 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
               disabled={!canPromoteNow}
               onPress={() => {
                 if (!promote()) return;
-                setCelebratedRank(rankId);
+                showPromotionCelebration(rankId);
                 onPromote?.(rankId);
               }}
             >
@@ -266,8 +264,6 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
           );
         })}
       </View>
-
-      <PromotionCelebration rankId={celebratedRank} onDismiss={() => setCelebratedRank(null)} />
     </Panel>
   );
 }

@@ -7,7 +7,6 @@ import { HeaderHud } from '@widgets/header-hud';
 import { WorkspaceClicker } from '@widgets/workspace-clicker';
 import { SkillsCatalog } from '@widgets/skills-catalog';
 import { TAP_MODE_SWITCH_HEIGHT, TapModeSwitch, shouldShowTapModeSwitch } from '@widgets/tap-mode-switch';
-import { ResourceUnlockCard } from '@widgets/resource-unlock';
 import { IntroSequence } from '@widgets/intro';
 import { DockHint, StressHint, TapGuide, useOnboardingSync } from '@widgets/onboarding-hints';
 import { NextGoalStrip, useDockBadges } from '@widgets/next-goal';
@@ -15,6 +14,7 @@ import { CareerRoadmap } from '@widgets/career-roadmap';
 import { SimulatedLeaderboard } from '@widgets/simulated-leaderboard';
 import { BottomDock, type ActiveTab } from '@widgets/bottom-dock';
 import { useSkillStore } from '@features/purchase-skill';
+import { ModalHost } from './ModalHost';
 import { SettingsPanel } from '@widgets/settings';
 import { CONTENT_MAX_WIDTH, ColorTransitionView, FadeSlideIn, TEXT_MAX_FONT_SCALE } from '@shared/ui';
 import { colors, getRankTheme, spacing, typography } from '@shared/theme';
@@ -119,8 +119,8 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
         <DockHint onSkillsTab={activeTab === 'skills'} />
         <BottomDock activeTab={activeTab} onChangeTab={setActiveTab} badges={badges} />
       </View>
-      {/* Waits while the Career tab may show the promotion celebration, so two modals never stack. */}
-      <ResourceUnlockCard enabled={activeTab !== 'career'} />
+      {/* Offline report, promotion, resource unlock: one at a time, in queue order (T-019). */}
+      <ModalHost />
       {/* First launch (or replay from settings): covers the game until completed or skipped. */}
       <IntroSequence />
     </SafeAreaView>
