@@ -4,7 +4,7 @@ title: Шина подій рушія: що сталося в грі — одн�
 type: refactor
 priority: P0
 size: M
-status: review
+status: done
 epic: E1 (Рушій)
 hook: — (фундамент для E5, E7, E9)
 metric: —
