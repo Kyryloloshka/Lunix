@@ -1,4 +1,5 @@
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { TEXT_MAX_FONT_SCALE } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
@@ -24,6 +25,7 @@ export function DockHint({ onSkillsTab }: DockHintProps) {
   const stage = useGuideStage();
   const visible = stage === 'buy' && !onSkillsTab;
   const pulse = usePulse(visible);
+  const arrowStyle = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - pulse.value) * -4 + 4 }] }));
   if (!visible) return null;
 
   const tab = t('nav.skills');
@@ -43,12 +45,7 @@ export function DockHint({ onSkillsTab }: DockHintProps) {
         {Array.from({ length: TAB_COUNT }, (_, index) => (
           <View key={index} style={styles.arrowCell}>
             {index === SKILLS_TAB_INDEX ? (
-              <Animated.Text
-                style={[
-                  styles.arrow,
-                  { transform: [{ translateY: pulse.interpolate({ inputRange: [0, 1], outputRange: [0, 4] }) }] },
-                ]}
-              >
+              <Animated.Text style={[styles.arrow, arrowStyle]}>
                 {'▼'}
               </Animated.Text>
             ) : null}

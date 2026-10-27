@@ -35,6 +35,8 @@ const SHAKE_STEP_MS = Math.round(durations.fast / 4);
 const CODE_LINE_HEIGHT = 22;
 /** The flash tints the frame without hiding the code under it. */
 const CRIT_FLASH_PEAK_OPACITY = 0.6;
+const FLOW_FLASH_PEAK_OPACITY = 0.35;
+const FLOW_POP_SCALE = 1.04;
 
 /** What the editor needs to know about one tap; mirrors the model's tap result. */
 export interface EditorTapFeedback {
@@ -92,6 +94,11 @@ export const CodeEditor = memo(function CodeEditor({
   const scale = useSharedValue(1);
   const shakeX = useSharedValue(0);
   const critFlash = useSharedValue(0);
+  // 0 = normal frame, 1 = Flow frame; glides between them. `flowFlash`/`flowPop` are the one-shot enter accents.
+  const flowGlow = useSharedValue(flowActive ? 1 : 0);
+  const flowFlash = useSharedValue(0);
+  const flowPop = useSharedValue(1);
+  const flowWasActive = useRef(flowActive);
   const litKey = useSharedValue(-1);
   const keyGlow = useSharedValue(0);
   const cursorOpacity = useSharedValue(1);
@@ -104,6 +111,20 @@ export const CodeEditor = memo(function CodeEditor({
     }
     scale.value = withSpring(pressed ? PRESSED_SCALE : 1, springs.press);
   }, [pressed, reducedMotion, scale]);
+
+  useEffect(() => {
+    const entered = flowActive && !flowWasActive.current;
+    flowWasActive.current = flowActive;
+    flowGlow.value = withTiming(flowActive ? 1 : 0, timingConfig(flowActive ? 'fast' : 'slow', reducedMotion, { kind: 'fade' }));
+    if (!entered) return;
+    // Entering Flow: a flash across the frame and a small pop (the flash is a color fade, so it stays under reduced motion).
+    flowFlash.value = 1;
+    flowFlash.value = withTiming(0, timingConfig('celebrate', reducedMotion, { kind: 'fade', easing: 'decelerate' }));
+    if (!reducedMotion) {
+      flowPop.value = FLOW_POP_SCALE;
+      flowPop.value = withSpring(1, springs.pop);
+    }
+  }, [flowActive, reducedMotion, flowGlow, flowFlash, flowPop]);
 
   const startBlink = useCallback((delayMs: number) => {
     if (reducedMotion) {
@@ -154,8 +175,10 @@ export const CodeEditor = memo(function CodeEditor({
   useImperativeHandle(ref, () => ({ onTap }), [onTap]);
 
   const frameStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shakeX.value }, { scale: scale.value }],
+    borderColor: interpolateColor(flowGlow.value, [0, 1], [rankTheme.border, flowColor]),
+    transform: [{ translateX: shakeX.value }, { scale: scale.value * flowPop.value }],
   }));
+  const flowFlashStyle = useAnimatedStyle(() => ({ opacity: flowFlash.value * FLOW_FLASH_PEAK_OPACITY }));
   const flashStyle = useAnimatedStyle(() => ({ opacity: critFlash.value * CRIT_FLASH_PEAK_OPACITY }));
   const cursorStyle = useAnimatedStyle(() => ({ opacity: cursorOpacity.value }));
 
@@ -180,7 +203,7 @@ export const CodeEditor = memo(function CodeEditor({
             style={[
               styles.laptopButton,
               { borderColor: rankTheme.border, backgroundColor: rankTheme.surfaceTint },
-              flowActive && [styles.laptopButtonFlow, { borderColor: flowColor, shadowColor: flowColor }],
+              flowActive && [styles.laptopButtonFlow, { shadowColor: flowColor }],
               frameStyle,
             ]}
           >
@@ -229,6 +252,8 @@ export const CodeEditor = memo(function CodeEditor({
 
             {/* Crit flash: a color fade over the frame, kept (short) under reduced motion */}
             <Animated.View style={[styles.critFlash, flashStyle]} />
+            {/* Flow flash: the frame lights up in the Flow color when Flow starts */}
+            <Animated.View style={[styles.critFlash, { borderColor: flowColor, backgroundColor: flowColor }, flowFlashStyle]} />
           </Animated.View>
         </View>
       </View>

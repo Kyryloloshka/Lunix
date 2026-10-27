@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { getUnlockedResources, type RankResource } from '@entities/career-rank';
 import type { Decimal } from '@shared/lib/decimal';
 import {
@@ -9,14 +10,18 @@ import {
   toCountdownSeconds,
   useCurrencyStore,
 } from '@entities/currency';
+import { FlowBadge } from './FlowBadge';
 import { FlowCooldownMeter, ResilienceTag } from './RhythmIndicators';
+import { useStressZoneFeedback } from './useStressZoneFeedback';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
-import { DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, FadeSlideIn, Meter } from '@shared/ui';
+import { ColorTransitionView, CountUpText, DENSE_TEXT_MAX_FONT_SCALE, DevGlyph, FadeSlideIn, Meter } from '@shared/ui';
 import { colors, getRankTheme, radii, resources, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 
 // HUD numbers sit in a fixed 3-column grid: cap system font scaling so large fonts don't break it
 const HUD_FONT_SCALE = DENSE_TEXT_MAX_FONT_SCALE;
+/** Count-up of the balances: fewer pre-formatted frames than the default, since it restarts on every 200 ms tick. */
+const COUNT_UP_STEPS = 6;
 
 const HUD_FORMAT: Record<RankResource, (value: Decimal) => string> = {
   capital: (value) => formatCurrency(value),
@@ -48,6 +53,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
   };
 
   const rankTheme = getRankTheme(rankIndex);
+  const { inZone: stressInZone, shakeStyle: stressShake } = useStressZoneFeedback(stress);
   const stressColor = stress > 75
     ? colors.accent.red
     : stress > 45
@@ -55,7 +61,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
     : rankTheme.accent;
 
   return (
-    <View style={[styles.container, { borderColor: rankTheme.border, backgroundColor: rankTheme.surfaceTint }]}>
+    <ColorTransitionView style={styles.container} borderColor={rankTheme.border} backgroundColor={rankTheme.surfaceTint}>
       <View style={styles.topRow}>
         <View style={styles.rankBadge}>
           <DevGlyph name="rank" size={12} color={rankTheme.accentBright} />
@@ -66,12 +72,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
 
         <View style={styles.topRowActions}>
           {flow.isActive ? (
-            <View style={styles.flowBadge}>
-              <DevGlyph name={resources.flow.glyph} size={12} color={colors.text.onAccent} />
-              <Text style={styles.flowText} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
-                {t('status.flow')} x{flow.multiplier} · {Math.ceil(flow.remainingMs / 1000)}s
-              </Text>
-            </View>
+            <FlowBadge multiplier={flow.multiplier} remainingMs={flow.remainingMs} />
           ) : flow.cooldownRemainingMs > 0 ? (
             <FlowCooldownMeter />
           ) : (
@@ -83,7 +84,7 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
                   seconds: toCountdownSeconds(flow.comboCount > 0 ? flow.comboRemainingMs : COMBO_WINDOW_MS),
                 })}
               </Text>
-              <Meter kind="combo" ratio={flow.comboCount / FLOW_COMBO_THRESHOLD} style={styles.comboMeter} />
+              <Meter animated kind="combo" ratio={flow.comboCount / FLOW_COMBO_THRESHOLD} style={styles.comboMeter} />
             </View>
           )}
         </View>
@@ -100,9 +101,16 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
                   {t(resources[resource].labelKey).toUpperCase()}
                 </Text>
               </View>
-              <Text style={styles.value} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
-                {HUD_FORMAT[resource](balances[resource])}
-              </Text>
+              {/* Counts up on the UI thread: a new balance never re-renders React per frame (T-015). */}
+              <CountUpText
+                value={balances[resource]}
+                format={HUD_FORMAT[resource]}
+                duration="fast"
+                steps={COUNT_UP_STEPS}
+                style={styles.value}
+                maxFontSizeMultiplier={HUD_FONT_SCALE}
+                testID={`hud-value-${resource}`}
+              />
               {/* T-017: the number is what really came in during the last second (taps included); when idle it equals passive. */}
               {income[resource].gt(0) || perSec[resource].gt(0) ? (
                 <Text style={styles.rate} numberOfLines={1} maxFontSizeMultiplier={HUD_FONT_SCALE}>
@@ -129,15 +137,15 @@ export function HeaderHud({ rankTitle, rankIndex }: HeaderHudProps) {
             </Text>
             <ResilienceTag />
           </View>
-          <Text style={[styles.stressHint, stress > 70 && styles.throttlingHint]} numberOfLines={2} maxFontSizeMultiplier={HUD_FONT_SCALE}>
-            {stress > 70
+          <Animated.Text style={[styles.stressHint, stressInZone && styles.throttlingHint, stressShake]} numberOfLines={2} maxFontSizeMultiplier={HUD_FONT_SCALE}>
+            {stressInZone
               ? `${t('status.throttling')} · -${getStressPenaltyPercent(stress)}% ${t('status.output')}`
               : t('status.optimal')}
-          </Text>
+          </Animated.Text>
         </View>
-        <Meter kind="stress" ratio={stress / 100} color={stressColor} />
+        <Meter animated pulse={stressInZone} kind="stress" ratio={stress / 100} color={stressColor} />
       </View>
-    </View>
+    </ColorTransitionView>
   );
 }
 
@@ -178,22 +186,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.mono,
     fontWeight: '800',
     fontSize: typography.sizes.xs,
-  },
-  flowBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: resources.flow.color,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radii.xs,
-    gap: 4,
-  },
-  flowText: {
-    color: colors.text.onAccent,
-    fontFamily: typography.mono,
-    fontWeight: '900',
-    fontSize: typography.sizes.xs,
-    letterSpacing: 0.5,
   },
   comboProgress: {
     alignItems: 'flex-end',
@@ -241,6 +233,8 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     fontWeight: '900',
     marginTop: 2,
+    // The count-up text is an input: give it the box's width so changing digits never re-measure it.
+    width: '100%',
   },
   rate: {
     ...typography.roles.label,

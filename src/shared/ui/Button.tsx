@@ -1,5 +1,8 @@
-import { memo, type ReactNode } from 'react';
+import { memo, useCallback, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import type { GestureResponderEvent } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { usePressScale } from '@shared/lib/motion';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { DENSE_TEXT_MAX_FONT_SCALE, MIN_TOUCH_TARGET } from './layout';
 
@@ -24,6 +27,8 @@ export interface ButtonProps extends Omit<PressableProps, 'style' | 'children' |
   style?: StyleProp<ViewStyle>;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 const isText = (node: ReactNode): node is string | number => typeof node === 'string' || typeof node === 'number';
 
 /**
@@ -42,6 +47,8 @@ export const Button = memo(function Button({
   style,
   accessibilityLabel,
   accessibilityState,
+  onPressIn,
+  onPressOut,
   ...props
 }: ButtonProps) {
   const inactive = disabled || loading;
@@ -49,14 +56,31 @@ export const Button = memo(function Button({
   const label = disabled && disabledReason && name ? `${name}. ${disabledReason}` : name;
   const filled = FILLED_BUTTON_TONES.has(tone);
 
+  // Press feedback: a spring scale on the UI thread (none under reduced motion) plus a dim, which stays
+  // as the non-motion pressed state. The dim needs a tiny state; it only re-renders this button.
+  const [pressed, setPressed] = useState(false);
+  const press = usePressScale({ disabled: inactive });
+  const handlePressIn = useCallback((event: GestureResponderEvent) => {
+    setPressed(true);
+    press.onPressIn();
+    onPressIn?.(event);
+  }, [onPressIn, press]);
+  const handlePressOut = useCallback((event: GestureResponderEvent) => {
+    setPressed(false);
+    press.onPressOut();
+    onPressOut?.(event);
+  }, [onPressOut, press]);
+
   return (
-    <Pressable
+    <AnimatedPressable
       {...props}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ ...accessibilityState, disabled: inactive, busy: loading }}
       disabled={inactive}
-      style={({ pressed }) => [
+      style={[
         styles.base,
         styles[tone],
         size === 'sm' ? styles.sm : styles.md,
@@ -64,6 +88,7 @@ export const Button = memo(function Button({
         pressed && !inactive && styles.pressed,
         disabled && styles.disabled,
         style,
+        press.animatedStyle,
       ]}
     >
       {loading ? (
@@ -79,7 +104,7 @@ export const Button = memo(function Button({
       ) : (
         children
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 });
 

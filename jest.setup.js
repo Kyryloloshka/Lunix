@@ -38,6 +38,7 @@ jest.mock('react-native-reanimated', () => {
       callback?.(true);
       return value;
     },
+    interpolateColor: (_progress, _input, output) => output[0],
     withDelay: (_delay, value) => value,
     withSequence: (...values) => values[values.length - 1],
     withRepeat: (value) => value,

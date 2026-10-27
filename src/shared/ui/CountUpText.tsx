@@ -12,6 +12,7 @@ interface CountUpTextProps extends CountUpOptions {
   style?: StyleProp<TextStyle>;
   /** Screen reader label. Defaults to the final formatted value (never the in-between frames). */
   accessibilityLabel?: string;
+  maxFontSizeMultiplier?: number;
   testID?: string;
 }
 
@@ -19,11 +20,12 @@ interface CountUpTextProps extends CountUpOptions {
  * Text that counts up/down to a Decimal value on the UI thread (no React render per frame).
  * Rendered as a read-only, non-focusable TextInput because its text can be updated natively.
  */
-export function CountUpText({ value, format, style, accessibilityLabel, testID, ...options }: CountUpTextProps) {
+export function CountUpText({ value, format, style, accessibilityLabel, maxFontSizeMultiplier, testID, ...options }: CountUpTextProps) {
   const { text, animatedProps } = useCountUp(value, format, options);
   return (
     <AnimatedTextInput
       testID={testID}
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
       animatedProps={animatedProps}
       defaultValue={text}
       editable={false}
