@@ -64,7 +64,7 @@
 | [T-026](T-026-prestige-exit.md) | Престиж Exit / IPO: Equity, дерево перків, новий ран швидше | product / economy | P0 | L | todo | T-022, T-025 (етап 1 — дизайн — можна раніше) |
 | [T-020](T-020-save-slots-and-export.md) | Сейв не губиться: резервний слот, експорт/імпорт рядком | feature / quality | P1 | M | todo | T-019 |
 | [T-024](T-024-incidents.md) | Інциденти з вибором: хотфікс / rollback / ігнор, техборг | feature / content | P1 | M | todo | T-023 |
-| [T-027](T-027-uk-language-polish.md) | Українська звучить природно: відмінки, одна форма наказу | content / i18n | P2 | S | todo | — |
+| [T-027](T-027-uk-language-polish.md) | Українська звучить природно: відмінки, одна форма наказу | content / i18n | P2 | S | done | — |
 | [T-007](T-007-resources-clarity-and-cognitive-sink.md) | ~~Зрозумілі ресурси і куди витрачати Cognitive~~ | — | — | — | superseded | → T-014, T-016, T-017, T-018 |
 
 **Рекомендований порядок.** T-001 → T-002 + T-012 (одна розкладка «Консолі») → **T-016 етап 1 (дизайн-
