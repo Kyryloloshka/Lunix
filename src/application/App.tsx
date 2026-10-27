@@ -28,7 +28,7 @@ export default function App() {
       <SafeAreaProvider>
         <MotionPreferenceProvider reducedMotion={reducedMotionChoice}>
           <StatusBar style="light" />
-          {isGameLoaded && areFontsReady ? <GameScreen onResetProgress={resetProgress} /> : <View style={{ flex: 1, backgroundColor: colors.bg.app }} />}
+          {isGameLoaded && areFontsReady ? <GameScreen onResetProgress={resetProgress} /> : <View style={{ flex: 1, backgroundColor: colors.surface.base }} />}
         </MotionPreferenceProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

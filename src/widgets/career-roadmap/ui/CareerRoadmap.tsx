@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCurrencyStore } from '@entities/currency';
 import {
   getFirstUnmetRequirement,
@@ -13,12 +13,12 @@ import {
 } from '@entities/career-rank';
 import {
   Badge,
+  Button,
   DevGlyph,
   FadeSlideIn,
-  MIN_TOUCH_TARGET,
   Panel,
   PanelHeader,
-  ProgressBar,
+  Meter,
   ResourceValue,
   type GlyphName,
 } from '@shared/ui';
@@ -164,17 +164,16 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
                     </ResourceValue>
                   )}
                 </View>
-                <ProgressBar
-                  value={Math.round(getRequirementRatio(item) * 100)}
+                <Meter
+                  ratio={getRequirementRatio(item)}
                   color={requirementColor(item)}
-                  trackColor={colors.bg.inset}
                   style={styles.progressBar}
                 />
               </View>
             ))}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !canPromoteNow }}
+            <Button
+              tone="primary"
+              style={styles.promoteButton}
               accessibilityLabel={
                 canPromoteNow
                   ? t('career.promoteA11y', { rank: title })
@@ -186,16 +185,9 @@ export function CareerRoadmap({ currentRankId, onPromote }: CareerRoadmapProps) 
                 setCelebratedRank(rankId);
                 onPromote?.(rankId);
               }}
-              style={({ pressed }) => [
-                styles.promoteButton,
-                !canPromoteNow && styles.promoteButtonDisabled,
-                pressed && canPromoteNow && styles.promoteButtonPressed,
-              ]}
             >
-              <Text style={[styles.promoteText, !canPromoteNow && styles.promoteTextDisabled]}>
-                {t('career.promote')}
-              </Text>
-            </Pressable>
+              {t('career.promote')}
+            </Button>
             <Text style={[styles.reason, canPromoteNow && styles.reasonReady]}>{reason}</Text>
           </View>
         ) : null}
@@ -284,7 +276,7 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: spacing.lg,
     marginVertical: spacing.md,
-    backgroundColor: colors.bg.surface,
+    backgroundColor: colors.surface.raised,
   },
   header: {
     marginBottom: spacing.lg,
@@ -314,7 +306,7 @@ const styles = StyleSheet.create({
     width: NODE_SIZE,
     height: NODE_SIZE,
     borderRadius: radii.sm,
-    backgroundColor: colors.bg.inset,
+    backgroundColor: colors.surface.inset,
     borderWidth: 1,
     borderColor: colors.border.default,
     alignItems: 'center',
@@ -345,7 +337,7 @@ const styles = StyleSheet.create({
   },
   stepCard: {
     flex: 1,
-    backgroundColor: colors.bg.inset,
+    backgroundColor: colors.surface.inset,
     borderWidth: 1,
     borderColor: colors.border.subtle,
     borderRadius: radii.md,
@@ -353,11 +345,11 @@ const styles = StyleSheet.create({
   },
   stepCardCurrent: {
     borderColor: colors.accent.phosphorDim,
-    backgroundColor: colors.bg.surface,
+    backgroundColor: colors.surface.raised,
   },
   stepCardNext: {
     borderColor: colors.accent.amber,
-    backgroundColor: colors.bg.surface,
+    backgroundColor: colors.surface.raised,
   },
   stepCardSilhouette: {
     borderStyle: 'dashed',
@@ -393,7 +385,7 @@ const styles = StyleSheet.create({
   requirementsBox: {
     marginTop: spacing.sm,
     padding: spacing.sm,
-    backgroundColor: colors.bg.inset,
+    backgroundColor: colors.surface.inset,
     borderRadius: radii.xs,
     borderWidth: 1,
     borderColor: colors.border.subtle,
@@ -428,28 +420,6 @@ const styles = StyleSheet.create({
   },
   promoteButton: {
     marginTop: spacing.sm,
-    minHeight: MIN_TOUCH_TARGET,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: colors.accent.amber,
-    backgroundColor: colors.accent.amberBg,
-  },
-  promoteButtonPressed: {
-    backgroundColor: colors.bg.elevated,
-  },
-  promoteButtonDisabled: {
-    borderStyle: 'dashed',
-    borderColor: colors.border.default,
-    backgroundColor: colors.bg.subtle,
-  },
-  promoteText: {
-    ...typography.roles.label,
-    color: colors.accent.amberBright,
-  },
-  promoteTextDisabled: {
-    color: colors.text.muted,
   },
   reason: {
     ...typography.roles.label,

@@ -55,7 +55,7 @@ export const panelHeaderStyles = StyleSheet.create({
   },
   eyebrow: {
     fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
+    fontSize: typography.sizes.xs,
     fontWeight: '900',
     color: colors.text.muted,
     letterSpacing: 1.2,

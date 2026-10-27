@@ -125,7 +125,7 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.bg.app,
+    backgroundColor: colors.surface.base,
   },
   column: {
     flex: 1,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   kicker: {
     color: colors.accent.amber,
     fontFamily: typography.mono,
-    fontSize: typography.sizes.xxs,
+    fontSize: typography.sizes.xs,
     fontWeight: '900',
     letterSpacing: 1.2,
     textAlign: 'center',

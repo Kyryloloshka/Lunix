@@ -142,3 +142,12 @@ needs-approval: так — брендовий моноширинний шриф�
 - Гліф Flow `bolt` (⚡) — емодзі за замовчуванням на частині платформ; замінити на текстовий гліф разом
   з етапом 2.
 - Ліцензію OFL додати в екран «Credits», коли він з'явиться.
+
+**2026-10-26 — етап 2 (компоненти) зроблено**, гілка `task/T-004-stage2-components`.
+- `shared/ui`: `Button` (primary/secondary/ghost/danger; `disabled` + `disabledReason` додається до a11y-імені; `loading` → busy; мін. 44 pt), `SegmentedControl` (radio/tab, selected/checked, акцент на сегмент), `Toggle` (role switch, стан текстом), `Meter` (stress/combo/progress; `valueText` → progressbar), `Card`/`ListRow` (іконка + тіло + trailing + overlay). `PanelHeader`, `ResourceValue` збережено.
+- Замінено у віджетах: режими покупки x1/x10/x100/MAX (тепер `radio`), вкладки каталогу, мова, нотація, TapModeSwitch → `SegmentedControl`; стрес і комбо (HUD), кулдаун Flow, вимоги кар'єри, next-goal, лідерборд → `Meter`; Купити (скіли/апгрейди), Промоут, кнопки в налаштуваннях → `Button`; тогли → `Toggle`; картки скілів/апгрейдів → `ListRow` (мемоізація `UpgradeCard` збережена).
+- Видалено: `GameButton`, `ProgressBar`, `ResourcePill`, `SectionHeader`, `StatPlate` (останні три не використовувались), застарілі `colors.bg.*`, `text.inverse`, `sizes.xxs`, `theme`. Додано токен `colors.shadow`, у віджетах більше немає hex і шрифтів < 11.
+- Тести: `components.test.tsx` (ролі, причина disabled, loading, clamp), `widgetStyleRules.test.ts` (у віджетах немає hex/rgb і `fontSize` < 11). T-011 тести й a11y-аудит проходять без змін запитів.
+- Перевірено у web (375 px): Консоль, Стек (скіли/апгрейди), Грейди, Топ, Опції. Android не перевірявся.
+
+**Відкладено:** нижній док (вкладки з іконкою) і модалки/інтро/хінти (`Pressable`-кнопки) лишились ручними; скріншоти до/після для PR не збирались; контраст тексту на disabled-кнопках (opacity .55) не вимірювався. Через це статус лишається `in-progress`.
