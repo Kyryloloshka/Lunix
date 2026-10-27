@@ -39,7 +39,12 @@
     "resetConfirm": "Sí, empezar de nuevo",
     "resetCancel": "Cancelar",
     "replayIntro": "Ver la introducción",
-    "replayIntroHint": "La breve historia del inicio del juego. Tu progreso no cambia."
+    "replayIntroHint": "La breve historia del inicio del juego. Tu progreso no cambia.",
+    "languageNames": {
+      "uk": "Українська",
+      "en": "English",
+      "es": "Español"
+    }
   },
   "resources": {
     "capital": "Capital",
@@ -50,7 +55,7 @@
   "status": {
     "prod": "PROD: ESTABLE",
     "zone": "EN LA ZONA ×{multiplier}",
-    "flow": "FLOW OVERCLOCK",
+    "flow": "FLUJO: OVERCLOCK",
     "combo": "Combo {current}/{target} · {seconds}s",
     "ratePerSec": "+{amount}/s",
     "throttling": "RIESGO DE ESTRANGULAMIENTO",
@@ -86,7 +91,7 @@
     "waitA11y": "Aproximadamente {time} para poder comprar",
     "purchased": "ADQUIRIDO",
     "multiplier": "x{mult} IMPULSO",
-    "reqLevel": "Requiere {skill} Nivel {level}",
+    "reqLevel": "Requiere: {skill}, nivel {level}",
     "newBadge": "NUEVO",
     "teaser": "??? · se desbloquea en el rango {rank}",
     "items": {
@@ -318,7 +323,13 @@
     "targetLevel": "{skill} · NIVEL {level}",
     "leadershipHint": "Potencia toda una rama",
     "active": "ACTIVO",
-    "perksTab": "VENTAJAS"
+    "perksTab": "VENTAJAS",
+    "max": "MÁX",
+    "buyAmount": "×{count}",
+    "buyA11y": "Comprar {name}",
+    "buyModeA11y": "Comprar {count} niveles a la vez",
+    "buyModeMaxA11y": "Comprar tantos como puedas pagar",
+    "maxedA11y": "{name}: nivel máximo"
   },
   "career": {
     "heading": "HOJA DE RUTA PROFESIONAL",

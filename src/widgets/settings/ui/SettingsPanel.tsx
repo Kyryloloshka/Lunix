@@ -9,11 +9,16 @@ import { useSettingsStore, type NumberNotation } from '@features/settings';
 import { useSkillStore } from '@features/purchase-skill';
 import { useOnboardingStore } from '@features/onboarding';
 
-const LOCALE_OPTIONS: readonly SegmentOption<Locale>[] = [
-  { value: 'uk', label: 'UK' },
-  { value: 'en', label: 'EN' },
-  { value: 'es', label: 'ES' },
-];
+const LOCALES: readonly Locale[] = ['uk', 'en', 'es'];
+
+/** Visible label is the language code; the spoken name is the language's own name (same in every locale). */
+function localeOptions(): SegmentOption<Locale>[] {
+  return LOCALES.map((code) => ({
+    value: code,
+    label: code.toUpperCase(),
+    accessibilityLabel: t(`settings.languageNames.${code}`),
+  }));
+}
 
 type ResetProgressSectionProps = {
   onResetProgress: () => Promise<void>;
@@ -107,7 +112,7 @@ export function SettingsPanel({ onResetProgress }: SettingsPanelProps) {
         </Pressable>
       )}
       <Text style={styles.selectLabel}>{t('settings.language')}</Text>
-      <SegmentedControl role="radio" options={LOCALE_OPTIONS} value={locale} onChange={setLocale} />
+      <SegmentedControl role="radio" options={localeOptions()} value={locale} onChange={setLocale} />
       <Text style={styles.selectLabel}>{t('settings.notation')}</Text>
       <SegmentedControl role="radio" options={notationOptions} value={notation} onChange={setNotation} />
       <View style={styles.introSection}>

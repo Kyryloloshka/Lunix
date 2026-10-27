@@ -39,7 +39,12 @@
     "resetConfirm": "Yes, start over",
     "resetCancel": "Cancel",
     "replayIntro": "Replay intro",
-    "replayIntroHint": "The short story from the start of the game. Your progress stays as is."
+    "replayIntroHint": "The short story from the start of the game. Your progress stays as is.",
+    "languageNames": {
+      "uk": "Українська",
+      "en": "English",
+      "es": "Español"
+    }
   },
   "resources": {
     "capital": "Capital",
@@ -86,7 +91,7 @@
     "waitA11y": "About {time} until you can buy",
     "purchased": "OWNED",
     "multiplier": "x{mult} BOOST",
-    "reqLevel": "Requires {skill} Lvl {level}",
+    "reqLevel": "Requires: {skill}, lvl {level}",
     "newBadge": "NEW",
     "teaser": "??? · unlocks at rank {rank}",
     "items": {
@@ -318,7 +323,13 @@
     "targetLevel": "{skill} · LVL {level}",
     "leadershipHint": "Boosts a whole branch",
     "active": "ACTIVE",
-    "perksTab": "PERKS"
+    "perksTab": "PERKS",
+    "max": "MAX",
+    "buyAmount": "×{count}",
+    "buyA11y": "Buy {name}",
+    "buyModeA11y": "Buy {count} levels at a time",
+    "buyModeMaxA11y": "Buy as many as you can afford",
+    "maxedA11y": "{name}: maximum level"
   },
   "career": {
     "heading": "CAREER ROADMAP",

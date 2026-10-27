@@ -49,12 +49,13 @@ function isBranchTab(tab: CatalogTab): tab is SkillBranch {
   return tab !== 'perks' && tab !== 'upgrades';
 }
 
-const PURCHASE_MODE_OPTIONS: readonly SegmentOption<PurchaseMode>[] = [
-  { value: 1, label: 'x1' },
-  { value: 10, label: 'x10' },
-  { value: 100, label: 'x100' },
-  { value: 'max', label: 'MAX' },
-];
+const PURCHASE_MODES: readonly PurchaseMode[] = [1, 10, 100, 'max'];
+
+function purchaseModeOptions(): SegmentOption<PurchaseMode>[] {
+  return PURCHASE_MODES.map((mode) => (mode === 'max'
+    ? { value: mode, label: t('skills.max'), accessibilityLabel: t('skills.buyModeMaxA11y') }
+    : { value: mode, label: t('skills.buyAmount', { count: mode }), accessibilityLabel: t('skills.buyModeA11y', { count: mode }) }));
+}
 
 function tabLabel(tab: CatalogTab): string {
   if (tab === 'upgrades') return t('skills.upgradesTab');
@@ -246,7 +247,7 @@ const UpgradeCard = memo(function UpgradeCard({
           tone="secondary"
           size="sm"
           style={styles.buyButton}
-          accessibilityLabel={`${t('skills.buy')} ${name}`}
+          accessibilityLabel={t('skills.buyA11y', { name })}
           disabled={!affordable || isOwned}
           disabledReason={isOwned ? undefined : wait?.a11y}
           onPress={() => onBuy(upgrade)}
@@ -330,6 +331,7 @@ export function SkillsCatalog() {
   const activeTab = tabs.includes(category) ? category : 'knowledge';
   const branchTab = isBranchTab(activeTab) ? activeTab : null;
   // Rebuilt only when the tab set or the language changes, so the memoized control keeps equal props.
+  const modeOptions = useMemo(() => purchaseModeOptions(), [locale]);
   const tabOptions = useMemo(() => tabs.map((tab) => ({ value: tab, label: tabLabel(tab) })), [tabs, locale]);
 
   const seenSkillIds = useSkillStore((state) => state.seenSkillIds);
@@ -489,13 +491,13 @@ export function SkillsCatalog() {
             tone="secondary"
             size="sm"
             style={styles.buyButton}
-            accessibilityLabel={`${t('skills.buy')} ${name}`}
+            accessibilityLabel={t('skills.buyA11y', { name })}
             disabled={!affordable}
             disabledReason={wait?.a11y}
             onPress={() => handleBuy(skill.id)}
           >
             <Text style={styles.buyText} numberOfLines={1} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>
-              {isMaxed ? 'MAX' : (
+              {isMaxed ? t('skills.max') : (
                 <ResourceValue kind={skill.costResource}>{FORMAT[skill.costResource](cost)}</ResourceValue>
               )}
             </Text>
@@ -512,9 +514,14 @@ export function SkillsCatalog() {
           ) : null}
           <Text style={styles.level}>{t('skills.lvl', { level })}</Text>
         </View>
-        <Text style={styles.description} numberOfLines={1}>
-          {unlocked ? t(`skills.items.${skill.id}.desc`) : requirementText(skill)}
-        </Text>
+        {unlocked ? (
+          <Text style={styles.description} numberOfLines={1}>{t(`skills.items.${skill.id}.desc`)}</Text>
+        ) : (
+          <View style={styles.lockedRow}>
+            <DevGlyph name="lock" size={11} color={colors.text.muted} />
+            <Text style={[styles.description, styles.lockedText]} numberOfLines={2}>{requirementText(skill)}</Text>
+          </View>
+        )}
         <Text style={styles.bonus}>
           <GainText
             skill={skill}
@@ -550,7 +557,7 @@ export function SkillsCatalog() {
           style={styles.purchaseModes}
           role="radio"
           tone="amber"
-          options={PURCHASE_MODE_OPTIONS}
+          options={modeOptions}
           value={purchaseMode}
           onChange={setPurchaseMode}
         />
@@ -626,6 +633,8 @@ const styles = StyleSheet.create({
     color: colors.accent.amber,
     marginLeft: spacing.xxs,
   },
+  lockedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  lockedText: { flexShrink: 1 },
   description: {
     ...typography.roles.body,
     color: colors.text.secondary,

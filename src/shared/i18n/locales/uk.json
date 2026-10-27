@@ -39,7 +39,12 @@
     "resetConfirm": "Так, почати заново",
     "resetCancel": "Скасувати",
     "replayIntro": "Переглянути інтро",
-    "replayIntroHint": "Коротка історія на початку гри. Прогрес не зміниться."
+    "replayIntroHint": "Коротка історія на початку гри. Прогрес не зміниться.",
+    "languageNames": {
+      "uk": "Українська",
+      "en": "English",
+      "es": "Español"
+    }
   },
   "resources": {
     "capital": "Капітал",
@@ -48,9 +53,9 @@
     "stress": "Навантаження"
   },
   "status": {
-    "prod": "PROD: STABLE",
-    "zone": "IN THE ZONE ×{multiplier}",
-    "flow": "FLOW OVERCLOCK",
+    "prod": "PROD: СТАБІЛЬНО",
+    "zone": "В ПОТОЦІ ×{multiplier}",
+    "flow": "ФЛОУ: ОВЕРКЛОК",
     "combo": "Комбо {current}/{target} · {seconds}с",
     "ratePerSec": "+{amount}/с",
     "throttling": "РИЗИК ПЕРЕВАНТАЖЕННЯ",
@@ -86,7 +91,7 @@
     "waitA11y": "Приблизно {time} до покупки",
     "purchased": "КУПЛЕНО",
     "multiplier": "x{mult} БУСТ",
-    "reqLevel": "Потрібен {skill} Рів. {level}",
+    "reqLevel": "Потрібно: {skill}, рів. {level}",
     "newBadge": "НОВЕ",
     "teaser": "??? · відкривається на ранзі {rank}",
     "items": {
@@ -318,7 +323,13 @@
     "targetLevel": "{skill} · РІВ. {level}",
     "leadershipHint": "Підсилює всю гілку",
     "active": "АКТИВНО",
-    "perksTab": "ПЕРКИ"
+    "perksTab": "ПЕРКИ",
+    "max": "МАКС",
+    "buyAmount": "×{count}",
+    "buyA11y": "Купити {name}",
+    "buyModeA11y": "Купувати по {count} рівнів",
+    "buyModeMaxA11y": "Купувати максимум, що вистачає коштів",
+    "maxedA11y": "{name}: максимальний рівень"
   },
   "career": {
     "heading": "КАР'ЄРНИЙ МАРШРУТ",
