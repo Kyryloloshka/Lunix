@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Decimal } from '@shared/lib/decimal';
+import { gameEvents } from '@entities/game-events';
 import { RHYTHM_CONFIG, getResilienceMultiplier, getStressDecay } from './rhythm';
 import { EMPTY_INCOME_WINDOW, ZERO_AMOUNTS, getIncomePerSec, recordIncome, type IncomeWindow, type ResourceAmounts } from './income';
 import type { FlowState, ResourceRates, ResourceState, TapResource } from './types';
@@ -168,6 +169,8 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
     const outputMultiplier = bonusMultiplier * getStressOutputMultiplier(stress);
     const amount = getTapValue(rates, resource).multiplyScalar(outputMultiplier);
 
+    let flowStarted = false;
+    let overloadStress = -1;
     set((state) => {
       const now = Date.now();
       const { flow: current } = state;
@@ -179,6 +182,8 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
       const windowStartedAt = comboLocked || windowOpen ? current.windowStartedAt : now;
       const flowStarts = !comboLocked && nextCombo >= FLOW_COMBO_THRESHOLD;
       const flowIsActive = current.isActive || flowStarts;
+      flowStarted = flowStarts && !current.isActive;
+      if (state.stress <= OVERLOAD_THRESHOLD && nextStress > OVERLOAD_THRESHOLD) overloadStress = nextStress;
       return {
         [resource]: state[resource].add(amount),
         ...(resource === 'capital' ? { totalCapitalEarned: state.totalCapitalEarned.add(amount) } : {}),
@@ -199,6 +204,13 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
       };
     });
 
+    // Events fire after the state is committed, so subscribers read the post-tap store.
+    if (gameEvents.hasSubscribers()) {
+      gameEvents.emit({ type: 'tap', resource, amount, crit: isCritical, flow: flow.isActive });
+      if (flowStarted) gameEvents.emit({ type: 'flow_started' });
+      if (overloadStress >= 0) gameEvents.emit({ type: 'stress_overload_entered', stress: overloadStress });
+    }
+
     return { resource, amount, isCritical, multiplier: bonusMultiplier };
   },
 
@@ -213,6 +225,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
     const influence = rates.influencePerSec.multiplyScalar(deltaSeconds * outputMultiplier);
     const flowDelta = deltaSeconds * 1000;
 
+    let flowEnded = false;
     set((state) => {
       const now = Date.now();
       const { flow: current } = state;
@@ -225,6 +238,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
         if (remainingMs === 0) {
           // Flow ended inside this tick: the rest of the tick already counts toward the cooldown.
           isActive = false;
+          flowEnded = true;
           comboCount = 0;
           cooldownRemainingMs = Math.max(0, FLOW_COOLDOWN_MS - (flowDelta - current.remainingMs));
         }
@@ -251,6 +265,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
         flow: { ...current, isActive, remainingMs, cooldownRemainingMs, comboCount, comboRemainingMs },
       };
     });
+    if (flowEnded) gameEvents.emit({ type: 'flow_ended' });
   },
 
   addResources: (resources) => set((state) => ({
@@ -293,7 +308,14 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
     return true;
   },
 
-  addStress: (amount) => set((state) => ({ stress: clampStress(state.stress + amount) })),
+  addStress: (amount) => {
+    const before = get().stress;
+    set((state) => ({ stress: clampStress(state.stress + amount) }));
+    const after = get().stress;
+    if (before <= OVERLOAD_THRESHOLD && after > OVERLOAD_THRESHOLD) {
+      gameEvents.emit({ type: 'stress_overload_entered', stress: after });
+    }
+  },
   reduceStress: (amount) => set((state) => ({ stress: Math.max(0, state.stress - Math.max(0, amount)) })),
   updateRates: (rates) => set((state) => ({ rates: { ...state.rates, ...rates } })),
   saveTimestamp: () => set({ lastSavedAt: Date.now() }),
