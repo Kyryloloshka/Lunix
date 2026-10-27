@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { getOfflineSeconds, useCurrencyStore } from '@entities/currency';
 import { toSnapshot, useOnboardingStore } from '@features/onboarding';
+import { useSkillStore } from '@features/purchase-skill';
+import { showOfflineReport } from '@widgets/welcome-back';
 import { loadGame, saveGame } from './gamePersistence';
 
 const AUTOSAVE_INTERVAL_MS = 10_000;
@@ -19,7 +21,10 @@ export function useGamePersistence(): boolean {
     // Never write before the save is read, or a fresh state would overwrite real progress.
     let canSave = false;
 
-    void loadGame().finally(() => {
+    void loadGame().then((earnings) => {
+      // The grant is already applied and saved; the queue only tells the player about it.
+      showOfflineReport(earnings, useSkillStore.getState().currentRank);
+    }).finally(() => {
       canSave = true;
       if (!cancelled) setIsLoaded(true);
     });
@@ -42,9 +47,10 @@ export function useGamePersistence(): boolean {
       if (!canSave) return;
       if (state === 'active') {
         if (backgroundedAt !== null) {
-          useCurrencyStore.getState().applyOfflineProgress(getOfflineSeconds(backgroundedAt, Date.now()));
+          const earnings = useCurrencyStore.getState().applyOfflineProgress(getOfflineSeconds(backgroundedAt, Date.now()));
           backgroundedAt = null;
           void saveGame();
+          showOfflineReport(earnings, useSkillStore.getState().currentRank);
         }
         return;
       }

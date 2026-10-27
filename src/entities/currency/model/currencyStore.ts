@@ -90,6 +90,8 @@ export interface CurrencyStore extends ResourceState {
 
 export interface OfflineEarnings {
   seconds: number;
+  /** The time away reached the storage cap (`MAX_OFFLINE_SECONDS`); anything longer earned nothing more. */
+  capped: boolean;
   capital: Decimal;
   cognitive: Decimal;
   influence: Decimal;
@@ -312,6 +314,7 @@ export const useCurrencyStore = create<CurrencyStore>((set, get) => ({
     const factor = seconds * OFFLINE_EFFICIENCY;
     const earnings: OfflineEarnings = {
       seconds,
+      capped: seconds >= MAX_OFFLINE_SECONDS,
       capital: rates.capitalPerSec.multiplyScalar(factor),
       cognitive: rates.cognitivePerSec.multiplyScalar(factor),
       influence: rates.influencePerSec.multiplyScalar(factor),

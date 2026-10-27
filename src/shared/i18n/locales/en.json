@@ -493,6 +493,20 @@
       }
     }
   },
+  "welcomeBack": {
+    "eyebrow": "WHILE YOU WERE AWAY",
+    "title": "You were gone for {duration}",
+    "durationHm": "{hours}h {minutes}m",
+    "durationM": "{minutes} min",
+    "line": {
+      "phase1": "Docs pages read while you slept: {count}",
+      "phase2": "Bugs fixed while you were offline: {count}",
+      "phase3": "Tickets closed without you: {count}"
+    },
+    "capped": "The storage holds up to 8 hours of work. Come back a bit sooner to catch it all.",
+    "collect": "COLLECT",
+    "collectA11y": "Collect the earnings and continue"
+  },
   "nextGoal": {
     "label": "NEXT GOAL",
     "a11yLabel": "Next goal: {goal}",
