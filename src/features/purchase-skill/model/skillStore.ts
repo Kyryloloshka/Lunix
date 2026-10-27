@@ -23,6 +23,7 @@ import {
   type RequirementProgress,
 } from '@entities/career-rank';
 import { useCurrencyStore, type TapResult } from '@entities/currency';
+import { gameEvents } from '@entities/game-events';
 import { calculateRates } from './skillIncome';
 
 export function isSkillUnlocked(
@@ -150,6 +151,7 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
       seenSkillIds: state.seenSkillIds.includes(id) ? state.seenSkillIds : [...state.seenSkillIds, id],
     }));
     syncRatesFromSkills(get().levels, get().purchasedUpgrades);
+    gameEvents.emit({ type: 'skill_bought', id, levels: quantity });
     return quantity;
   },
   buyUpgrade: (id: string) => {
@@ -166,6 +168,7 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
       purchasedUpgrades: [...state.purchasedUpgrades, id],
     }));
     syncRatesFromSkills(get().levels, get().purchasedUpgrades);
+    gameEvents.emit({ type: 'upgrade_bought', id });
     return true;
   },
   markSkillsSeen: (ids) => {
@@ -185,7 +188,8 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
     ), Decimal.ZERO);
     if (spend.isPositive() && !useCurrencyStore.getState().spendResources({ influence: spend })) return false;
 
-    const unlocked = getNewlyUnlockedResources(get().currentRank, nextRank);
+    const previousRank = get().currentRank;
+    const unlocked = getNewlyUnlockedResources(previousRank, nextRank);
     set({ currentRank: nextRank });
     if (unlocked.length > 0) {
       // A new resource is the point of this promotion: taps switch to it and the UI gets an event.
@@ -194,6 +198,8 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
         pendingResourceUnlocks: [...state.pendingResourceUnlocks, ...unlocked],
       }));
     }
+    gameEvents.emit({ type: 'rank_up', from: previousRank, to: nextRank });
+    unlocked.forEach((resource) => gameEvents.emit({ type: 'resource_unlocked', resource }));
     return true;
   },
   setTapResource: (resource) => {

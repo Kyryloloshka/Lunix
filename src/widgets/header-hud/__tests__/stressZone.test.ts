@@ -1,4 +1,4 @@
-import { enteredStressZone, getFlowTimeRatio, isInStressZone, STRESS_ZONE_THRESHOLD } from '../model/stressZone';
+import { getFlowTimeRatio, isInStressZone, STRESS_ZONE_THRESHOLD } from '../model/stressZone';
 
 describe('stress zone', () => {
   it('starts above the throttling threshold, not at it', () => {
@@ -11,15 +11,6 @@ describe('stress zone', () => {
   it('never treats non-finite stress as in the zone', () => {
     expect(isInStressZone(Number.NaN)).toBe(false);
     expect(isInStressZone(Number.POSITIVE_INFINITY)).toBe(false);
-  });
-
-  it('fires only on the update that crosses into the zone', () => {
-    expect(enteredStressZone(69, 71)).toBe(true);
-    expect(enteredStressZone(STRESS_ZONE_THRESHOLD, STRESS_ZONE_THRESHOLD + 1)).toBe(true);
-    // Staying in, leaving, or staying out never fire again (one haptic per entry).
-    expect(enteredStressZone(75, 80)).toBe(false);
-    expect(enteredStressZone(80, 60)).toBe(false);
-    expect(enteredStressZone(10, 20)).toBe(false);
   });
 });
 

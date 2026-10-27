@@ -58,13 +58,13 @@
 | [T-011](T-011-component-tests.md) | Компонентні тести ключових флоу і доступності | quality | P2 | M | done | — |
 | [T-019](T-019-welcome-back-screen.md) | Екран «Поки тебе не було»: офлайн-дохід видно і приємно забрати | feature / ux | P0 | M | todo | — |
 | [T-021](T-021-dev-tools-and-ci.md) | Dev-tools і CI: debug-меню, прискорення часу, перевірки на кожен пуш | quality / tooling | P0 | M | todo | — |
-| [T-022](T-022-engine-events.md) | Шина подій рушія (`skill_bought`, `rank_up`, `tap`…) | refactor | P0 | M | todo | — |
+| [T-022](T-022-engine-events.md) | Шина подій рушія (`skill_bought`, `rank_up`, `tap`…) | refactor | P0 | M | done | — |
 | [T-023](T-023-golden-commit.md) | Golden Commit: випадковий баф (Frenzy, Lucky, Click Storm) | feature | P0 | M | todo | T-022 |
 | [T-025](T-025-achievements.md) | Досягнення: 100+ ачівок, +1% доходу за кожну, стікербук | feature / content | P0 | L | todo | T-022 |
 | [T-026](T-026-prestige-exit.md) | Престиж Exit / IPO: Equity, дерево перків, новий ран швидше | product / economy | P0 | L | todo | T-022, T-025 (етап 1 — дизайн — можна раніше) |
 | [T-020](T-020-save-slots-and-export.md) | Сейв не губиться: резервний слот, експорт/імпорт рядком | feature / quality | P1 | M | todo | T-019 |
 | [T-024](T-024-incidents.md) | Інциденти з вибором: хотфікс / rollback / ігнор, техборг | feature / content | P1 | M | todo | T-023 |
-| [T-027](T-027-uk-language-polish.md) | Українська звучить природно: відмінки, одна форма наказу | content / i18n | P2 | S | todo | — |
+| [T-027](T-027-uk-language-polish.md) | Українська звучить природно: відмінки, одна форма наказу | content / i18n | P2 | S | done | — |
 | [T-007](T-007-resources-clarity-and-cognitive-sink.md) | ~~Зрозумілі ресурси і куди витрачати Cognitive~~ | — | — | — | superseded | → T-014, T-016, T-017, T-018 |
 
 **Рекомендований порядок.** T-001 → T-002 + T-012 (одна розкладка «Консолі») → **T-016 етап 1 (дизайн-

@@ -87,7 +87,7 @@
     "needMore": "ще {amount}",
     "waitSeconds": "~{seconds} с",
     "waitMinutes": "~{minutes} хв",
-    "needMoreA11y": "Бракує {amount} {resource}",
+    "needMoreA11y": "Бракує: {amount} {resource}",
     "waitA11y": "Приблизно {time} до покупки",
     "purchased": "КУПЛЕНО",
     "multiplier": "x{mult} БУСТ",
@@ -393,7 +393,7 @@
     "silhouetteTitle": "???",
     "silhouetteDesc": "Вище на тебе ще щось чекає",
     "silhouetteA11y": "Прихований ранг. Відкриється після наступного підвищення.",
-    "missingResource": "Бракує {amount} {resource}",
+    "missingResource": "Бракує: {amount} {resource}",
     "missingSkill": "Потрібно {skill} рівня {level}",
     "readyToPromote": "Усі умови виконано",
     "promoteA11y": "Пройти підвищення до рангу {rank}",
@@ -513,8 +513,8 @@
     "a11yHint": "Відкриває вкладку «{tab}»",
     "buySkill": "Купи {skill}, рівень {level}",
     "buyUpgrade": "Купи апгрейд",
-    "earn": "Заробити {resource} до «{rank}»",
-    "spend": "Накопичити {resource} на «{rank}»",
+    "earn": "До «{rank}» заробити: {resource}",
+    "spend": "На «{rank}» накопичити: {resource}",
     "promote": "Підвищення до «{rank}» готове",
     "ready": "ГОТОВО",
     "progress": "{current} / {target}"
@@ -532,11 +532,11 @@
       "step": "Екран {current} з {total}"
     },
     "tap": {
-      "label": "Тапни, щоб вчитися",
+      "label": "Тапай, щоб вчитися",
       "a11y": "Підказка: тапай по екрану, щоб вчитися"
     },
     "warmup": {
-      "label": "Ще трохи: {have} / {cost} {resource} на першу навичку",
+      "label": "Ще трохи до першої навички ({resource}): {have} / {cost}",
       "a11y": "Підказка: назбирай {cost} на першу навичку, зараз {have}"
     },
     "buy": {

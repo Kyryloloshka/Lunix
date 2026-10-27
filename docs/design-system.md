@@ -81,6 +81,17 @@ of truth: `src/shared/theme` (colors, type, motion) and `src/shared/ui` (compone
 
 Widgets must not hand-build buttons, segmented switches or bars: use the components above. A test (`widgetStyleRules.test.ts`) fails on hex/rgb colors and numeric `fontSize` below 11 in `src/widgets`.
 
+## Ukrainian copy (T-027)
+- Imperative: "Тапай" for the repeated tap that earns a resource (mode hints, intro, first-tap hint);
+  "Тапни" only for a one-off confirmation ("Тапни, щоб продовжити"). Same informal "ти" form everywhere
+  ("Відкрий", "Купи").
+- Resource names are stored in the nominative only. Never put one after a number or a verb that needs
+  another case ("Бракує 250 Когнітивка", "Заробити Когнітивка" are wrong). Use a colon so the name reads
+  as a label: "Бракує: 250 ◈ Когнітивка", "До «Junior» заробити: Когнітивка". Enforced by
+  `src/shared/i18n/__tests__/ukStyle.test.ts`.
+- No plural-aware numerals: avoid templates that need "1 / 2–4 / 5+" forms; show the number next to a
+  glyph/label instead. If a plural is ever required, add it to the i18n layer first.
+
 ## Do / Don't
 | Do | Don't |
 | --- | --- |
