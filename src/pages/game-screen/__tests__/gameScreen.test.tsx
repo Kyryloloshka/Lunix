@@ -82,13 +82,13 @@ describe('GameScreen', () => {
     await expectTexts(uk);
 
     await openTab('settings', uk);
-    await fireEvent.press(screen.getByRole('radio', { name: 'EN' }));
-    expect(screen.getByRole('radio', { name: 'EN' }).props.accessibilityState.selected).toBe(true);
+    await fireEvent.press(screen.getByRole('radio', { name: en.settings.languageNames.en }));
+    expect(screen.getByRole('radio', { name: en.settings.languageNames.en }).props.accessibilityState.selected).toBe(true);
     await expectTexts(en);
     // Old-language headings are gone, not merely hidden behind the new ones.
     expect(screen.queryByText(uk.settings.heading)).toBeNull();
 
-    await fireEvent.press(screen.getByRole('radio', { name: 'ES' }));
+    await fireEvent.press(screen.getByRole('radio', { name: en.settings.languageNames.es }));
     await expectTexts(es);
     expect(screen.queryByText(en.settings.heading)).toBeNull();
   });

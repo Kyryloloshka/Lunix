@@ -2,6 +2,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 import { Decimal } from '@shared/lib/decimal';
 import { setLocale } from '@shared/i18n';
 import en from '@shared/i18n/locales/en.json';
+import uk from '@shared/i18n/locales/uk.json';
 import { renderWithProviders } from '@shared/lib/testing/renderWithProviders';
 import { useCurrencyStore } from '@entities/currency';
 import { skillById } from '@entities/skill';
@@ -12,7 +13,7 @@ const SKILL_ID = 'html-tags';
 // The label may carry a wait hint after the name ("BUY X. 5 more"), so match its start.
 const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const startsWith = (label: string) => new RegExp(`^${escapeRegExp(label)}(?:[.,]|$)`);
-const BUY_LABEL = startsWith(`${en.skills.buy} ${en.skills.items['html-tags'].name}`);
+const BUY_LABEL = startsWith(en.skills.buyA11y.replace('{name}', en.skills.items['html-tags'].name));
 
 const giveCognitive = (amount: number) => useCurrencyStore.getState().addResources({ cognitive: Decimal.from(amount) });
 const buyButton = () => screen.getByRole('button', { name: BUY_LABEL });
@@ -61,5 +62,23 @@ describe('SkillsCatalog', () => {
     // Subscribers re-render on the store change; the screen reader state follows.
     await screen.findByRole('button', { name: BUY_LABEL });
     expect(buyButton().props.accessibilityState.disabled).toBe(false);
+  });
+
+  it('a locked skill names its requirement with the localized skill name, never a raw id', async () => {
+    await renderWithProviders(<SkillsCatalog />);
+    const requirement = en.skills.reqLevel
+      .replace('{skill}', en.skills.items['html-tags'].name)
+      .replace('{level}', '3');
+    expect(screen.getByText(requirement)).toBeTruthy();
+    expect(screen.queryByText(/html-tags/)).toBeNull();
+  });
+
+  it('buy labels and purchase modes follow the selected language', async () => {
+    setLocale('uk');
+    await renderWithProviders(<SkillsCatalog />);
+    const label = uk.skills.buyA11y.replace('{name}', uk.skills.items['html-tags'].name);
+    expect(screen.getByRole('button', { name: startsWith(label) })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: uk.skills.buyModeMaxA11y })).toBeTruthy();
+    expect(screen.getByText(uk.skills.max)).toBeTruthy();
   });
 });
