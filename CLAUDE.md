@@ -13,6 +13,7 @@ designing a feature or changing balance.
 Larger features, refactors and UX batches live in `docs/tasks/` (index and format in
 `docs/tasks/README.md`). When picking one up, set its `status`, follow its acceptance criteria, stop at
 any `needs-approval` step, and update the index table when done.
+Running several tasks in parallel through subagents (tech-lead role): follow `docs/tasks/TECH-LEAD.md`.
 
 ## Commands
 - Typecheck: `npm run ts:check`
