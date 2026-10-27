@@ -1,13 +1,20 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
-  Animated,
   StyleSheet,
   Text,
   View,
   type AccessibilityActionEvent,
   type LayoutChangeEvent,
 } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import {
   GestureDetector,
   GestureStateManager,
@@ -19,15 +26,24 @@ import type { Decimal } from '@shared/lib/decimal';
 import { useSkillStore } from '@features/purchase-skill';
 import { formatCurrency, formatDecimal } from '@shared/lib/formatters';
 import { ResourceValue } from '@shared/ui';
-import { colors, getRankTheme, radii, spacing, typography } from '@shared/theme';
+import { colors, durations, getRankTheme, radii, spacing, springs, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
 import { useSettingsStore } from '@features/settings';
-import { useMotionPreference } from '@shared/lib/motion';
+import { motionEasing, timingConfig, useMotionPreference } from '@shared/lib/motion';
 import { toZonePoint, zoneCenter, type ZoneSize } from '../model/touchCoordinates';
 import { CodeEditor, type CodeEditorHandle } from './CodeEditor';
 
-const FLOATER_LIFETIME_MS = 1_050;
-const MAX_FLOATERS = 20;
+/** Floaters rise for the celebrate beat; the last part of the flight fades them out. */
+const FLOATER_LIFETIME_MS = durations.celebrate;
+const FLOATER_RISE = 64;
+/** Share of the flight spent fully opaque before the fade starts. */
+const FLOATER_HOLD = 0.62;
+const FLOATER_START_SCALE = 0.75;
+/**
+ * Fixed pool of floater slots, reused round-robin: nothing mounts or unmounts per tap and no timer runs per
+ * floater. 16 covers 10+ taps/s (T-015); beyond that the oldest floater is simply recycled.
+ */
+const FLOATER_POOL_SIZE = 16;
 const HAPTIC_THROTTLE_MS = 60;
 // Wide enough for the longest crit label so the text never wraps
 const FLOATER_ANCHOR_WIDTH = 240;
@@ -56,7 +72,6 @@ interface FloatingNumber {
   multiplier: number;
   x: number;
   y: number;
-  reducedMotion: boolean;
 }
 
 const A11Y_ACTIONS = [{ name: 'activate' as const }];
@@ -83,7 +98,6 @@ export function WorkspaceClicker({ header, overlay }: WorkspaceClickerProps = {}
   useLocale();
   const currentRank = useSkillStore((state) => state.currentRank);
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
-  const { reducedMotion } = useMotionPreference();
   const rankTheme = useMemo(() => getRankTheme(currentRank), [currentRank]);
   // Boolean/number selectors: the zone only re-renders when Flow starts or ends, not on every tick
   const flowActive = useCurrencyStore((state) => state.flow.isActive);
@@ -93,7 +107,7 @@ export function WorkspaceClicker({ header, overlay }: WorkspaceClickerProps = {}
   const tapResource = useSkillStore((state) => state.tapResource);
   const tapHint = t(TAP_HINT[tapResource]);
   const [pressed, setPressed] = useState(false);
-  const [floaters, setFloaters] = useState<FloatingNumber[]>([]);
+  const [slots, setSlots] = useState<(FloatingNumber | null)[]>(EMPTY_SLOTS);
   const editorRef = useRef<CodeEditorHandle>(null);
 
   // Size of the tap zone; the floaters layer covers it exactly, so touch coords need no offset
@@ -101,12 +115,7 @@ export function WorkspaceClicker({ header, overlay }: WorkspaceClickerProps = {}
 
   const activePointers = useRef(new Set<number>());
   const nextFloaterId = useRef(0);
-  const cleanupTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const lastHapticAt = useRef(0);
-
-  useEffect(() => () => {
-    cleanupTimers.current.forEach(clearTimeout);
-  }, []);
 
   const handleZoneLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -134,17 +143,17 @@ export function WorkspaceClicker({ header, overlay }: WorkspaceClickerProps = {}
     editorRef.current?.onTap({ isCritical: result.isCritical, multiplier: result.multiplier });
 
     const point = toZonePoint({ x, y }, zoneSize.current);
-    setFloaters((prev) => [
-      ...prev.slice(-(MAX_FLOATERS - 1)),
-      { id, text, resource: result.resource, isCrit: result.isCritical, multiplier: result.multiplier, x: point.x, y: point.y, reducedMotion },
-    ]);
-
-    const timer = setTimeout(() => {
-      setFloaters((prev) => prev.filter((item) => item.id !== id));
-      cleanupTimers.current = cleanupTimers.current.filter((active) => active !== timer);
-    }, FLOATER_LIFETIME_MS);
-    cleanupTimers.current.push(timer);
-  }, [reducedMotion, tap, triggerHaptic]);
+    const floater: FloatingNumber = {
+      id, text, resource: result.resource, isCrit: result.isCritical, multiplier: result.multiplier, x: point.x, y: point.y,
+    };
+    const slot = id % FLOATER_POOL_SIZE;
+    // Only the recycled slot changes, so only that memoized slot re-renders.
+    setSlots((prev) => {
+      const next = prev.slice();
+      next[slot] = floater;
+      return next;
+    });
+  }, [tap, triggerHaptic]);
 
   // Screen readers expose the zone as one button; "activate" is one tap with a floater in the middle
   const handleAccessibilityAction = useCallback((event: AccessibilityActionEvent) => {
@@ -213,8 +222,8 @@ export function WorkspaceClicker({ header, overlay }: WorkspaceClickerProps = {}
 
           {/* Floaters cover the whole zone, so a tap anywhere shows its number at the touch point */}
           <View style={styles.floatersLayer} pointerEvents="none">
-            {floaters.map((floater) => (
-              <AnimatedFloater key={floater.id} floater={floater} />
+            {slots.map((floater, index) => (
+              <FloaterSlot key={index} floater={floater} />
             ))}
           </View>
         </View>
@@ -228,29 +237,49 @@ export function WorkspaceClicker({ header, overlay }: WorkspaceClickerProps = {}
   );
 }
 
-const AnimatedFloater = memo(function AnimatedFloater({ floater }: { floater: FloatingNumber }) {
-  const translateY = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(1)).current;
-  const scale = useRef(new Animated.Value(0.75)).current;
+const EMPTY_SLOTS: (FloatingNumber | null)[] = Array.from({ length: FLOATER_POOL_SIZE }, () => null);
+
+/**
+ * One reusable floater. A new `floater` object restarts its flight on the UI thread: position and text
+ * come from props, the rise/fade/pop from shared values (no React render per frame). Under reduced motion
+ * the number stays put and only fades.
+ */
+const FloaterSlot = memo(function FloaterSlot({ floater }: { floater: FloatingNumber | null }) {
+  const { reducedMotion } = useMotionPreference();
+  // 1 = flight finished (invisible); a new floater resets it to 0.
+  const progress = useSharedValue(1);
+  const scale = useSharedValue(1);
+  const reducedMotionRef = useRef(reducedMotion);
+  reducedMotionRef.current = reducedMotion;
 
   useEffect(() => {
-    if (floater.reducedMotion) {
-      const animation = Animated.timing(opacity, { toValue: 0, duration: 120, useNativeDriver: true });
-      animation.start();
-      return () => animation.stop();
+    if (!floater) return undefined;
+    cancelAnimation(progress);
+    if (reducedMotionRef.current) {
+      scale.value = 1;
+      progress.value = 0;
+      // Hold the number briefly, then a short fade: no movement.
+      progress.value = withDelay(durations.slow, withTiming(1, timingConfig('fast', true, { kind: 'fade' })));
+      return () => cancelAnimation(progress);
     }
-    const animation = Animated.parallel([
-      Animated.timing(translateY, { toValue: -64, duration: FLOATER_LIFETIME_MS, useNativeDriver: true }),
-      Animated.sequence([
-        Animated.delay(650),
-        Animated.timing(opacity, { toValue: 0, duration: 400, useNativeDriver: true }),
-      ]),
-      Animated.spring(scale, { toValue: 1, speed: 38, bounciness: 6, useNativeDriver: true }),
-    ]);
-    animation.start();
-    return () => animation.stop();
-  }, [floater.reducedMotion, opacity, scale, translateY]);
+    progress.value = 0;
+    progress.value = withTiming(1, { duration: FLOATER_LIFETIME_MS, easing: motionEasing('decelerate') });
+    scale.value = FLOATER_START_SCALE;
+    scale.value = withSpring(1, springs.pop);
+    return () => cancelAnimation(progress);
+    // `floater` identity is the trigger: one flight per spawned floater.
+  }, [floater, progress, scale]);
 
+  const animatedStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    // Under reduced motion there is no rise: the number holds, then fades over the tail.
+    return {
+      opacity: p >= 1 ? 0 : reducedMotion ? 1 - p : p < FLOATER_HOLD ? 1 : 1 - (p - FLOATER_HOLD) / (1 - FLOATER_HOLD),
+      transform: [{ translateY: reducedMotion ? 0 : -FLOATER_RISE * p }, { scale: scale.value }],
+    };
+  });
+
+  if (!floater) return null;
   return (
     <Animated.View
       style={[
@@ -258,9 +287,8 @@ const AnimatedFloater = memo(function AnimatedFloater({ floater }: { floater: Fl
         {
           left: floater.x,
           top: floater.y,
-          opacity,
-          transform: [{ translateY }, { scale }],
         },
+        animatedStyle,
       ]}
     >
       <View style={[styles.floaterPill, floater.isCrit && styles.floaterPillCrit]}>

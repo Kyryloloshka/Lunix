@@ -1,4 +1,5 @@
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useCurrencyStore } from '@entities/currency';
 import { getFirstSkillCost } from '@features/onboarding';
 import { formatDecimal } from '@shared/lib/formatters';
@@ -36,13 +37,14 @@ export function TapGuide() {
   useLocale();
   const stage = useGuideStage();
   const pulse = usePulse(stage === 'tap');
+  const frameStyle = useAnimatedStyle(() => ({ opacity: 0.35 + pulse.value * 0.65 }));
   if (stage !== 'tap' && stage !== 'warmup') return null;
 
   return (
     <View pointerEvents="none" style={styles.root} testID="onboarding-tap-guide">
       {stage === 'tap' ? (
         <>
-          <Animated.View style={[styles.frame, { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }) }]} />
+          <Animated.View style={[styles.frame, frameStyle]} />
           <View style={styles.pill} accessible accessibilityLabel={t('onboarding.tap.a11y')}>
             <Text style={styles.pillText} maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}>
               {t('onboarding.tap.label')}

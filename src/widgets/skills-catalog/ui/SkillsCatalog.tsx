@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import {
   BRANCH_RESOURCE,
   calculateBulkPurchase,
@@ -21,14 +21,15 @@ import {
   DevGlyph,
   FadeSlideIn,
   ListRow,
+  PurchasePulse,
   ResourceValue,
+  RollText,
   SegmentedControl,
   type GlyphName,
   type SegmentOption,
 } from '@shared/ui';
 import { colors, radii, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
-import { useMotionPreference } from '@shared/lib/motion';
 import {
   getSkillContribution,
   getWaitHint,
@@ -311,14 +312,14 @@ export function SkillsCatalog() {
   const locale = useLocale();
   const [category, setCategory] = useState<CatalogTab>('knowledge');
   const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>(1);
-  const [upgradedSkillId, setUpgradedSkillId] = useState<string | null>(null);
-  const upgradePulse = useRef(new Animated.Value(0)).current;
+  // The purchase pulse lives on one card at a time: the bought card mounts it, so lists pay nothing for it.
+  const [pulse, setPulse] = useState<{ id: string; key: number; label: ReactNode } | null>(null);
+  const pulseKey = useRef(0);
   const capital = useCurrencyStore((state) => state.capital);
   const cognitive = useCurrencyStore((state) => state.cognitive);
   const influence = useCurrencyStore((state) => state.influence);
   const income = useCurrencyStore((state) => state.income);
   const rates = useCurrencyStore((state) => state.rates);
-  const { reducedMotion } = useMotionPreference();
   const currentRank = useSkillStore((state) => state.currentRank);
   const buy = useSkillStore((state) => state.buy);
   const buyUpgrade = useSkillStore((state) => state.buyUpgrade);
@@ -396,23 +397,29 @@ export function SkillsCatalog() {
         : BRANCH_RESOURCE[branchTab] === 'cognitive' ? effects.cognitivePerSec : effects.influencePerSec,
     );
 
-  const pulse = (id: string) => {
-    if (reducedMotion) return;
-    setUpgradedSkillId(id);
-    upgradePulse.setValue(0);
-    Animated.timing(upgradePulse, {
-      toValue: 1,
-      duration: 450,
-      useNativeDriver: true,
-    }).start(() => setUpgradedSkillId(null));
+  const showPulse = (id: string, label: ReactNode = null) => {
+    pulseKey.current += 1;
+    setPulse({ id, key: pulseKey.current, label });
   };
+  const clearPulse = useCallback(() => setPulse(null), []);
 
   const handleBuy = (id: string) => {
-    if (buy(id, purchaseMode) > 0) pulse(id);
+    const skill = skillById(id);
+    const bought = buy(id, purchaseMode);
+    if (bought <= 0) return;
+    // Gain of this purchase for the flying "+X/s" label. `gainFor` reads the render-time levels, i.e. the ones before buying.
+    const label = skill?.kind === 'producer' ? (
+      <Text style={styles.flyLabel}>
+        <ResourceValue kind={skill.produces}>
+          {t('skills.rateLabel', { amount: FORMAT[skill.produces](gainFor(id, bought).perSec[skill.produces]) })}
+        </ResourceValue>
+      </Text>
+    ) : null;
+    showPulse(id, label);
   };
 
   const handleBuyUpgrade = (upgrade: Upgrade) => {
-    if (buyUpgrade(upgrade.id)) pulse(upgrade.id);
+    if (buyUpgrade(upgrade.id)) showPulse(upgrade.id);
   };
 
   // Latest handler behind a stable callback, so memoized cards keep equal props between ticks.
@@ -420,18 +427,9 @@ export function SkillsCatalog() {
   buyUpgradeRef.current = handleBuyUpgrade;
   const onBuyUpgrade = useCallback((upgrade: Upgrade) => buyUpgradeRef.current(upgrade), []);
 
-  const pulseOverlay = (id: string) => (upgradedSkillId === id ? (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        styles.pulseClone,
-        {
-          transform: [{ scale: upgradePulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] }) }],
-          opacity: upgradePulse.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0.8, 0.6, 0] }),
-        },
-      ]}
-    />
-  ) : null);
+  const pulseOverlay = (id: string) => (
+    pulse?.id === id ? <PurchasePulse key={pulse.key} label={pulse.label} onDone={clearPulse} /> : null
+  );
 
   const renderUpgrade = (upgrade: Upgrade) => {
     const isOwned = purchasedUpgrades.includes(upgrade.id);
@@ -512,7 +510,7 @@ export function SkillsCatalog() {
           {isNew ? (
             <Text style={styles.newBadge} maxFontSizeMultiplier={DENSE_TEXT_MAX_FONT_SCALE}>{t('skills.newBadge')}</Text>
           ) : null}
-          <Text style={styles.level}>{t('skills.lvl', { level })}</Text>
+          <RollText style={styles.level} text={t('skills.lvl', { level })} />
         </View>
         {unlocked ? (
           <Text style={styles.description} numberOfLines={1}>{t(`skills.items.${skill.id}.desc`)}</Text>
@@ -615,13 +613,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   listContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl },
-  pulseClone: {
-    ...StyleSheet.absoluteFill,
-    borderWidth: 2,
-    borderColor: colors.accent.amber,
-    borderRadius: radii.md,
-    backgroundColor: colors.accent.phosphorBg,
-  },
+  flyLabel: { fontFamily: typography.mono, fontSize: typography.sizes.sm, fontWeight: '900', color: colors.text.primary },
   cardTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   skillName: {
     ...typography.roles.label,

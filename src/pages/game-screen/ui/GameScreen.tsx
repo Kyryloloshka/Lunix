@@ -16,9 +16,12 @@ import { SimulatedLeaderboard } from '@widgets/simulated-leaderboard';
 import { BottomDock, type ActiveTab } from '@widgets/bottom-dock';
 import { useSkillStore } from '@features/purchase-skill';
 import { SettingsPanel } from '@widgets/settings';
-import { CONTENT_MAX_WIDTH, TEXT_MAX_FONT_SCALE } from '@shared/ui';
+import { CONTENT_MAX_WIDTH, ColorTransitionView, FadeSlideIn, TEXT_MAX_FONT_SCALE } from '@shared/ui';
 import { colors, getRankTheme, spacing, typography } from '@shared/theme';
 import { t, useLocale } from '@shared/i18n';
+
+/** Tab content slides in this far (dp); smaller than the default entrance so switching feels instant. */
+const TAB_SLIDE_DISTANCE = 8;
 
 interface GameScreenProps {
   /** Wired by the app layer, which owns save/load. */
@@ -69,13 +72,14 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.screen, { backgroundColor: rankTheme.appBackground }]}
-      edges={['top', 'bottom']}
-    >
+    // The screen color glides to the new rank's theme after a promotion (T-015); the safe area itself stays transparent.
+    <ColorTransitionView backgroundColor={rankTheme.appBackground} style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       {/* One centered column for HUD, tab content and dock; the tab content is the only vertical scroll. */}
       <View style={styles.column}>
         <HeaderHud rankTitle={t(`career.ranks.${rank.id}.title`)} rankIndex={rank.id} />
+        {/* Short crossfade + slide on tab change; the key restarts it. Fills the column like the content did. */}
+        <FadeSlideIn key={activeTab} from="bottom" distance={TAB_SLIDE_DISTANCE} duration="fast" style={styles.tabTransition}>
         {activeTab === 'work' ? (
           // Console (T-012): no scroll competing with taps; the whole area between HUD and dock is the tap
           // zone. Future buttons on top of it (next goal, tap mode) go into `overlay` so they never pay out.
@@ -111,6 +115,7 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
             {renderTab()}
           </ScrollView>
         )}
+        </FadeSlideIn>
         <DockHint onSkillsTab={activeTab === 'skills'} />
         <BottomDock activeTab={activeTab} onChangeTab={setActiveTab} badges={badges} />
       </View>
@@ -119,13 +124,16 @@ export function GameScreen({ onResetProgress }: GameScreenProps) {
       {/* First launch (or replay from settings): covers the game until completed or skipped. */}
       <IntroSequence />
     </SafeAreaView>
+    </ColorTransitionView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.surface.base,
+  },
+  tabTransition: {
+    flex: 1,
   },
   column: {
     flex: 1,

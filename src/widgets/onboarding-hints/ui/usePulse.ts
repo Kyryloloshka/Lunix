@@ -1,28 +1,35 @@
-import { useEffect, useRef } from 'react';
-import { Animated } from 'react-native';
-import { useMotionPreference } from '@shared/lib/motion';
+import { useEffect } from 'react';
+import {
+  cancelAnimation,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
+import { motionEasing, useMotionPreference } from '@shared/lib/motion';
+import { durations } from '@shared/theme';
 
-const PULSE_HALF_MS = 700;
+/** One half of the loop (down or up): slow + fast, the same breathing rhythm as the editor cursor. */
+const PULSE_HALF_MS = durations.slow + durations.fast + durations.base;
 
 /**
- * Looping 0..1 value for attention hints. Runs on the native driver and stays at 1 (a static
+ * Looping 0..1 shared value for attention hints. Runs on the UI thread and stays at 1 (a static
  * highlight) under reduced motion. The loop is stopped on unmount or when `active` turns false.
  */
-export function usePulse(active: boolean): Animated.Value {
+export function usePulse(active: boolean): SharedValue<number> {
   const { reducedMotion } = useMotionPreference();
-  const value = useRef(new Animated.Value(1)).current;
+  const value = useSharedValue(1);
 
   useEffect(() => {
     if (!active || reducedMotion) {
-      value.setValue(1);
+      cancelAnimation(value);
+      value.value = 1;
       return undefined;
     }
-    const loop = Animated.loop(Animated.sequence([
-      Animated.timing(value, { toValue: 0, duration: PULSE_HALF_MS, useNativeDriver: true }),
-      Animated.timing(value, { toValue: 1, duration: PULSE_HALF_MS, useNativeDriver: true }),
-    ]));
-    loop.start();
-    return () => loop.stop();
+    const config = { duration: PULSE_HALF_MS, easing: motionEasing('standard') };
+    value.value = withRepeat(withSequence(withTiming(0, config), withTiming(1, config)), -1);
+    return () => cancelAnimation(value);
   }, [active, reducedMotion, value]);
 
   return value;

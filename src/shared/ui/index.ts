@@ -23,3 +23,6 @@ export type { GlyphName } from './DevGlyph';
 export { CountUpText } from './CountUpText';
 export { FadeSlideIn } from './FadeSlideIn';
 export type { SlideFrom } from './FadeSlideIn';
+export { RollText } from './RollText';
+export { PurchasePulse } from './PurchasePulse';
+export { ColorTransitionView } from './ColorTransitionView';
